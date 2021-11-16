@@ -16,6 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import org.apache.rocketmq.streams.common.model.NameCreator;
 import org.apache.rocketmq.streams.filter.operator.FilterOperator;
 import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
@@ -174,7 +175,8 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         if (StringUtil.isNotEmpty(expression)) {
             SqlSelect sqlSelect = (SqlSelect)sqlNode;
             sqlSelect.setWhere(null);
-            pipelineBuilder.addChainStage(new FilterOperator(expression));
+            String ruleName = NameCreator.createOrGet(this.getPipelineBuilder().getPipelineName()).createName("rule");
+            pipelineBuilder.addChainStage(new FilterOperator(getNamespace(), ruleName, expression));
         }
 
     }
