@@ -16,6 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -48,7 +49,7 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     private static final Log LOG = LogFactory.getLog(CreateSQLBuilder.class);
     private static String TABLE_NAME="sql_create_table_name";
-
+    private List<String> headerFieldNames;
     protected MetaData metaData = new MetaData();//保存存储的字段结构
     protected List<SqlNode> property;//sql中with部分的内容，主要是连接参数
     protected Properties properties;//和property等价，把property转化成Properties
@@ -93,6 +94,8 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
         this.properties = createProperty();
         this.properties.put(TABLE_NAME,getTableName());
+        this.properties.put("headerFieldNames",this.headerFieldNames);
+        this.properties.put("metaData",this.metaData);
         ISource source = ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(),
             pipelineBuilder.getPipelineName(), properties, metaData);
 
@@ -223,8 +226,10 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
      * @param sqlNodes
      */
     public void createColumn(SqlNodeList sqlNodes) {
-        MetaData metaData = ColumnUtil.createMetadata(this,sqlNodes);
+        List<String> headerFieldNames=new ArrayList<>();
+        MetaData metaData = ColumnUtil.createMetadata(this,sqlNodes, headerFieldNames);
         this.metaData = metaData;
+        this.headerFieldNames=headerFieldNames;
     }
 
     public List<SqlNode> getProperty() {
@@ -245,5 +250,9 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     public Properties getProperties() {
         return properties;
+    }
+
+    public List<String> getHeaderFieldNames() {
+        return headerFieldNames;
     }
 }

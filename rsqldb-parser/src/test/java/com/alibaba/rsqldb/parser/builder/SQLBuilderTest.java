@@ -16,6 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
+import com.alibaba.rsqldb.parser.entity.SqlTask;
+
 import org.apache.rocketmq.streams.common.utils.FileUtil;
 import org.junit.Test;
 
@@ -24,7 +26,7 @@ public class SQLBuilderTest {
     public void testSQL() {
         String sqlPath = "/Users/yuanxiaodong/Desktop/dipper_sql/aegis_proc/windows_proc_alert.sql";
         String sql = FileUtil.loadFileContentContainLineSign(sqlPath);
-        SQLBuilder sqlBuilder = new SQLBuilder("namespace", "name", sql);
+        SqlTask sqlBuilder = new SqlTask("namespace", "name", sql);
         sqlBuilder.startSQL();
     }
 

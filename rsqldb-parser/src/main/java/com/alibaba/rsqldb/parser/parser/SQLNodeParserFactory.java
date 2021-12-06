@@ -16,6 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser;
 
+import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.expression.BlinkRuleV2Parser;
+
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,14 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.rocketmq.streams.common.model.NameCreator;
 import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
 import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
+
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 
@@ -48,11 +54,11 @@ public class SQLNodeParserFactory {
     /**
      * 保存解析的udf
      */
-    private static Set<String> udfSet = new HashSet<>();
+    private static Map<String, FunctionSQLBuilder> udfSet = new HashedMap();
 
     private static AbstractScan scan = new AbstractScan() {
         @Override
-        protected void doProcessor(Class clazz) {
+        protected void doProcessor(Class clazz, String functionName) {
             if (ISqlParser.class.isAssignableFrom(clazz)) {
                 if (Modifier.isAbstract(clazz.getModifiers())) {
                     return;
@@ -95,15 +101,19 @@ public class SQLNodeParserFactory {
                 return sqlParser;
             }
         }
-        if (SqlBasicCall.class.isInstance(sqlNode)) {
+        if (sqlNode instanceof SqlBasicCall) {
             final SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
             String name = sqlBasicCall.getOperator().getName().toUpperCase();
             if (udfsContains(name)) {
+                //                FunctionSQLBuilder functionSQLBuilder=udfSet.get(name.trim().toLowerCase());
+                //                if("com.lyra.xs.udf.ext.sas_black_rule_v2".equals(functionSQLBuilder.getClassName())){
+                //                    return new BlinkRuleV2Parser(udfSet.get(name.trim().toLowerCase()).getClassName(),name);
+                //                }
                 return new ISqlParser() {
 
                     @Override
-                    public IParseResult parse(AbstractSQLBuilder builder, Object o) {
-                        if (!SelectSQLBuilder.class.isInstance(builder)) {
+                    public IParseResult parse(AbstractSQLBuilder builder, Object object) {
+                        if (!(builder instanceof SelectSQLBuilder)) {
                             throw new RuntimeException(
                                 "can not support parser udf " + name + ", expect select sql builder ,real is " + builder
                                     .getClass().getName());
@@ -145,7 +155,7 @@ public class SQLNodeParserFactory {
             return false;
         }
         name = name.trim().toLowerCase();
-        return udfSet.contains(name);
+        return udfSet.containsKey(name);
     }
 
     /**
@@ -165,10 +175,10 @@ public class SQLNodeParserFactory {
         return builder;
     }
 
-    public static void addUDF(String functionName) {
+    public static void addUDF(String functionName, FunctionSQLBuilder sqlBuilder) {
         if (functionName == null) {
             return;
         }
-        udfSet.add(functionName.trim().toLowerCase());
+        udfSet.put(functionName.trim().toLowerCase(), sqlBuilder);
     }
 }

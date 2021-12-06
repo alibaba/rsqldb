@@ -67,6 +67,14 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
     public void build() {
         boolean isJoin = isJoin();//判断是否是大流join，目前只支持自己join自己
         if (isJoin) {
+            //左表build会产生脚本，脚本设置到pipline中
+            if (getScripts() != null && getScripts().size() > 0) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (String script : scripts) {
+                    stringBuilder.append(script + ";");
+                }
+                getPipelineBuilder().addChainStage(new ScriptOperator(stringBuilder.toString()));
+            }
             buildJoin();
             return;
         }
@@ -99,11 +107,12 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
             builder.addRootTableName(this.rootTableNames);
             if (SnapshotBuilder.class.isInstance(builder)) {
                 SnapshotBuilder snapshotBuilder = (SnapshotBuilder)builder;
-                snapshotBuilder.setExpression(onCondition);
-                snapshotBuilder.setExpressionSQLNode(conditionSQLNode);
-                snapshotBuilder.setJoinType(joinType);
+                //snapshotBuilder.setExpression(onCondition);
+                snapshotBuilder.buildDimCondition(conditionSQLNode,joinType,onCondition);
+            }else {
+                builder.buildSQL();
             }
-            builder.buildSQL();
+
         }
 
     }
@@ -217,12 +226,14 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
         if (!isJoin()) {
             return false;
         }
-        if (this.rootTableNames.size() > 1) {
-            BuilderParseResult rightResult = (BuilderParseResult) getRight();
-            return rightResult.getBuilder().getTableName().equals(parentName);
-        } else {
+        if (this.rootTableNames.size() <= 1) {
             return false;
         }
+        BuilderParseResult rightResult = (BuilderParseResult) getRight();
+        if( rightResult.getBuilder().getTableName().equals(parentName)){
+            return true;
+        }
+        return false;
 //        BuilderParseResult rightResult = (BuilderParseResult)getRight();
 //        return rightResult.getBuilder().getTableName().equals(parentName);
     }
@@ -302,11 +313,7 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
      * @return
      */
     public boolean isJoin() {
-//        if (this.rootTableNames.size() > 1) {
-//            return true;
-//        } else {
-//            return false;
-//        }
+
         AbstractSQLBuilder leftBuilder = getJoinBuilder(left);
         AbstractSQLBuilder rightBuilder = getJoinBuilder(right);
 
@@ -434,9 +441,14 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
             asName = fieldName.substring(0, index);
             fieldName = fieldName.substring(index + 1);
         }
+        String tableAsName=null;
         if (BuilderParseResult.class.isInstance(getLeft())) {
             BuilderParseResult builderParseResult = (BuilderParseResult)getLeft();
-            if ((asName != null && asName.equals(builderParseResult.getBuilder().getAsName())) | StringUtil.isEmpty(asName)) {
+            tableAsName=builderParseResult.getBuilder().getAsName();
+            if(asName!=null&&tableAsName==null){
+                tableAsName=builderParseResult.getBuilder().getTableName();
+            }
+            if ((asName != null && asName.equals(tableAsName)) | StringUtil.isEmpty(asName)) {
                 if (SelectSQLBuilder.class.isInstance(builderParseResult.getBuilder())) {
                     SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder)builderParseResult.getBuilder();
                     value = selectSQLBuilder.getFieldName(fieldName, true);
@@ -448,7 +460,11 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
         }
         if (BuilderParseResult.class.isInstance(getRight())) {
             BuilderParseResult builderParseResult = (BuilderParseResult)getRight();
-            if ((asName != null && asName.equals(builderParseResult.getBuilder().getAsName())) | StringUtil.isEmpty(asName)) {
+            tableAsName=builderParseResult.getBuilder().getAsName();
+            if(asName!=null&&tableAsName==null){
+                tableAsName=builderParseResult.getBuilder().getTableName();
+            }
+            if ((asName != null && asName.equals(tableAsName)) | StringUtil.isEmpty(asName)) {
                 if (SelectSQLBuilder.class.isInstance(builderParseResult.getBuilder())) {
                     SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder)builderParseResult.getBuilder();
                     value = selectSQLBuilder.getFieldName(fieldName, true);

@@ -175,8 +175,8 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         if (StringUtil.isNotEmpty(expression)) {
             SqlSelect sqlSelect = (SqlSelect)sqlNode;
             sqlSelect.setWhere(null);
-            String ruleName = NameCreator.createOrGet(this.getPipelineBuilder().getPipelineName()).createName("rule");
-            pipelineBuilder.addChainStage(new FilterOperator(getNamespace(), ruleName, expression));
+            String ruleName= NameCreator.createOrGet(this.getPipelineBuilder().getPipelineName()).createName(this.getPipelineBuilder().getPipelineName(),"rule");
+            pipelineBuilder.addChainStage(new FilterOperator(getNamespace(),ruleName,expression));
         }
 
     }
@@ -608,7 +608,11 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             } else {
                 String ailasName = fieldName.substring(0, index);
                 fieldName = fieldName.substring(index + 1);
-                if (ailasName.equals(getAsName())) {
+                String tableAilasName=getAsName();
+                if(ailasName!=null&&tableAilasName==null){
+                    tableAilasName=getTableName();
+                }
+                if (ailasName.equals(tableAilasName)) {
                     if (fieldNames.contains(fieldName)) {
                         return fieldName;
                     }

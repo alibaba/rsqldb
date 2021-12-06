@@ -17,29 +17,38 @@
 package com.alibaba.rsqldb.parser.parser.builder;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import com.alibaba.rsqldb.udf.FunctionUDFScript;
+import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
+import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
+import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
+
+import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableFunction;
 import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.utils.FileUtil;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.common.utils.ReflectUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.script.annotation.Function;
+import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
 import org.apache.rocketmq.streams.script.service.udf.UDFScript;
-import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
-import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
-import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
-import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
+import sun.misc.JarFilter;
 
 /**
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
@@ -47,14 +56,12 @@ import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
 public class BlinkUDFScan extends AbstractScan {
     private static BlinkUDFScan blinkUDFScan = new BlinkUDFScan();
 
-    protected String BLINK_UDF_JAR_PATH = ComponentCreator.BLINK_UDF_JAR_PATH;
+    protected static final String BLINK_UDF_JAR_PATH = ComponentCreator.BLINK_UDF_JAR_PATH;
 
     /**
      * udf的class name和dipper blink script的对应关系
      */
     protected Map<String, UDFScript> className2Scripts = new HashMap<>();
-
-
 
     /**
      * 保证blink udf扫描可重入
@@ -65,7 +72,7 @@ public class BlinkUDFScan extends AbstractScan {
      * dipper不能识别的udf，主要是黑名单作用
      */
     protected transient static Set<String> notSupportUDF = new HashSet<>();
-    protected transient Map<String,String> extendsDirFoUDF=new HashMap<>();//packageName,dir;classNAME;METHOD,dir
+    protected transient Map<String, String> extendsDirFoUDF = new HashMap<>();//packageName,dir;classNAME;METHOD,dir
 
     static {
         notSupportUDF.add("AegisBinForLag");
@@ -78,30 +85,52 @@ public class BlinkUDFScan extends AbstractScan {
         return blinkUDFScan;
     }
 
+    public static void main(String[] args) {
+        System.out.println(BlinkUDFScan.class.getClassLoader().getResource("").getPath());
+        BlinkUDFScan udf = BlinkUDFScan.getInstance();
+        String outSideJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
+        //        udf.scan("com.self.HexStrEncode");
+        //        udf.scanFromLocalFile(outSideJarFielPath,"com.self.HexStrEncode");
+        //        udf.scanFromFile("./","");
+        //        udf.scanFromUrl("https://softwaretk.oss-cn-beijing.aliyuncs.com/extudf_2.0.jar", "");
+        System.out.println("end");
+    }
+
     /**
      * 阿里内部使用
      *
      * @param jarFilePath
      */
     @Deprecated
-    public void scan(String jarFilePath) {
-        if (hasScane.compareAndSet(false, true)) {
-            scan(jarFilePath, "com.aliyun.sec.dw.blink.udf");
-            scan(jarFilePath, "com.aliyun.sec.dw.blink.udf");
-            scan(jarFilePath, "com.aliyun.sec.dw.rt.udf");
-            scan(jarFilePath, "com.aliyun.sec.dw.udf");
-            scan(jarFilePath, "com.aliyun.sec.lyra");
-            scan(jarFilePath, "com.aliyun.sec.secdata");
-            scan(jarFilePath, "com.lyra");
-            scan(jarFilePath, "com.sas.zing.blink.udf");
-            scan(jarFilePath, "com.self");
-            scan(jarFilePath, "com.aliyun.sec.sas");
-            scan(jarFilePath, "com.aliyun.yundun.dipper.sql.udf");
-            scan(jarFilePath, "com.aliyun.isec.seraph.udtf");
-            scan(jarFilePath, "com.lyra.udf.ext");
-
+    public void scan(String jarFilePath, String classname, String functionName) {
+        scanInnerBlinkUDF();
+        String localJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
+        if (localJarFielPath == null || "".equalsIgnoreCase(localJarFielPath)) {
+            localJarFielPath = "./udflib";
         }
+        scanFromLocalFile(localJarFielPath, jarFilePath, functionName);
 
+    }
+
+    /**
+     * 扫描rocketmq内部自带blink udf函数
+     */
+    public void scanInnerBlinkUDF() {
+        if (hasScane.compareAndSet(false, true)) {
+            scan(null, "com.aliyun.sec.dw.blink.udf");
+            scan(null, "com.aliyun.sec.dw.blink.udf");
+            scan(null, "com.aliyun.sec.dw.rt.udf");
+            scan(null, "com.aliyun.sec.dw.udf");
+            scan(null, "com.aliyun.sec.lyra");
+            scan(null, "com.aliyun.sec.secdata");
+            scan(null, "com.lyra");
+            scan(null, "com.sas.zing.blink.udf");
+            scan(null, "com.self");
+            scan(null, "com.aliyun.sec.sas");
+            scan(null, "com.aliyun.yundun.dipper.sql.udf");
+            scan(null, "com.aliyun.isec.seraph.udtf");
+            scan(null, "com.lyra.udf.ext");
+        }
     }
 
     /**
@@ -118,28 +147,91 @@ public class BlinkUDFScan extends AbstractScan {
                 jarDir = "file:" + jarDir;
                 url = new URL(jarDir);
             } catch (MalformedURLException e) {
-                throw new RuntimeException("can not parser url for udf jar " + jarDir, e);
+                throw new RuntimeException("can not parse url for udf jar " + jarDir, e);
             }
             URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
-            this.scanClassDir(file, packageName, urlClassLoader);
+            this.scanClassDir(file, packageName, urlClassLoader, null);
 
         } else {
             this.scanPackage(packageName);
         }
     }
 
-    public void registBlinkUDF(String dir,String packageName){
-        this.extendsDirFoUDF.put(packageName,dir);
-        this.scanJarsFromDir(dir,packageName);
+    /**
+     * 扫描本地目录下用户自定义的udf
+     *
+     * @param jarDir      如果为null，在类路径扫描
+     * @param packageName
+     */
+    public void scanFromLocalFile(String jarDir, String packageName, String functionName) {
+        if (StringUtil.isNotEmpty(jarDir)) {
+            List<File> jars = new ArrayList<>();
+            File file = new File(jarDir);
+            if (file.isDirectory()) {
+                System.out.println("BlinkUDFScan file is===" + file.getAbsolutePath());
+                File[] files = file.listFiles(new JarFilter());
+                jars.addAll(Arrays.asList(files));
+            } else if (file.getName().endsWith(".jar")) {
+                jars.add(file);
+            }
+            for (File jar : jars) {
+                URL url = null;
+                try {
+                    jarDir = "file:" + jar.getCanonicalPath();
+                    url = new URL(jarDir);
+                    URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
+                    //                    this.registBlinkUDF(file.getCanonicalPath(), packageName);
+                    this.extendsDirFoUDF.put(packageName, jar.getCanonicalPath());
+                    this.scanClassDir(jar, packageName, urlClassLoader, functionName);
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException("can not parse url for udf jar " + jarDir, e);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        } else {
+            this.scanPackage(packageName);
+        }
     }
 
-    public void registJarUDF(String dir,String className,String methodName){
-        this.extendsDirFoUDF.put(MapKeyUtil.createKey(className,methodName),dir);
-        this.scanJarsFromDir(dir,ReflectUtil.forClass(className).getPackage().getName());
+    /**
+     * 扫描某个目录下jar包的包名
+     *
+     * @param jarDir      如果为null，在类路径扫描
+     * @param packageName
+     */
+    public void scanFromUrl(String jarDir, String packageName, String functionName) {
+        if (StringUtil.isNotEmpty(jarDir)) {
+            File file = new File(jarDir);
+            URL url = null;
+            try {
+                jarDir = "file:" + jarDir;
+                url = new URL(jarDir);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException("can not parse url for udf jar " + jarDir, e);
+            }
+            URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url}, this.getClass().getClassLoader());
+            this.scanClassDir(file, packageName, urlClassLoader, functionName);
+
+        } else {
+            this.scanPackage(packageName);
+        }
+    }
+
+    public void registerBlinkUDF(String dir, String packageName) {
+        this.extendsDirFoUDF.put(packageName, dir);
+        this.scanJarsFromDir(dir, packageName);
+    }
+
+    public void registerJarUDF(String dir, String className, String methodName) {
+        this.extendsDirFoUDF.put(MapKeyUtil.createKey(className, methodName), dir);
+        this.scanJarsFromDir(dir, ReflectUtil.forClass(className).getPackage().getName());
     }
 
     @Override
-    protected void doProcessor(Class clazz) {
+    protected void doProcessor(Class clazz, String functionName) {
         try {
             if (ScalarFunction.class.isAssignableFrom(clazz) || TableFunction.class.isAssignableFrom(clazz) || AggregateFunction.class.isAssignableFrom(clazz)) {
                 if (notSupportUDF.contains(clazz.getSimpleName())) {
@@ -156,28 +248,135 @@ public class BlinkUDFScan extends AbstractScan {
                 script.setFullClassName(clazz.getName());
                 script.setFunctionName(clazz.getSimpleName());
                 className2Scripts.put(clazz.getName(), script);
-                String dir=this.extendsDirFoUDF.get(clazz.getPackage().getName());
-                if(dir!=null){
-                    script.setValue(FileUtil.LOCAL_FILE_HEADER+dir);
+                //                String dir=this.extendsDirFoUDF.get(clazz.getPackage().getName());
+                String dir = this.extendsDirFoUDF.get(clazz.getName());
+                if (dir != null) {
+                    script.setValue(FileUtil.LOCAL_FILE_HEADER + dir);
                 }
-            }
-            Method[] methods=clazz.getMethods();
-            for(Method method:methods){
-                String dir=this.extendsDirFoUDF.get(MapKeyUtil.createKey(clazz.getName(),method.getName()));
-                if(dir!=null){
-                    UDFScript script = new UDFScript();
-                    script.setFullClassName(clazz.getName());
-                    script.setFunctionName(clazz.getSimpleName());
-                    className2Scripts.put(clazz.getName(), script);
-                    script.setValue(dir);
-                }
+            } else if (clazz.isAnnotationPresent(Function.class)) {
+                registerAnnotationFunction(clazz);
+            } else {
+                registerUserFunction(clazz, functionName);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public UDFScript getScript(String className) {
-        return className2Scripts.get(className);
+    /**
+     * 将带有@FunctionMethod注解的方法注册为udfscript
+     *
+     * @param clazz
+     */
+    public void registerAnnotationFunction(Class clazz) {
+        List<Method> methods = getMethodList(clazz);
+
+        for (Method method : methods) {
+            FunctionMethod annotation = method.getAnnotation(FunctionMethod.class);
+            String functionName = annotation.value();
+            if (functionName != null && !"".equalsIgnoreCase(functionName)) {
+                registerFunctionUDFScript(clazz, method.getName(), functionName);
+            }
+            registerFunctionUDFScript(clazz, method.getName(), method.getName());
+            if (StringUtil.isNotEmpty(annotation.alias())) {
+                String aliases = annotation.alias();
+                if (aliases.indexOf(",") != -1) {
+                    String[] values = aliases.split(",");
+                    for (String alias : values) {
+                        registerFunctionUDFScript(clazz, method.getName(), alias);
+                    }
+                } else {
+                    registerFunctionUDFScript(clazz, method.getName(), aliases);
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据class和函数名字注册udf，如果方法列表中包含eval方法，则将functionname全部与eval方法绑定并注册UDFScript
+     * 如果class中不包含eval方法，则将functionname与对应的方法名进行绑定并注册
+     *
+     * @param clazz
+     * @param functionName
+     */
+    public void registerUserFunction(Class clazz, String functionName) {
+        List<Method> evalMethods = getEvalMethodList(clazz);
+        if (evalMethods != null && evalMethods.size() > 0) {
+            registerFunctionUDFScript(clazz, "eval", functionName);
+        } else {
+            Method[] methods = clazz.getMethods();
+            if (methods != null && methods.length > 0) {
+                for (Method method : methods) {
+                    if (functionName != null && functionName.equalsIgnoreCase(method.getName())) {
+                        registerFunctionUDFScript(clazz, method.getName(), functionName);
+                    }
+                }
+            }
+        }
+
+    }
+
+    public void registerFunctionUDFScript(Class clazz, String methodName, String functionName) {
+        UDFScript script = new FunctionUDFScript(methodName, functionName);
+        script.setFullClassName(clazz.getName());
+        //        script.setFunctionName(clazz.getSimpleName());
+        String dir = this.extendsDirFoUDF.get(clazz.getName());
+        if (dir != null) {
+            script.setValue(FileUtil.LOCAL_FILE_HEADER + dir);
+        }
+        className2Scripts.put(createName(clazz.getName(), functionName), script);
+
+    }
+
+    /**
+     * 获取所有带FunctionMethod标注的方法
+     *
+     * @param clazz
+     * @return
+     */
+    private List<Method> getMethodList(Class clazz) {
+        Method[] methods = clazz.getMethods();
+        List<Method> methodList = new ArrayList<Method>();
+        for (Method method : methods) {
+            if (method.getAnnotation(FunctionMethod.class) != null) {
+                methodList.add(method);
+            }
+        }
+        return methodList;
+    }
+
+    /**
+     * 提取class中方法名为eval的函数列表
+     * @param clazz
+     * @return
+     */
+    private List<Method> getEvalMethodList(Class clazz) {
+        Method[] methods = clazz.getMethods();
+        List<Method> methodList = new ArrayList<Method>();
+        for (Method method : methods) {
+            if ("eval".equalsIgnoreCase(method.getName())) {
+                methodList.add(method);
+            }
+        }
+        return methodList;
+    }
+
+    public UDFScript getScript(String className, String functionName) {
+        UDFScript udfScript = className2Scripts.get(className);
+        if (udfScript == null) {
+            udfScript = className2Scripts.get(createName(className, functionName));
+        }
+        return udfScript;
+    }
+
+    public String createName(String... names) {
+        StringBuilder builder = new StringBuilder();
+        if (names != null && names.length > 0) {
+            for (String name : names) {
+                builder.append(name).append('-');
+            }
+            return builder.substring(0, builder.length() - 1);
+        }
+        return "";
     }
 }

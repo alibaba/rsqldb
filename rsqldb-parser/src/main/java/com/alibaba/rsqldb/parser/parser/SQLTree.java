@@ -21,17 +21,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.rocketmq.streams.common.configurable.IConfigurable;
-import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
-import org.apache.rocketmq.streams.common.topology.ChainPipeline;
-import org.apache.rocketmq.streams.common.topology.model.AbstractStage;
-import org.apache.rocketmq.streams.common.topology.ChainStage;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.utils.CollectionUtil;
-import org.apache.rocketmq.streams.common.utils.PrintUtil;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
+
+import org.apache.rocketmq.streams.common.configurable.IConfigurable;
+import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
+import org.apache.rocketmq.streams.common.topology.ChainPipeline;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.model.AbstractStage;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.PrintUtil;
 
 public class SQLTree {
 
@@ -47,10 +48,10 @@ public class SQLTree {
      */
     protected List<FunctionSQLBuilder> functionBuilders;
 
-    protected String piplineName;
+    protected String pipelineName;
 
     /**
-     * sql树的根节点对应的creator，用于生成pipline
+     * sql树的根节点对应的creator，用于生成pipeline
      */
     protected PipelineBuilder rootCreator;
 
@@ -58,24 +59,30 @@ public class SQLTree {
      * 优化后的sql
      */
     protected String sql;
+    /**
+     * 最顶层的create的tablename
+     */
+    protected String rootTableName;
 
-    protected String rootTableName;//最顶层的create的tablename
-
-    //protected AbstractSource abstractSource;//最源头的数据源，主要提供输出文件目录和输出字段脚本
-
+    /**
+     * protected AbstractSource abstractSource;//最源头的数据源，主要提供输出文件目录和输出字段脚本
+     * @param pipeline
+     * @param sqlBuilder
+     * @param functionBuilders
+     */
     public SQLTree(String pipeline, AbstractSQLBuilder sqlBuilder, List<FunctionSQLBuilder> functionBuilders) {
         this.namespace = sqlBuilder.getNamespace();
         this.sqlBuilder = sqlBuilder;
-        if (CreateSQLBuilder.class.isInstance(sqlBuilder)) {
+        if (sqlBuilder instanceof CreateSQLBuilder) {
             CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder)sqlBuilder;
             rootTableName = createSQLBuilder.getTableName();
         }
         this.functionBuilders = functionBuilders;
-        this.piplineName = pipeline;
+        this.pipelineName = pipeline;
     }
 
     public PipelineBuilder build() {
-        PipelineBuilder rootCreator = new PipelineBuilder(namespace, piplineName);
+        PipelineBuilder rootCreator = new PipelineBuilder(namespace, pipelineName);
         if (functionBuilders != null) {
             for (FunctionSQLBuilder functionSQLBuilder : functionBuilders) {
                 functionSQLBuilder.setPipelineBuilder(rootCreator);
@@ -105,7 +112,7 @@ public class SQLTree {
      * @param currentBuilder
      */
     protected void build(String namespace, AbstractSQLBuilder sqlBuilder, final PipelineBuilder currentBuilder,
-                         Map<String, List<String>> tree, Map<AbstractSQLBuilder, BuilderNodeStage> nodeStageMap) {
+        Map<String, List<String>> tree, Map<AbstractSQLBuilder, BuilderNodeStage> nodeStageMap) {
         List<AbstractSQLBuilder> list = sqlBuilder.getChildren();
 
         if (CollectionUtil.isEmpty(list)) {
@@ -130,11 +137,11 @@ public class SQLTree {
             ChainStage last = null;
             boolean isBreak = false;
             if (nodeStage == null) {
-                PipelineBuilder pipelineBuilder = builderPipline(builder, sqlBuilder.getTableName());
+                PipelineBuilder pipelineBuilder = builderPipeline(builder, sqlBuilder.getTableName());
                 isBreak = pipelineBuilder.isBreak();
                 List<IConfigurable> configurableList = pipelineBuilder.getConfigurables();
-                ChainPipeline chainPipline = pipelineBuilder.getPipeline();
-                configurableList.remove(chainPipline);
+                ChainPipeline chainPipeline = pipelineBuilder.getPipeline();
+                configurableList.remove(chainPipeline);
                 currentBuilder.addConfigurables(configurableList);
                 ChainPipeline pipeline = pipelineBuilder.getPipeline();
                 currentBuilder.getPipeline().getStages().addAll(pipeline.getStages());
@@ -177,7 +184,7 @@ public class SQLTree {
             nodeStageMap.put(builder, new BuilderNodeStage(first, last));
         }
 
-        if (chainStages != null && chainStages.size() > 0) {
+        if (chainStages.size() > 0) {
             currentBuilder.setHorizontalStages(chainStages);
         }
 
@@ -194,14 +201,14 @@ public class SQLTree {
     }
 
     /**
-     * build pipline，如果是双流join的右分支，特殊处理，否则正常创建
+     * build pipeline，如果是双流join的右分支，特殊处理，否则正常创建
      *
      * @param builder
      * @return
      */
-    protected PipelineBuilder builderPipline(AbstractSQLBuilder builder, String parentName) {
+    protected PipelineBuilder builderPipeline(AbstractSQLBuilder builder, String parentName) {
 
-        PipelineBuilder pipelineBuilder = new PipelineBuilder(namespace, piplineName);
+        PipelineBuilder pipelineBuilder = new PipelineBuilder(namespace, pipelineName);
         pipelineBuilder.setParentTableName(parentName);
         builder.setPipelineBuilder(pipelineBuilder);
         //如果是双流join，且是join中的右流join
@@ -238,7 +245,7 @@ public class SQLTree {
         }
     }
 
-    public ChainPipeline buildPipline(IConfigurableService configurableService) {
+    public ChainPipeline buildPipeline(IConfigurableService configurableService) {
         return this.rootCreator.build(configurableService);
     }
 

@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-streams</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
     <groupId>com.alibaba</groupId>
     <artifactId>rsqldb</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -14,6 +20,7 @@
         <module>rsqldb-parser</module>
         <module>rsqldb-udf</module>
         <module>rsqldb-clients</module>
+        <module>rsqldb-runner</module>
     </modules>
 
 
@@ -108,31 +115,6 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-clients</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-dim</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-script</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-commons</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-window</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-clients</artifactId>
                 <version>${project.version}</version>
@@ -148,8 +130,8 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-channel-sls</artifactId>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-runner</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -199,13 +181,6 @@
                 <version>${scala-library.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>2.12.4</version>
-            </dependency>
         </dependencies>
-
-
     </dependencyManagement>
 </project>

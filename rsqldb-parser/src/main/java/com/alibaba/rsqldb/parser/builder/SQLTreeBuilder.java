@@ -29,6 +29,7 @@ import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.topology.model.PipelineSourceJoiner;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
 import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.SQLParserContext;
@@ -42,50 +43,49 @@ public class SQLTreeBuilder {
 
     private static final Log LOG = LogFactory.getLog(SQLTreeBuilder.class);
 
-    protected String namespace;//命名空间
-
-    protected String sql;//带解析的sql
-
-    protected boolean shareSource = true;//是否共享数据源，如果共享，则根据channel表名在sourceutil中找对应的数据源，如果没有，把channel name当数据源
+    protected String namespace;
     protected String pipelineName;//pipeline Name
-
-    protected List<PipelineBuilder> pipelineBuilders = new ArrayList<>();//pipline builder
-
+    protected String sql;//带解析的sql
+    protected boolean shareSource = true;//是否共享数据源，如果共享，则根据channel表名在sourceutil中找对应的数据源，如果没有，把channel name当数据源
     protected Map<String, String> sourceNames;//数据源表名和数据源名字的映射关系，在多表join的场景应用
     protected String sourceName;//如果是单表，可以直接指定
-
     protected String sourcePipelineName;//数据源的pipeline name
-
     protected ConfigurableComponent configurableComponent;
+
+    protected List<PipelineBuilder> pipelineBuilders = new ArrayList<>();//pipeline builder
 
     public SQLTreeBuilder(String namespace, String pipelineName, String sql, boolean shareSource, String sourceName, Map<String, String> sourceNames) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
-        sql = sql.replace("\\\\", "\\");
-        this.sql = sql;
+        this.sql = sql.replace("\\\\", "\\");
         this.shareSource = shareSource;
-        configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
         this.sourceNames = sourceNames;
         this.sourceName = sourceName;
+        this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
     }
 
     public SQLTreeBuilder(String namespace, String pipelineName, String sql) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
-        sql = sql.replace("\\\\", "\\");
-        this.sql = sql;
+        this.sql = sql.replace("\\\\", "\\");
         this.shareSource = false;
-        configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
+        this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
     }
 
     public SQLTreeBuilder(String namespace, String pipelineName, String sql, String sourcePipelineName) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
-        sql = sql.replace("\\\\", "\\");
-        this.sql = sql;
-        this.shareSource = true;
+        this.sql = sql.replace("\\\\", "\\");
         this.sourcePipelineName = sourcePipelineName;
-        configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
+        this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
+    }
+
+    public SQLTreeBuilder(String namespace, String pipelineName, String sql, ConfigurableComponent configurableComponent) {
+        this.namespace = namespace;
+        this.pipelineName = pipelineName;
+        this.sql = sql.replace("\\\\", "\\");
+        this.shareSource = false;
+        this.configurableComponent = configurableComponent;
     }
 
     /**
@@ -208,7 +208,7 @@ public class SQLTreeBuilder {
             }
             Set<String> dependentTables = builder.parseDependentTables();
             if (dependentTables.size() == 0) {
-                ((AbstractSQLBuilder)builder).addRootTableName(((AbstractSQLBuilder<?>) builder).getTableName());
+                ((AbstractSQLBuilder)builder).addRootTableName(((AbstractSQLBuilder<?>)builder).getTableName());
                 continue;
             }
             /**
@@ -272,13 +272,13 @@ public class SQLTreeBuilder {
                 if (StringUtil.isEmpty(sourceName)) {
                     sourceName = tableName;
                 } else {
-                    //如果有内置的数据源，创建连接对象，用来数据源动态加载这个pipline
-                    PipelineSourceJoiner piplineSourceJoiner = new PipelineSourceJoiner();
-                    piplineSourceJoiner.setNameSpace(namespace);
-                    piplineSourceJoiner.setConfigureName(builder.getPipelineName());
-                    piplineSourceJoiner.setSourcePipelineName(sourceName);
-                    piplineSourceJoiner.setPipelineName(builder.getPipelineName());
-                    sqlTree.getRootCreator().addConfigurables(piplineSourceJoiner);
+                    //如果有内置的数据源，创建连接对象，用来数据源动态加载这个pipeline
+                    PipelineSourceJoiner pipelineSourceJoiner = new PipelineSourceJoiner();
+                    pipelineSourceJoiner.setNameSpace(namespace);
+                    pipelineSourceJoiner.setConfigureName(builder.getPipelineName());
+                    pipelineSourceJoiner.setSourcePipelineName(sourceName);
+                    pipelineSourceJoiner.setPipelineName(builder.getPipelineName());
+                    sqlTree.getRootCreator().addConfigurables(pipelineSourceJoiner);
                 }
                 builder.getPipeline().setSourceIdentification(sourceName);
             }
@@ -306,7 +306,6 @@ public class SQLTreeBuilder {
         return name;
     }
 
-
     /**
      * 判断一个节点是否是root节点
      *
@@ -330,6 +329,66 @@ public class SQLTreeBuilder {
             allConfigurables.addAll(pipelineBuilder.getAllConfigurables());
         }
         return allConfigurables;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
+    public String getPipelineName() {
+        return pipelineName;
+    }
+
+    public void setPipelineName(String pipelineName) {
+        this.pipelineName = pipelineName;
+    }
+
+    public String getSql() {
+        return sql;
+    }
+
+    public void setSql(String sql) {
+        this.sql = sql;
+    }
+
+    public boolean isShareSource() {
+        return shareSource;
+    }
+
+    public void setShareSource(boolean shareSource) {
+        this.shareSource = shareSource;
+    }
+
+    public Map<String, String> getSourceNames() {
+        return sourceNames;
+    }
+
+    public void setSourceNames(Map<String, String> sourceNames) {
+        this.sourceNames = sourceNames;
+    }
+
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
+    }
+
+    public String getSourcePipelineName() {
+        return sourcePipelineName;
+    }
+
+    public void setSourcePipelineName(String sourcePipelineName) {
+        this.sourcePipelineName = sourcePipelineName;
+    }
+
+    public ConfigurableComponent getConfigurableComponent() {
+        return configurableComponent;
     }
 
     public void setConfigurableComponent(ConfigurableComponent configurableComponent) {
