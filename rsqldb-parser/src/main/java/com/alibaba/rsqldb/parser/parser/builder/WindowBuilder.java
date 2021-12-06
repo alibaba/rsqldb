@@ -192,7 +192,7 @@ public class WindowBuilder extends SelectSQLBuilder {
     }
 
     private List<String> getDependentScripts(String varName, List<String> script) {
-        ScriptDependent scriptDependent=new ScriptDependent(MapKeyUtil.createKey(";",script)+";");
+        ScriptDependent scriptDependent=new ScriptDependent(null,MapKeyUtil.createKey(";",script)+";");
         List<IScriptExpression> scriptExpressions= scriptDependent.getDependencyExpression(varName);
         List<String> expressions=new ArrayList<>();
         for(IScriptExpression scriptExpression:scriptExpressions){

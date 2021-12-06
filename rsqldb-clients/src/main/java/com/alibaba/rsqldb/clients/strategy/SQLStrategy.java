@@ -66,12 +66,12 @@ public class  SQLStrategy implements Strategy {
     }
 
     public SQLStrategy configBlinkUDF(String dir,String packageName){
-        BlinkUDFScan.getInstance().registBlinkUDF(dir,packageName);
+        BlinkUDFScan.getInstance().registerBlinkUDF(dir,packageName);
         return this;
     }
 
     public SQLStrategy configJar(String dir,String className,String methodName){
-        BlinkUDFScan.getInstance().registJarUDF(dir,className,methodName);
+        BlinkUDFScan.getInstance().registerJarUDF(dir,className,methodName);
         return this;
     }
 

@@ -16,6 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.datatype.StringDataType;
@@ -40,7 +41,7 @@ public class ColumnUtil {
      * @param sqlNodes
      * @return
      */
-    public static MetaData createMetadata(CreateSQLBuilder builder,SqlNodeList sqlNodes) {
+    public static MetaData createMetadata(CreateSQLBuilder builder,SqlNodeList sqlNodes, List<String> headerFildNames) {
         if (sqlNodes == null) {
             return null;
         }
@@ -72,6 +73,9 @@ public class ColumnUtil {
             DataType dataType = SqlDataTypeUtil.covert(type);
             if (dataType == null) {
                 LOG.warn("expect datatype, but convert fail.the sqlnode type is " + type);
+            }
+            if(sqlTableColumn.isHeader()){
+                headerFildNames.add(fieldName);
             }
             MetaDataField metaDataField = new MetaDataField();
             metaDataField.setDataType(dataType);

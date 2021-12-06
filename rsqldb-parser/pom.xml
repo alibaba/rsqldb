@@ -46,6 +46,5 @@
             <artifactId>scala-library</artifactId>
         </dependency>
 
-
     </dependencies>
 </project>

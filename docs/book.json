@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    "collapsible-menu",
+    "anchor-navigation-ex",
+    "tbfed-pagefooter",
+    "disqus"
+  ],
+  "title": "# Rrocket-Stream(SQL)",
+  "pluginsConfig": {
+    "tbfed-pagefooter": {
+      "copyright": "Copyright &copy 阿里云智能引擎团队 2021",
+      "modify_label": "文件修订时间：",
+      "modify_format": "YYYY-MM-DD HH:mm:ss"
+    },
+    "disqus": {
+      "shortName": "gitbookuse"
+    }
+  }
+}

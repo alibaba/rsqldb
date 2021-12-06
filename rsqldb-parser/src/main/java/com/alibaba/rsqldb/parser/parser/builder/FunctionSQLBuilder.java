@@ -38,12 +38,16 @@ public class FunctionSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     @Override
     public void build() {
-        blinkUDFScan.scan(null);
-        UDFScript blinkUDFScript = blinkUDFScan.getScript(className);
+        UDFScript blinkUDFScript = blinkUDFScan.getScript(className, functionName);
         if (blinkUDFScript == null) {
-            LOG.error("can not find udf, the udf is " + className);
-            return;
+            blinkUDFScan.scan(className, null, functionName);
+            blinkUDFScript = blinkUDFScan.getScript(className, functionName);
+            if (blinkUDFScript == null) {
+                LOG.error("can not find udf, the udf is " + className);
+                return;
+            }
         }
+//        blinkUDFScan.scan(null);
         blinkUDFScript.setFunctionName(functionName);
         blinkUDFScript.setNameSpace(getPipelineBuilder().getPipelineNameSpace());
         String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(),
