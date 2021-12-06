@@ -21,15 +21,6 @@ RocketMQ-Streams聚焦大数据量->高过滤->轻窗口计算的场景，核心
     - 专门针对过滤做了优化，包括前置过滤指纹，同源规则自动归并，hyperscan加速，表达式指纹等
     - 计算资源比flink降低（65%-95%），专有云部分规则的测试结果。
     - 最好效果，一个超大规则，flink消耗3000 CU，消耗264.25 CU
-
-Flink任务（SQL直接跑在flink上）
-
-![img_2.png](img_2.png)
-
-Dipper任务（Dipper支持和flink融合，也可以跑在flink上，SQL->Dipper任务->Dipper发布成flinkUDF->发布成flink任务）
-
-![img_3.png](img_3.png)
-
 - **维表 JOIN（千万数据量维表支持）**
   我们为维表 JOIN 做了高压缩的内存设计，无java头部和对齐的开销，内存存储接近原始数据大小，千万维表加载到内存，不超过2G内存，纯内存操作，性能最大化，同时对于Mysql提供了多线程并发加载，提高加载维表的速度。
 - **双流 JOIN**
