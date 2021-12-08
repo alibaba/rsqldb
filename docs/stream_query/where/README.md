@@ -1,6 +1,6 @@
 如需有条件地从表中选取数据，可将 WHERE 子句添加到 SELECT 语句。
 
-## 语法格式：
+# 语法
 
 ```sql
 SELECT [ ALL | DISTINCT ]
@@ -21,13 +21,10 @@ WHERE booleanExpression ];
 | < | 小于 |
 | <= | 小于等于 |
 
-## 示例
+# 示例
 
 ```sql
 SELECT *
 FROM XXXX
 WHERE City = 'Beijing'
 ```
-
-​
-

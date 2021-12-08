@@ -1,22 +1,25 @@
-chr## 语法
+# 语法
 
 ```sql
  INITCAP
 (A)
 ```
 
-## 入参
+# 入参
 
 - A VARCHAR 类型。
 
-## 功能描述
+# 功能描述
 
 返回字符串，每个字转换器的第一个字母大写，其余为小写。
 
-## 示例
+# 示例
 
-- 测试数据 | var1(VARCHAR) | | --- | | aADvbn |
+- 测试数据
 
+| var1(VARCHAR) |
+|---------------| 
+| aADvbn        |
 
 - 测试案例
 
@@ -27,7 +30,7 @@ FROM T1;
 
 - 测试结果
 
-  | aa(VARCHAR) |
-    | --- |
-  | Aadvbn |
+| aa(VARCHAR) |
+| --- |
+| Aadvbn |
 

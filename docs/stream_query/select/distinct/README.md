@@ -2,7 +2,7 @@
 
 比如：现在启动了10个Dipper实例，每个实例独立去重，对于相同的去重key，同一时刻全局会有10条输出，并非1条。
 
-## 语法
+# 语法
 
 ```sql
 SELECT DISTINCT expressions
@@ -13,9 +13,9 @@ FROM tables
 - DISTINCT - 必须放到开始位置。（和其他函数一起使用时也是一样的，例如concat_agg(DISTINCT ',', device_id)）
 - expressions - 是N(N>=1)个expression，可以是具体的column，也可以是function等任何合法表达式
 
-## 示例
+# 示例
 
-### SQL 语句
+## SQL 语句
 
 我们以如下Dipper SQL例直观感知一下`DISTINCT`的语义，如下：
 
@@ -82,7 +82,7 @@ FROM distinct_tab_source
 GROUP BY FirstName, LastName; -- 以 FirstName和LastName 两个列进行去重
 ```
 
-## DISTINCT in COUNT AGG
+# DISTINCT in COUNT AGG
 
 DISTINCT 在COUNT AGG中使用是统计去重后的计数。目前这块还不能支持容错的能力，系统挂掉，重新启动会导致结果不准确，还在完善中
 
@@ -92,7 +92,7 @@ DISTINCT 在COUNT AGG中使用是统计去重后的计数。目前这块还不�
 COUNT(DISTINCT expression)
 ```
 
-**SQL语句**
+## SQL语句
 
 ```sql
 CREATE TABLE distinct_tab_source

@@ -1,14 +1,14 @@
 # 快速搭建
 
-## 1. 下载压缩包
+## 下载压缩包
 
 [rocketmq-streams-sql-1.0.0-SNAPSHOT-distribution.tar.gz](rocketmq-streams-sql-1.0.0-SNAPSHOT-distribution.tar.gz)
 
-## 2. 将压缩包解压
+## 将压缩包解压
 
 ![img.png](img.png)
 
-## 3. 编写任务代码
+## 编写任务代码
 
 将任务代码保存为sql文件， 如test.sql 并放入jobs目录
 
@@ -104,13 +104,13 @@ from view_test
 bin/start.sh 
 ```
 
-## 5. 查看日志
+## 查看日志
 
 运行日志会被打印在log/catalina.out文件中
 
 # 详细介绍
 
-## 1. 运行目录介绍
+## 运行目录介绍
 
 ![img_1.png](img_1.png)
 
@@ -132,7 +132,7 @@ bin/start.sh
 - `LICENSE` 许可证
 - `NOTICE` 声明
 
-## 2. 任务开发
+## 任务开发
 
 sql开发模式与blink基本一样，如果使用过blink会非常好上手，以demo.sql为例说明下sql各结构
 
@@ -222,7 +222,7 @@ from view_test
 
 ### create function
 
-```java
+```sql
 CREATE FUNCTION json_concat as 'org.apache.rocketmq.streams.udf.JsonConcat';
 ```
 
@@ -233,7 +233,7 @@ CREATE FUNCTION json_concat as 'org.apache.rocketmq.streams.udf.JsonConcat';
 
 创建数据源表，主要属性为数据源字段列表，字段名称与数据源相匹配即可，另外一部分为数据源属性 以sls为例：
 
-```java
+```sql
     type='sls',  //数据源类型 此处为sls
     endPoint='',  //sls endpoint地址
     project='', //sls project name
@@ -250,7 +250,7 @@ CREATE FUNCTION json_concat as 'org.apache.rocketmq.streams.udf.JsonConcat';
 
 将最终的结果数据写入指定数据源
 
-## 3. 自定义函数开发
+## 自定义函数开发
 
 udf（user define function）作为数据处理过程中的额外的补充能力，可以方便的为引入开发者自己个性化的处理逻辑，既利用该特性补充增强内置函数的处理能力，同时也可以复用开发者已有的逻辑实现，降低开发成本。 ​
 
@@ -307,7 +307,7 @@ CREATE FUNCTION extract_test as 'com.ContentExtract';
 
 上述三种方式，都会生成运行时的jar包， 只需要将jar包放入实时框架的ext目录即可， 实时任务在启动时会自动加载； ​
 
-## 4. 任务发布
+## 任务发布
 
 默认情况下任务发布在jobs目录下， 以`.sql`文件的形式存在, 每一个独立的sql文件就是一个实时任务
 
@@ -315,7 +315,7 @@ CREATE FUNCTION extract_test as 'com.ContentExtract';
 
 jobs目录最多俩层，如果sql文件直接放在jobs目录下， 则该文件的名称就是任务的namespace以及任务的名称； jobs目录可以有第二层目录， sql文件也可以放在这一层目录中，此时文件夹的名称就是namespace的名称，而文件夹中目录的名称为任务的名称；
 
-## 5. 任务的运行和停止
+## 任务的运行和停止
 
 任务可以通过bin目录中的start.sh 和stop.sh对任务进行启动和停止；
 
@@ -377,7 +377,7 @@ bin/recover.sh namespace
 
 ```
 
-## 6 任务运行时配置
+## 任务运行时配置
 
 用户可以通过配置dipper.properties 文件来设定任务运行过程中的各种特征，如指纹设置， state的存储设置等；
 
@@ -426,6 +426,3 @@ dipper.configurable.service.type=memory
 # out.mock.sls.accessId=
 # out.mock.sls.group=
 ```
-
-​
-

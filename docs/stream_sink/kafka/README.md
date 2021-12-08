@@ -1,4 +1,4 @@
-# 一、语法示例
+# 语法示例
 
 流计算可以将消息队列作为流式数据输入，如下:
 
@@ -22,9 +22,9 @@ create table metaq_stream
 
 | 参数名 | 是否必填 | 字段说明 | 默认值 |
 | --- | --- | --- | --- |
-| type | 是 | 固定值，必须是metaq | ​
+| type | 是 | 固定值，必须是metaq | |
 | topic | 是 | 队列的Topic |  |
-| bootstrap.servers | 否 | kakfa集群 | ​
+| bootstrap.servers | 否 | kakfa集群 | |
 | group.id | 否 | 消费组名称，可以按规范自取 |  |
 | batchSize | 否 | 消息缓存输出，缓存的大小 | 1000 |
 | autoFlushSize | 否 | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存 | 300 |
@@ -32,7 +32,7 @@ create table metaq_stream
 
 输出的消息默认是json格式，key是输出表的字段名，value是输出的字段值。整条数据会存在record的value字段 ​
 
-# 二、环境变量
+# 环境变量
 
 直接在sql中写参数值，对于专有云，idc输出场景，需要每个用户修改sql，这里提供了环境变量的概念：
 

@@ -1,6 +1,6 @@
 流上join和传统批上join的语义一致，都是两张表的join（table a join table b），不同的是流上table a和table b是两张动态表，join的结果也会动态更新，保证最终结果和批处理的一致性。
 
-## 语法格式：
+# 语法格式：
 
 ```sql
 tableReference
@@ -12,7 +12,7 @@ tableReference
 - 支持 INNER JOIN, LEFT JOIN,
 - 不支持RIGHT JOIN, FULL JOIN, ANTI JOIN, SEMI JOIN
 
-## 示例：
+# 示例：
 
 ```sql
 --创建Datahub table作为数据源引用

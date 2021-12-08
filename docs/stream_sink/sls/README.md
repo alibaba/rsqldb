@@ -1,4 +1,4 @@
-# 一、SLS说明
+# SLS说明
 
 日志服务本身是流数据存储，流计算能将其作为流式数据输入。对于日志服务而言，每条数据类似一个JSON格式，举例如下：
 
@@ -10,7 +10,7 @@
 }
 ```
 
-# 二、语法示例
+# 语法示例
 
 流计算可以将消息队列作为流式数据输入，如下:
 
@@ -35,29 +35,23 @@ create table sls_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值 |
-| --- | --- | --- | --- |
-| type | 是 | 固定值，必须是sls | ​
-|
-| endPoint | 是 | 消费端点信息 | ​
-|
-| accessId | 是 | sls读取的accessKey | ​
-|
+| 参数名 | 是否必填 | 字段说明 | 默认值      |
+| --- | --- | --- |----------|
+| type | 是 | 固定值，必须是sls |          |
+| endPoint | 是 | 消费端点信息 |          |
+| accessId | 是 | sls读取的accessKey |          |
 | accessKey | 是 | accessKey | sls读取的密钥 |
-| project | 是 | 读取的sls项目 | ​
-|
-| logStore | 是 | project下的具体的logStore | ​
-|
-| producerGroup | 否 | 消费组名 | ​
-|
-| maxThread | 否 | 一个并发任务启动几个线程 |  |
-| batchSize | 否 | 消息缓存输出，缓存的大小 | 1000 |
-| autoFlushSize | 否 | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存 | 300 |
-| autoFlushTimeGap | 否 | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000 |
+| project | 是 | 读取的sls项目 ||
+| logStore | 是 | project下的具体的logStore ||
+| producerGroup | 否 | 消费组名 ||
+| maxThread | 否 | 一个并发任务启动几个线程 |          |
+| batchSize | 否 | 消息缓存输出，缓存的大小 | 1000     |
+| autoFlushSize | 否 | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存 | 300      |
+| autoFlushTimeGap | 否 | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000     |
 
 输出的消息默认是json格式，key是输出表的字段名，value是输出的字段值，metaq刷新用的接口是sendOneway。如果系统崩溃，可能会有数据的丢失
 
-# 三、环境变量
+# 环境变量
 
 直接在sql中写ak，sk容易带来安全风险，同时对于专有云，idc输出场景，需要每个用户修改sql，这里提供了环境变量的概念：
 

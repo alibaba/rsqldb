@@ -21,8 +21,7 @@ create table metaq_stream
 
 | 参数名 | 是否必填 | 字段说明 | 默认值 |
 | --- | --- | --- | --- |
-| type | 是 | 固定值，必须是metaq | ​
-|
+| type | 是 | 固定值，必须是metaq ||
 | filePath | 是 | 输出文件的路径 |  |
 | needAppend | 否 | 是否追加记录，如果false，任务启动时，会清空历史数据 | true |
 | batchSize | 否 | 消息缓存输出，缓存的大小 | 1000 |

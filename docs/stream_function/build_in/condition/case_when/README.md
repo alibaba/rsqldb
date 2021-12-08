@@ -5,11 +5,11 @@ CASE WHEN a THEN b [WHEN c THEN d]* [ELSE e]
 END
 ```
 
-## 功能描述
+# 功能描述
 
 如果a为TRUE,则返回b；如果c为TRUE，则返回d；否则返回e 。
 
-## 测试数据
+# 测试数据
 
 | device_type(VARCHAR) |
 | --- |
@@ -17,7 +17,7 @@ END
 | ios |
 | win |
 
-## 测试案例
+# 测试案例
 
 ```sql
 create table T1
@@ -50,7 +50,7 @@ from (
      );
 ```
 
-## 测试结果
+# 测试结果
 
 | os(VARCHAR) | length(INT) |
 | --- | --- |

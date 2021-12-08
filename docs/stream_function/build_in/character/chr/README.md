@@ -1,21 +1,24 @@
-## 语法
+# 语法
 
 ```sql
 VARCHAR CHR(INT ascii)
 ```
 
-## 入参
+# 入参
 
 - ascii INT 类型，是0到255之间的整数。如果不在此范围内，则返回NULL。
 
-## 功能描述
+# 功能描述
 
 将ASCII码转换为字符.
 
-## 示例
+# 示例
 
-- 测试数据 | int1(INT) | int2(INT) | int3(INT) | | --- | --- | --- | | 255 | 97 | 65 |
+- 测试数据
 
+| int1(INT) | int2(INT) | int3(INT) | 
+| --- | --- | --- | 
+| 255 | 97 | 65 |
 
 - 测试案例
 
@@ -26,7 +29,7 @@ FROM T1
 
 - 测试结果
 
-  | var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) |
-      | --- | --- | --- |
-  | ÿ | a | A |
+| var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | 
+|---|---|---|
+| ÿ | a | A |
 
