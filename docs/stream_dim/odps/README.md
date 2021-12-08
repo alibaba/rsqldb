@@ -1,4 +1,4 @@
-### 一、语法示例
+# 语法示例
 
 ```sql
 create table odps_dim
@@ -38,11 +38,11 @@ create table odps_dim
 | filePath | N |  | /tmp/${project_name}_${tableName} |  |
 | isLarge | N | 是否开启内存映射模式 | false |  |
 
-### 二、数据量说明
+# 数据量说明
 
 meta数据 ：对加载的数据做了二进制的压缩，每一行添加行的长度，最多占2个字节，每一列添加一个列长度，最多占用2个字节。 其他同文件维表 ​
 
-### 三、示例
+# 示例
 
 ```sql
 

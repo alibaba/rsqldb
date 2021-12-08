@@ -1,6 +1,6 @@
 只要blink udf/udtf/udaf未引用blink上下文信息，可以兼容，但也有可能测试不到位的，如发现有不兼容的可以找我反馈
 
-# 一、Blink UDF
+# Blink UDF
 
 用户定义的标量函数将零个，一个或多个标量值映射到一个新的标量值。
 
@@ -36,7 +36,7 @@ public class StringLengthUdf extends ScalarFunction {
 }
 ```
 
-### 上线
+## 上线
 
 - 找到你指定的class编写SQL语句后，点击上线、进入运维页面点击启动就可以运行了。
 
@@ -81,7 +81,7 @@ select a,
 from sls_stream
 ```
 
-# 二、Blink UDTF
+# Blink UDTF
 
 与用户定义的标量函数类似，用户定义的表函数将零个，一个或多个标量值作为输入参数。然而，与标量函数相反，它可以返回任意数量的行作为输出，而不是单个值。返回的行可以由一个或多个列组成。
 
@@ -100,7 +100,7 @@ import org.apache.flink.table.functions.TableFunction;
 public class SplitUdtf extends TableFunction<String> {
 
 　　// 可选， open方法可以不写
-    　　// 需要import org.apache.flink.table.functions.FunctionContext;
+    // 需要import org.apache.flink.table.functions.FunctionContext;
 
     @Override
     public void open(FunctionContext context) {
@@ -119,7 +119,6 @@ public class SplitUdtf extends TableFunction<String> {
     public void close() {
         // ... ...
   　}
-
 }
 ```
 
@@ -215,9 +214,7 @@ from input_stream as S
 ON TRUE;
 ```
 
-###  
-
-# 三、Blink UDAF
+# Blink UDAF
 
 用户自定义聚合函数，将多条记录聚合成一条值。
 

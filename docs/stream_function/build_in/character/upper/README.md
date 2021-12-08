@@ -1,22 +1,27 @@
-## 语法
+# 语法
 
 ```sql
 VARCHAR UPPER(A)
 ```
 
-## 入参
+# 入参
 
 | 参数 | 数据类型 |
 | --- | --- |
 | A | VARCHAR |
 
-## 功能描述
+# 功能描述
 
 返回转换为大写字符的字符串。
 
-## 示例
+# 示例
 
-- 测试数据 | var1(VARCHAR) | | --- | | ss | | ttee |
+- 测试数据
+
+| var1(VARCHAR) | 
+| --- | 
+| ss | 
+| ttee |
 
 - 测试语句
 
@@ -27,8 +32,8 @@ FROM T1;
 
 - 测试结果
 
-  | aa(VARCHAR) |
-    | --- |
-  | SS |
-  | TTEE |
+| aa(VARCHAR) |
+| --- |
+| SS |
+| TTEE |
 

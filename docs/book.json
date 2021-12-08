@@ -3,7 +3,16 @@
     "collapsible-menu",
     "anchor-navigation-ex",
     "tbfed-pagefooter",
-    "disqus"
+    "disqus",
+    "expandable-chapters-small",
+    "-lunr",
+    "-search",
+    "search-plus",
+    "-sharing",
+    "splitter",
+    "hide-element",
+    "insert-logo",
+    "code"
   ],
   "title": "# Rrocket-Stream(SQL)",
   "pluginsConfig": {
@@ -14,6 +23,22 @@
     },
     "disqus": {
       "shortName": "gitbookuse"
+    },
+    "theme-default": {
+      "showLevel": false
+    },
+    "hide-element": {
+      "elements": [
+        ".gitbook-link"
+      ]
+    },
+    "insert-logo": {
+      "url": "/images/logo.jpeg",
+      "style": "background: none; max-height: 120px; min-height: 120px"
+    },
+    "anchor-navigation-ex": {
+      "showLevel": false,
+      "showGoTop": false
     }
   }
 }

@@ -25,8 +25,6 @@ FROM source_table;
 - 流计算不支持单独的select 查询，必须有CREATE VIEW 或者是在 INSERT INTO内才能操作。
 - INSERT INTO 支持UPDATE更新，例如向RDS的表插入一个KEY值，如果这个KEY值存在就会更新；如果不存在就会插入一条新的KEY值。
 
-​
-
 操作约束如下表：
 
 | 表类型 | 操作约束 |

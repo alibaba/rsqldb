@@ -1,6 +1,6 @@
 如果计算的逻辑比较复杂用一个StreamSQL难以描述，Dipper支持通过定义视图的方式来简化开发的过程。需要明确的是，**视图仅仅用于辅助计算逻辑的描述，不会产生数据的物理存储**。视图是一种方便的方法，可以通过提供这些片段名称将SQL转换成可管理的视图块。因此，视图并不占用系统空间。
 
-## 语法：
+# 语法：
 
 ```sql
 CREATE VIEW viewName
@@ -8,7 +8,7 @@ CREATE VIEW viewName
 AS queryStatement;
 ```
 
-## 示例一
+# 示例一
 
 ```sql
 
@@ -27,7 +27,7 @@ SELECT r,
 FROM LargeOrders;
 ```
 
-## 案例二：
+# 案例二：
 
 测试数据
 
@@ -41,7 +41,7 @@ FROM LargeOrders;
 | test1 | 1 | 1506823830000 |
 | test2 | 1 | 1506823860000 |
 
-## SQL案例
+# SQL案例
 
 ```sql
 CREATE TABLE datahub_stream
@@ -86,7 +86,7 @@ FROM rds_view
 WHERE cnt = 4
 ```
 
-## 测试结果
+# 测试结果
 
 | a(varchar) | b (TIMESTAMP) | cnt (BIGINT) |
 | --- | --- | --- |
