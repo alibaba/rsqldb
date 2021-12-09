@@ -75,7 +75,6 @@ rsqldb 作为sql版本的rocketmq-streams 框架， 支持俩种运行方式，�
 + 从```rsqldb-runner/target```目录下获取rocketmq-streams-{version}-distribution.tar.gz 并解压
 + 目录结果如下
 
-![img.png](docs/images/img.png)
 
 + bin 相关指令，包括start.sh 和 stop.sh
     + start.sh 启动指令
@@ -94,7 +93,6 @@ rsqldb 作为sql版本的rocketmq-streams 框架， 支持俩种运行方式，�
 
 在jobs目录中，任务是以```.sql``` 文件存在的， 每一个独立的sql文件就是一个实时任务
 
-![](docs/images/img_1.png)
 
 jobs目录最多俩层，如果sql文件直接放在jobs目录下， 则该文件的名称就是任务的namespace以及任务的名称； jobs目录可以有第二层目录， sql文件也可以放在这一层目录中，此时文件夹的名称就是namespace的名称，而文件夹中目录的名称为任务的名称；
 
