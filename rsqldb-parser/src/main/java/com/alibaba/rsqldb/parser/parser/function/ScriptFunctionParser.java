@@ -16,12 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.rocketmq.streams.filter.function.expression.ScriptFunction;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -29,6 +23,12 @@ import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.filter.function.expression.ScriptFunction;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 

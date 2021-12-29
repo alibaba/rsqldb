@@ -17,8 +17,6 @@
 package org.apache.rsqldb.runner;
 
 import com.alibaba.rsqldb.clients.sql.SQLStream;
-import com.alibaba.rsqldb.parser.entity.SqlTask;
-
 import org.apache.rocketmq.streams.common.utils.FileUtil;
 
 /**

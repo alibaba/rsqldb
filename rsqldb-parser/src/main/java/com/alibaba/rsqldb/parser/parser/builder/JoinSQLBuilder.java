@@ -16,6 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.parser.result.NotSupportParseResult;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,13 +35,15 @@ import org.apache.rocketmq.streams.filter.function.expression.Equals;
 import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import com.alibaba.rsqldb.parser.parser.result.NotSupportParseResult;
 import org.apache.rocketmq.streams.window.builder.WindowBuilder;
 import org.apache.rocketmq.streams.window.operator.join.JoinWindow;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -60,8 +65,7 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
 
     protected String rightPiplineName;//默认是空，在双流join场景，左右流都可能填充这个值
 
-
-    protected boolean needWhereToCondition=false;//need where as onCondition
+    protected boolean needWhereToCondition = false;//need where as onCondition
 
     @Override
     public void build() {
@@ -97,8 +101,7 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
             }
             getPipelineBuilder().addChainStage(new ScriptOperator(stringBuilder.toString()));
         }
-        if (right != null && BuilderParseResult.class.isInstance(right) && NotSupportParseResult.class.isInstance(right)
-            == false) {
+        if (right != null && BuilderParseResult.class.isInstance(right) && NotSupportParseResult.class.isInstance(right) == false) {
             BuilderParseResult result = (BuilderParseResult)right;
             AbstractSQLBuilder builder = result.getBuilder();
             builder.setPipelineBuilder(pipelineBuilder);
@@ -108,8 +111,8 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
             if (SnapshotBuilder.class.isInstance(builder)) {
                 SnapshotBuilder snapshotBuilder = (SnapshotBuilder)builder;
                 //snapshotBuilder.setExpression(onCondition);
-                snapshotBuilder.buildDimCondition(conditionSQLNode,joinType,onCondition);
-            }else {
+                snapshotBuilder.buildDimCondition(conditionSQLNode, joinType, onCondition);
+            } else {
                 builder.buildSQL();
             }
 
@@ -202,9 +205,9 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
                 public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
                     JoinChainStage joinChainStage = new JoinChainStage();
                     joinChainStage.setWindow(joinWindow);
-                    joinChainStage.setLeftPipline(leftPipelineBuilder.getPipeline());
-                    joinChainStage.setRightPipline(rightBuilder.getPipeline());
-                    joinChainStage.setRigthDependentTableName(((BuilderParseResult)right).getBuilder().getTableName());
+                    joinChainStage.setLeftPipeline(leftPipelineBuilder.getPipeline());
+                    joinChainStage.setRightPipeline(rightBuilder.getPipeline());
+                    joinChainStage.setRightDependentTableName(((BuilderParseResult)right).getBuilder().getTableName());
                     return joinChainStage;
                 }
 
@@ -229,13 +232,13 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
         if (this.rootTableNames.size() <= 1) {
             return false;
         }
-        BuilderParseResult rightResult = (BuilderParseResult) getRight();
-        if( rightResult.getBuilder().getTableName().equals(parentName)){
+        BuilderParseResult rightResult = (BuilderParseResult)getRight();
+        if (rightResult.getBuilder().getTableName().equals(parentName)) {
             return true;
         }
         return false;
-//        BuilderParseResult rightResult = (BuilderParseResult)getRight();
-//        return rightResult.getBuilder().getTableName().equals(parentName);
+        //        BuilderParseResult rightResult = (BuilderParseResult)getRight();
+        //        return rightResult.getBuilder().getTableName().equals(parentName);
     }
 
     /**
@@ -332,8 +335,7 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
      * @return
      */
     private AbstractSQLBuilder getJoinBuilder(IParseResult result) {
-        if (result != null && BuilderParseResult.class.isInstance(result) && NotSupportParseResult.class.isInstance(result)
-            == false) {
+        if (result != null && BuilderParseResult.class.isInstance(result) && NotSupportParseResult.class.isInstance(result) == false) {
             BuilderParseResult parseResult = (BuilderParseResult)result;
             return parseResult.getBuilder();
         } else {
@@ -441,12 +443,12 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
             asName = fieldName.substring(0, index);
             fieldName = fieldName.substring(index + 1);
         }
-        String tableAsName=null;
+        String tableAsName = null;
         if (BuilderParseResult.class.isInstance(getLeft())) {
             BuilderParseResult builderParseResult = (BuilderParseResult)getLeft();
-            tableAsName=builderParseResult.getBuilder().getAsName();
-            if(asName!=null&&tableAsName==null){
-                tableAsName=builderParseResult.getBuilder().getTableName();
+            tableAsName = builderParseResult.getBuilder().getAsName();
+            if (asName != null && tableAsName == null) {
+                tableAsName = builderParseResult.getBuilder().getTableName();
             }
             if ((asName != null && asName.equals(tableAsName)) | StringUtil.isEmpty(asName)) {
                 if (SelectSQLBuilder.class.isInstance(builderParseResult.getBuilder())) {
@@ -460,9 +462,9 @@ public class JoinSQLBuilder extends SelectSQLBuilder {
         }
         if (BuilderParseResult.class.isInstance(getRight())) {
             BuilderParseResult builderParseResult = (BuilderParseResult)getRight();
-            tableAsName=builderParseResult.getBuilder().getAsName();
-            if(asName!=null&&tableAsName==null){
-                tableAsName=builderParseResult.getBuilder().getTableName();
+            tableAsName = builderParseResult.getBuilder().getAsName();
+            if (asName != null && tableAsName == null) {
+                tableAsName = builderParseResult.getBuilder().getTableName();
             }
             if ((asName != null && asName.equals(tableAsName)) | StringUtil.isEmpty(asName)) {
                 if (SelectSQLBuilder.class.isInstance(builderParseResult.getBuilder())) {

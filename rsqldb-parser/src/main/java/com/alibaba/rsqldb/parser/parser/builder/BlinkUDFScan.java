@@ -16,6 +16,24 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.udf.FunctionUDFScript;
+import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
+import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
+import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
+import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableFunction;
+import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import org.apache.rocketmq.streams.common.utils.FileUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.script.annotation.Function;
+import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
+import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+import sun.misc.JarFilter;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -30,25 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.alibaba.rsqldb.udf.FunctionUDFScript;
-import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
-import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
-import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
-
-import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
-import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.utils.FileUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.script.annotation.Function;
-import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
-import org.apache.rocketmq.streams.script.service.udf.UDFScript;
-import sun.misc.JarFilter;
 
 /**
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
@@ -104,6 +103,7 @@ public class BlinkUDFScan extends AbstractScan {
     @Deprecated
     public void scan(String jarFilePath, String classname, String functionName) {
         scanInnerBlinkUDF();
+
         String localJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
         if (localJarFielPath == null || "".equalsIgnoreCase(localJarFielPath)) {
             localJarFielPath = "./udflib";
@@ -130,8 +130,12 @@ public class BlinkUDFScan extends AbstractScan {
             scan(null, "com.aliyun.yundun.dipper.sql.udf");
             scan(null, "com.aliyun.isec.seraph.udtf");
             scan(null, "com.lyra.udf.ext");
+            scan(null, "org.apache.rocketmq.streams.script.function.impl.flatmap");
         }
     }
+
+
+
 
     /**
      * 扫描某个目录下jar包的包名
@@ -233,14 +237,15 @@ public class BlinkUDFScan extends AbstractScan {
     @Override
     protected void doProcessor(Class clazz, String functionName) {
         try {
-            if (ScalarFunction.class.isAssignableFrom(clazz) || TableFunction.class.isAssignableFrom(clazz) || AggregateFunction.class.isAssignableFrom(clazz)) {
+            String blinkSuperClassName = getBlinkSuperClassName(clazz);
+            if (!"".equalsIgnoreCase(blinkSuperClassName)) {
                 if (notSupportUDF.contains(clazz.getSimpleName())) {
                     return;
                 }
                 UDFScript script = null;
-                if (TableFunction.class.isAssignableFrom(clazz)) {
+                if (TableFunction.class.isAssignableFrom(clazz) || TableFunction.class.getSimpleName().equalsIgnoreCase(blinkSuperClassName)) {
                     script = new BlinkUDTFScript();
-                } else if (AggregateFunction.class.isAssignableFrom(clazz)) {
+                } else if (AggregateFunction.class.isAssignableFrom(clazz) || AggregateFunction.class.getSimpleName().equalsIgnoreCase(blinkSuperClassName)) {
                     script = new BlinkUDAFScript();
                 } else {
                     script = new BlinkUDFScript();
@@ -260,6 +265,19 @@ public class BlinkUDFScan extends AbstractScan {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private String getBlinkSuperClassName(Class clazz) {
+        if (Object.class.getSimpleName().equalsIgnoreCase(clazz.getSimpleName())) {
+            return "";
+        }
+        if (ScalarFunction.class.getSimpleName().equalsIgnoreCase(clazz.getSimpleName()) ||
+            TableFunction.class.getSimpleName().equalsIgnoreCase(clazz.getSimpleName()) ||
+            AggregateFunction.class.getSimpleName().equalsIgnoreCase(clazz.getSimpleName())) {
+            return clazz.getSimpleName();
+        } else {
+            return this.getBlinkSuperClassName(clazz.getSuperclass());
         }
     }
 
@@ -293,8 +311,7 @@ public class BlinkUDFScan extends AbstractScan {
     }
 
     /**
-     * 根据class和函数名字注册udf，如果方法列表中包含eval方法，则将functionname全部与eval方法绑定并注册UDFScript
-     * 如果class中不包含eval方法，则将functionname与对应的方法名进行绑定并注册
+     * 根据class和函数名字注册udf，如果方法列表中包含eval方法，则将functionname全部与eval方法绑定并注册UDFScript 如果class中不包含eval方法，则将functionname与对应的方法名进行绑定并注册
      *
      * @param clazz
      * @param functionName
@@ -347,6 +364,7 @@ public class BlinkUDFScan extends AbstractScan {
 
     /**
      * 提取class中方法名为eval的函数列表
+     *
      * @param clazz
      * @return
      */

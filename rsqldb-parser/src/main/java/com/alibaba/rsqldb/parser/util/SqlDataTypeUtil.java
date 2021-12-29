@@ -16,9 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.rocketmq.streams.common.datatype.BooleanDataType;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.datatype.DateDataType;
@@ -28,6 +25,9 @@ import org.apache.rocketmq.streams.common.datatype.IntDataType;
 import org.apache.rocketmq.streams.common.datatype.LongDataType;
 import org.apache.rocketmq.streams.common.datatype.StringDataType;
 import org.apache.rocketmq.streams.script.utils.FunctionUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SqlDataTypeUtil {
 

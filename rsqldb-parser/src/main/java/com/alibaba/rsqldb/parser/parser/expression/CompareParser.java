@@ -16,10 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.expression;
 
-import java.util.List;
-
-import org.apache.rocketmq.streams.common.datatype.DataType;
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
@@ -28,6 +24,10 @@ import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.datatype.DataType;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
+
+import java.util.List;
 
 public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
 

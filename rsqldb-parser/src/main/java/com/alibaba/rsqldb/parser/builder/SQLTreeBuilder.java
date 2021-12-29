@@ -16,6 +16,19 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.ISqlParser;
+import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+import com.alibaba.rsqldb.parser.parser.SQLTree;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.ISQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.InsertSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.NotSupportSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SQLCreateTables;
+import com.alibaba.rsqldb.parser.parser.builder.ViewSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,14 +43,12 @@ import org.apache.rocketmq.streams.common.topology.model.PipelineSourceJoiner;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-import com.alibaba.rsqldb.parser.parser.ISqlParser;
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
-import com.alibaba.rsqldb.parser.parser.SQLTree;
-import com.alibaba.rsqldb.parser.parser.builder.*;
-import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SQLTreeBuilder {
 

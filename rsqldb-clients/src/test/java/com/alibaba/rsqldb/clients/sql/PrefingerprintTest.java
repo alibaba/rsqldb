@@ -17,7 +17,6 @@
 package com.alibaba.rsqldb.clients.sql;
 
 import com.alibaba.rsqldb.parser.entity.SqlTask;
-
 import org.apache.rocketmq.streams.common.optimization.fingerprint.FingerprintCache;
 import org.apache.rocketmq.streams.common.topology.ChainPipeline;
 import org.apache.rocketmq.streams.common.utils.FileUtil;

@@ -16,15 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import java.util.List;
-
+import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.JoinSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.LateralTableBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.TableNodeBuilder;
-import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.function.SqlIndentifierParser;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -36,6 +34,8 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.List;
 
 public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
 

@@ -16,9 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import java.util.Set;
-
 import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+
+import java.util.Set;
 
 /**
  * 把一条独立sql对应的描述信息保存下来，并能够builder成dipper的pipeline的节点

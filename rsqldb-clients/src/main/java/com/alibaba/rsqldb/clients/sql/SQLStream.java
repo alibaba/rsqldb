@@ -1,16 +1,15 @@
 package com.alibaba.rsqldb.clients.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
+import com.alibaba.rsqldb.parser.entity.SqlTask;
 import org.apache.rocketmq.streams.client.strategy.Strategy;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-import com.alibaba.rsqldb.parser.entity.SqlTask;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * can execute sql directly can submit sql to server support sql assemble

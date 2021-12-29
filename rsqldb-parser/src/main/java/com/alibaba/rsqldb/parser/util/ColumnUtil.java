@@ -16,20 +16,21 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
-import java.util.List;
+import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.rocketmq.streams.common.datatype.DataType;
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import org.apache.rocketmq.streams.common.datatype.DataType;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
+import org.apache.rocketmq.streams.common.metadata.MetaData;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+
+import java.util.List;
 
 public class ColumnUtil {
     private static final Log LOG = LogFactory.getLog(ColumnUtil.class);

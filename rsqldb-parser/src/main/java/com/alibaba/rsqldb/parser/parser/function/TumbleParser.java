@@ -21,12 +21,12 @@ import com.alibaba.rsqldb.parser.parser.builder.WindowBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
-import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalLiteral.IntervalValue;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 
 public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -83,7 +83,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
         //TODO default value
         int interval = 10;
         try {
-            interval = Integer.valueOf(intervalValue.getIntervalLiteral());
+            interval = Integer.parseInt(intervalValue.getIntervalLiteral());
         } catch (Exception e) {
 
         }
@@ -97,11 +97,11 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
             case SECOND:
                 return 1;
             case MINUTE:
-                return 1;
-            case DAY:
-                return 24 * 60;
-            case HOUR:
                 return 60;
+            case HOUR:
+                return 60 * 60;
+            case DAY:
+                return 24 * 60 * 60;
             default:
                 throw new RuntimeException("can not this time unit :" + timeUnit.toString()
                     + ", support second,minute,houre,day, millsecond");
@@ -118,15 +118,16 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
     protected static int convert2Minute(int interval, TimeUnit timeUnit) {
         int tumblePeriod = interval;
         if (timeUnit != null) {
-            if (TimeUnit.MINUTE == timeUnit || TimeUnit.SECOND == timeUnit) {
+            if (TimeUnit.SECOND == timeUnit) {
                 tumblePeriod = interval;
-            } else if (TimeUnit.HOUR == timeUnit) {
+            } else if (TimeUnit.MINUTE == timeUnit) {
                 tumblePeriod = interval * 60;
+            } else if (TimeUnit.HOUR == timeUnit) {
+                tumblePeriod = interval * 60 * 60;
             } else if (TimeUnit.DAY == timeUnit) {
-                tumblePeriod = interval * 24 * 60;
+                tumblePeriod = interval * 24 * 60 * 60;
             } else {
-                throw new RuntimeException("can not this time unit :" + timeUnit.toString()
-                    + ", support second,minute,houre,day, millsecond");
+                throw new RuntimeException("can not this time unit :" + timeUnit + ", support second,minute,houre,day, millsecond");
             }
         }
         return tumblePeriod;

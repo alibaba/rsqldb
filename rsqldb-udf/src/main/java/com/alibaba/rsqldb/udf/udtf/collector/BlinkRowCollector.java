@@ -19,22 +19,27 @@ package com.alibaba.rsqldb.udf.udtf.collector;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.rsqldb.udf.BlinkDataType;
 import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
-
-import org.apache.rocketmq.streams.common.context.AbstractContext;
-import org.apache.rocketmq.streams.common.context.IMessage;
-import org.apache.rocketmq.streams.common.context.Message;
-import org.apache.rocketmq.streams.common.datatype.*;
-import org.apache.rocketmq.streams.common.datatype.DataType;
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
-import org.apache.rocketmq.streams.common.model.ThreadContext;
-import org.apache.rocketmq.streams.script.context.FunctionContext;
-
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.types.DataTypes;
 import org.apache.flink.table.types.RowType;
 import org.apache.flink.table.types.TypeInfoWrappedType;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
+import org.apache.rocketmq.streams.common.context.AbstractContext;
+import org.apache.rocketmq.streams.common.context.IMessage;
+import org.apache.rocketmq.streams.common.context.Message;
+import org.apache.rocketmq.streams.common.datatype.BooleanDataType;
+import org.apache.rocketmq.streams.common.datatype.ByteDataType;
+import org.apache.rocketmq.streams.common.datatype.DataType;
+import org.apache.rocketmq.streams.common.datatype.DateDataType;
+import org.apache.rocketmq.streams.common.datatype.DoubleDataType;
+import org.apache.rocketmq.streams.common.datatype.FloatDataType;
+import org.apache.rocketmq.streams.common.datatype.IntDataType;
+import org.apache.rocketmq.streams.common.datatype.LongDataType;
+import org.apache.rocketmq.streams.common.datatype.ShortDataType;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
+import org.apache.rocketmq.streams.common.model.ThreadContext;
+import org.apache.rocketmq.streams.script.context.FunctionContext;
 import org.apache.rocketmq.streams.script.function.model.FunctionType;
 
 import java.lang.reflect.InvocationTargetException;

@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import java.util.Set;
-
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
@@ -26,6 +24,8 @@ import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
+
+import java.util.Set;
 
 public class ViewParser extends AbstractSqlNodeParser<SqlCreateView, ViewSQLBuilder> {
 

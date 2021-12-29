@@ -16,13 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.UnionSQLBuilder;
@@ -32,6 +25,13 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class UnionParser extends AbstractSqlNodeParser<SqlBasicCall, UnionSQLBuilder> {
     private static final Log LOG = LogFactory.getLog(UnionParser.class);
