@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.NotSupportParseResult;
@@ -28,6 +26,8 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.List;
 
 public class SqlAsOperatorParser extends AbstractSelectNodeParser<SqlBasicCall> {
 

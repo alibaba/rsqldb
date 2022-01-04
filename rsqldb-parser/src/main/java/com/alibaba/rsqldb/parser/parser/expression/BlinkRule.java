@@ -17,13 +17,14 @@
 package com.alibaba.rsqldb.parser.parser.expression;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 
 public class BlinkRule {
     /**

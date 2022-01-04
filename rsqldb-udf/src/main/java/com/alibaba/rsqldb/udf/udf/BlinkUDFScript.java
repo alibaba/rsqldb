@@ -16,16 +16,15 @@
  */
 package com.alibaba.rsqldb.udf.udf;
 
-import java.io.File;
-
-import org.apache.rocketmq.streams.script.service.udf.UDFScript;
 import org.apache.flink.api.common.accumulators.DoubleCounter;
 import org.apache.flink.api.common.accumulators.Histogram;
 import org.apache.flink.api.common.accumulators.IntCounter;
 import org.apache.flink.api.common.accumulators.LongCounter;
-
 import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.table.functions.FunctionContext;
+import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+
+import java.io.File;
 
 public class BlinkUDFScript extends UDFScript {
 

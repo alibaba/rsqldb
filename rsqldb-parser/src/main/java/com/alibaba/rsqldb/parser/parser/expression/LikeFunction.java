@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.expression;
 
-import java.util.List;
-
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -26,6 +24,8 @@ import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlLikeOperator;
+
+import java.util.List;
 
 public class LikeFunction extends AbstractSelectNodeParser<SqlBasicCall> {
 

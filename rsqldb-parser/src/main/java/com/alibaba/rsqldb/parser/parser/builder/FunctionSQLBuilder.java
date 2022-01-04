@@ -16,14 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.model.NameCreator;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * UDX's SQL Builder
@@ -43,15 +43,18 @@ public class FunctionSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             blinkUDFScan.scan(className, null, functionName);
             blinkUDFScript = blinkUDFScan.getScript(className, functionName);
             if (blinkUDFScript == null) {
+                blinkUDFScript = blinkUDFScan.getScript(className, null);
+            }
+            if (blinkUDFScript == null) {
                 LOG.error("can not find udf, the udf is " + className);
                 return;
             }
         }
-//        blinkUDFScan.scan(null);
+        blinkUDFScript.setFunctionName(functionName);
+        //        blinkUDFScan.scan(null);
         blinkUDFScript.setFunctionName(functionName);
         blinkUDFScript.setNameSpace(getPipelineBuilder().getPipelineNameSpace());
-        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(),
-            NameCreator.createNewName(functionName));
+        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(), NameCreator.createNewName(functionName));
         blinkUDFScript.setConfigureName(name);
         getPipelineBuilder().addConfigurables(blinkUDFScript);
     }

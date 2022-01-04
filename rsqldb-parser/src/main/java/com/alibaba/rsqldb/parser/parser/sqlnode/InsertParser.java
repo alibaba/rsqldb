@@ -21,13 +21,14 @@ import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.InsertSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.calcite.sql.SqlEmit;
 import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class InsertParser extends AbstractSqlNodeParser<SqlInsert, InsertSQLBuilder> {
 

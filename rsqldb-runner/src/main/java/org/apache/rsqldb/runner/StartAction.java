@@ -16,20 +16,19 @@
  */
 package org.apache.rsqldb.runner;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.stream.Collectors;
-
 import com.alibaba.rsqldb.parser.entity.SqlTask;
-
 import com.google.common.collect.Lists;
 import org.apache.rocketmq.streams.common.utils.FileUtil;
 import org.apache.rocketmq.streams.common.utils.PropertiesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * @author junjie.cheng

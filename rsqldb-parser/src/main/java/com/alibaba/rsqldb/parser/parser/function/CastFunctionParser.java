@@ -16,9 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
-import org.apache.rocketmq.streams.common.datatype.DataType;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -27,6 +24,9 @@ import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.datatype.DataType;
+
+import java.util.List;
 
 public class CastFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 

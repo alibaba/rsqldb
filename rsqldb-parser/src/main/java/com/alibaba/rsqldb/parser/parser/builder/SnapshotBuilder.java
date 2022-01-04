@@ -16,17 +16,20 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-
+import com.alibaba.rsqldb.parser.parser.ISqlParser;
+import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
+import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
+import org.apache.rocketmq.streams.common.metadata.MetaData;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 import org.apache.rocketmq.streams.dim.builder.IDimSQLParser;
 import org.apache.rocketmq.streams.dim.builder.SQLParserFactory;
 import org.apache.rocketmq.streams.dim.intelligence.AbstractIntelligenceCache;
@@ -38,27 +41,23 @@ import org.apache.rocketmq.streams.dim.model.AbstractDim;
 import org.apache.rocketmq.streams.dim.model.DBDim;
 import org.apache.rocketmq.streams.dim.model.FileDim;
 import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
-
 import org.apache.rocketmq.streams.filter.function.expression.Equals;
 import org.apache.rocketmq.streams.filter.operator.Rule;
 import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
 import org.apache.rocketmq.streams.filter.operator.expression.SimpleExpression;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.ISqlParser;
-import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.rocketmq.streams.db.driver.JDBCDriver;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * dimension table join builder specially for url, ip and domain
@@ -66,9 +65,7 @@ import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 public class SnapshotBuilder extends SelectSQLBuilder {
 
     protected static Map<String, AbstractIntelligenceCache> INTELLIGENCE = new HashMap<>();
-    protected static Map<CreateSQLBuilder,AbstractDim> dims=new HashMap<>();
-
-
+    protected static Map<CreateSQLBuilder, AbstractDim> dims = new HashMap<>();
 
     static {
         DomainIntelligenceCache domainIntelligenceCache = new DomainIntelligenceCache();
@@ -88,10 +85,11 @@ public class SnapshotBuilder extends SelectSQLBuilder {
 
     /**
      * 在join sql build中调用，一个sql如果有对一个维表多次join，数据只存一份。通过建立不同索引实现
+     *
      * @param condition
      * @param joinType
      */
-    public void buildDimCondition(SqlNode condition, String joinType,String onCondition) {
+    public void buildDimCondition(SqlNode condition, String joinType, String onCondition) {
 
         CreateSQLBuilder builder = SQLCreateTables.getInstance().get().get(getTableName());
         Properties properties = builder.createProperty();
@@ -101,9 +99,9 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         long pollingTime = 30;//默认更新时间是30分钟
 
         if (StringUtil.isNotEmpty(cacheTTLMs)) {
-            long ms=Long.valueOf(cacheTTLMs);
-            if(ms<1000*60){
-                ms=1000*60;
+            long ms = Long.valueOf(cacheTTLMs);
+            if (ms < 1000 * 60) {
+                ms = 1000 * 60;
             }
             pollingTime = (Long.valueOf(ms) / 1000 / 60);
         }
@@ -112,16 +110,16 @@ public class SnapshotBuilder extends SelectSQLBuilder {
          */
         AbstractIntelligenceCache intelligenceCache = INTELLIGENCE.get(tableName);
         if (intelligenceCache != null) {
-            buildIntelligence(pollingTime, intelligenceCache,joinType,onCondition);
+            buildIntelligence(pollingTime, intelligenceCache, joinType, onCondition);
         } else {
-            AbstractDim dim=dims.get(builder);
+            AbstractDim dim = dims.get(builder);
             /**
              * 通用维表builder
              */
-            if(dim==null){
-                dim=buildDim(builder, properties);
+            if (dim == null) {
+                dim = buildDim(builder, properties);
                 getPipelineBuilder().addConfigurables(dim);
-                dims.put(builder,dim);
+                dims.put(builder, dim);
             }
 
             /**
@@ -130,50 +128,51 @@ public class SnapshotBuilder extends SelectSQLBuilder {
             String selectFields = createSelectFields(builder);
             Set<String> fieldNames = createFieldNames(selectFields);
             JoinConditionSQLBuilder conditionSQLBuilder = new JoinConditionSQLBuilder(fieldNames, asName);
-            String expressionStr = convertExpression(conditionSQLBuilder,condition, selectFields, this.getAsName(), selectFields);
+            String expressionStr = convertExpression(conditionSQLBuilder, condition, selectFields, this.getAsName(), selectFields);
 
             //编译join条件
-            createIndexByJoinCondition(dim,expressionStr,builder);
-            addDimJoib2Pipeline(dim,conditionSQLBuilder,expressionStr,joinType,selectFields);
+            createIndexByJoinCondition(dim, expressionStr, builder);
+            addDimJoib2Pipeline(dim, conditionSQLBuilder, expressionStr, joinType, selectFields);
         }
     }
 
     private String getDimType(Properties properties) {
-        String type= properties.getProperty("type");
-        if(StringUtil.isEmpty(type)){
-            type= properties.getProperty("TYPE");
+        String type = properties.getProperty("type");
+        if (StringUtil.isEmpty(type)) {
+            type = properties.getProperty("TYPE");
         }
-        if(StringUtil.isEmpty(type)){
-            type= properties.getProperty("connector");
+        if (StringUtil.isEmpty(type)) {
+            type = properties.getProperty("connector");
         }
-        if(StringUtil.isEmpty(type)){
-            type= properties.getProperty("CONNECTOR");
+        if (StringUtil.isEmpty(type)) {
+            type = properties.getProperty("CONNECTOR");
         }
         return type;
     }
+
     /**
      * 创建dim对象，相同的create table ，只创建一个对象
+     *
      * @param builder
      * @param properties
      * @return
      */
-    protected AbstractDim buildDim( CreateSQLBuilder builder, Properties properties){
-        String type=getDimType(properties).toLowerCase();
-        IDimSQLParser dimSQLParser= SQLParserFactory.getInstance().create(type);
-        return dimSQLParser.parseDim(namespace,properties,builder.getMetaData());
+    protected AbstractDim buildDim(CreateSQLBuilder builder, Properties properties) {
+        String type = getDimType(properties).toLowerCase();
+        IDimSQLParser dimSQLParser = SQLParserFactory.getInstance().create(type);
+        return dimSQLParser.parseDim(namespace, properties, builder.getMetaData());
     }
-
-
 
     /**
      * 创建dim对象，相同的create table ，只创建一个对象
+     *
      * @param pollingTime
      * @param tableName
      * @param builder
      * @param properties
      * @return
      */
-    protected AbstractDim buildDBDim(long pollingTime, String tableName, CreateSQLBuilder builder, Properties properties){
+    protected AbstractDim buildDBDim(long pollingTime, String tableName, CreateSQLBuilder builder, Properties properties) {
         /**
          * 创建namelist，要起必须有pco rimary key，，否则抛出错误
          */
@@ -185,9 +184,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         dbNameList.setUrl(url);
         dbNameList.setUserName(userName);
         dbNameList.setPassword(password);
-        dbNameList.setPollingTimeMintue(pollingTime);
-
-
+        dbNameList.setPollingTimeMinute(pollingTime);
 
         String selectFields = createSelectFields(builder);
         String sql = "select " + selectFields + " from " + tableName + " limit 1000000";
@@ -202,23 +199,24 @@ public class SnapshotBuilder extends SelectSQLBuilder {
     }
 
     protected AbstractDim buildFileDim(long time, String name, CreateSQLBuilder builder, Properties properties) {
-        String filePath=properties.getProperty("filePath");
-        if(StringUtil.isEmpty(filePath)){
-            filePath=properties.getProperty("file_path");
+        String filePath = properties.getProperty("filePath");
+        if (StringUtil.isEmpty(filePath)) {
+            filePath = properties.getProperty("file_path");
         }
-        FileDim fileDim=new FileDim();
+        FileDim fileDim = new FileDim();
         fileDim.setFilePath(filePath);
         return fileDim;
     }
+
     /**
      * 根据join条件设置索引
+     *
      * @param dbNameList
      */
-    protected void createIndexByJoinCondition(AbstractDim dbNameList,String expressionStr, CreateSQLBuilder createSQLBuilder) {
+    protected void createIndexByJoinCondition(AbstractDim dbNameList, String expressionStr, CreateSQLBuilder createSQLBuilder) {
         List<Expression> expressions = new ArrayList<>();
         List<RelationExpression> relationExpressions = new ArrayList<>();
-        Expression expression = ExpressionBuilder.createOptimizationExpression("tmp", "tmp", expressionStr,
-            expressions, relationExpressions);
+        Expression expression = ExpressionBuilder.createOptimizationExpression("tmp", "tmp", expressionStr, expressions, relationExpressions);
 
         RelationExpression relationExpression = null;
         if (RelationExpression.class.isInstance(expression)) {
@@ -242,7 +240,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
             relationExpression.setValue(new ArrayList<>());
             for (String expressionName : expressionNames) {
                 Expression subExpression = map.get(expressionName);
-                if (subExpression != null && !RelationExpression.class.isInstance(subExpression)&&isDimField(subExpression.getValue(),createSQLBuilder)) {
+                if (subExpression != null && !RelationExpression.class.isInstance(subExpression) && isDimField(subExpression.getValue(), createSQLBuilder)) {
                     indexExpressions.add(subExpression);
                 } else {
                     otherExpressions.add(subExpression);
@@ -261,35 +259,35 @@ public class SnapshotBuilder extends SelectSQLBuilder {
                 continue;
             }
             String indexName = expre.getValue().toString();
-            if (Equals.isEqualFunction(expre.getFunctionName()) &&isDimField(expre.getValue(),createSQLBuilder)) {
+            if (Equals.isEqualFunction(expre.getFunctionName()) && isDimField(expre.getValue(), createSQLBuilder)) {
 
                 fieldNames.add(indexName);
 
             }
         }
 
-        String[] indexFieldNameArray=new String[fieldNames.size()];
-        int i=0;
-        for(String fieldName:fieldNames){
-            indexFieldNameArray[i]=fieldName;
+        String[] indexFieldNameArray = new String[fieldNames.size()];
+        int i = 0;
+        for (String fieldName : fieldNames) {
+            indexFieldNameArray[i] = fieldName;
             i++;
         }
         Arrays.sort(indexFieldNameArray);
         String index = MapKeyUtil.createKey(indexFieldNameArray);
-        if(dbNameList.getIndexs().contains(index)){
+        if (dbNameList.getIndexs().contains(index)) {
             return;
         }
-        if(indexFieldNameArray.length>0){
+        if (indexFieldNameArray.length > 0) {
             dbNameList.addIndex(indexFieldNameArray);
         }
     }
 
-    protected boolean isDimField(Object value,CreateSQLBuilder createSQLBuilder){
-        if(!String.class.isInstance(value)){
+    protected boolean isDimField(Object value, CreateSQLBuilder createSQLBuilder) {
+        if (!String.class.isInstance(value)) {
             return false;
         }
-        MetaData metaData= createSQLBuilder.getMetaData();
-        if(metaData.getMetaDataField((String)value)!=null){
+        MetaData metaData = createSQLBuilder.getMetaData();
+        if (metaData.getMetaDataField((String)value) != null) {
             return true;
         }
         return false;
@@ -297,13 +295,14 @@ public class SnapshotBuilder extends SelectSQLBuilder {
 
     /**
      * 生成dim的脚本，并设置pipeline的stage
+     *
      * @param dbNameList
      * @param conditionSQLBuilder
      * @param expression
      * @param joinType
      * @param selectFields
      */
-    protected void addDimJoib2Pipeline(AbstractDim dbNameList,JoinConditionSQLBuilder conditionSQLBuilder,String expression,String joinType,String selectFields){
+    protected void addDimJoib2Pipeline(AbstractDim dbNameList, JoinConditionSQLBuilder conditionSQLBuilder, String expression, String joinType, String selectFields) {
         List<String> scriptValue = conditionSQLBuilder.getScripts();
         String dimScript = conditionSQLBuilder.getDimScriptValue();
         if (dimScript == null) {
@@ -323,7 +322,6 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         getPipelineBuilder().addChainStage(new ScriptOperator(conditionSQLBuilder.createScript(scriptValue)));
     }
 
-
     private Set<String> createFieldNames(String selectFields) {
         Set<String> fieldNames = new HashSet<>();
         if (selectFields != null) {
@@ -334,13 +332,14 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         }
         return fieldNames;
     }
+
     /**
      * 创建情报维表，和对应的脚本。情报的表达式，支持等值操作
      *
      * @param pollingTime       多长时间加载一次
      * @param intelligenceCache 情报对应的对象
      */
-    protected void buildIntelligence(long pollingTime, AbstractIntelligenceCache intelligenceCache,String joinType,String expressionStr) {
+    protected void buildIntelligence(long pollingTime, AbstractIntelligenceCache intelligenceCache, String joinType, String expressionStr) {
         /**
          * 创建维表连接对象， 默认情报的数据连接是单独配置好的，不依赖sql中create语句
          */
@@ -356,13 +355,11 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         String intelligenceKey = null;
         Rule rule = ExpressionBuilder.createRule("tmp", "tmp", expressionStr);
         if (rule.getExpressionMap().size() > 1) {
-            throw new RuntimeException(
-                "can not support expression in intelligence . the expression is " + expression);
+            throw new RuntimeException("can not support expression in intelligence . the expression is " + expression);
         }
         Expression expression = rule.getExpressionMap().values().iterator().next();
         if (!SimpleExpression.class.isInstance(expression)) {
-            throw new RuntimeException(
-                "can not support expression in intelligence . the expression is " + expressionStr);
+            throw new RuntimeException("can not support expression in intelligence . the expression is " + expressionStr);
         }
         if (expression.getVarName().equals(asName + "." + intelligence.getKeyName()) || expression.getVarName().equals(intelligence.getKeyName())) {
             intelligenceKey = expression.getValue().toString();
@@ -374,18 +371,12 @@ public class SnapshotBuilder extends SelectSQLBuilder {
          *
          */
         if (joinType.toUpperCase().equals("INNER")) {
-            getPipelineBuilder().addChainStage(new ScriptOperator(
-                "intelligence('" + intelligence.getNameSpace() + "','" + intelligence.getConfigureName() + "',"
-                    + intelligenceKey + ",'" + getAsName() + "');"));
+            getPipelineBuilder().addChainStage(new ScriptOperator("intelligence('" + intelligence.getNameSpace() + "','" + intelligence.getConfigureName() + "'," + intelligenceKey + ",'" + getAsName() + "');"));
         } else if (joinType.toUpperCase().equals("LEFT")) {
-            getPipelineBuilder().addChainStage(new ScriptOperator(
-                "left_join_intelligence('" + intelligence.getNameSpace() + "','" + intelligence.getConfigureName() + "',"
-                    + intelligenceKey + ",'" + getAsName() + "');"));
+            getPipelineBuilder().addChainStage(new ScriptOperator("left_join_intelligence('" + intelligence.getNameSpace() + "','" + intelligence.getConfigureName() + "'," + intelligenceKey + ",'" + getAsName() + "');"));
         }
 
     }
-
-
 
     /**
      * 根据字段名，创建sql，最大加载10 w条数据，超过10w会被截断
@@ -447,11 +438,10 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         return tables;
     }
 
-
     /**
      * 维表不识别别名，需要做去除。维表join，要求维表字段必须在value字段，如果sql写反了，需要转换过来
      */
-    protected String convertExpression(JoinConditionSQLBuilder conditionSQLBuilder,SqlNode expressionSQLNode, String fieldNames, String aliasName, String selectFields) {
+    protected String convertExpression(JoinConditionSQLBuilder conditionSQLBuilder, SqlNode expressionSQLNode, String fieldNames, String aliasName, String selectFields) {
 
         ISqlParser sqlParser = SQLNodeParserFactory.getParse(expressionSQLNode);
         conditionSQLBuilder.switchWhere();
@@ -525,7 +515,5 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         }
         return expression.toExpressionString(map);
     }
-
-
 
 }

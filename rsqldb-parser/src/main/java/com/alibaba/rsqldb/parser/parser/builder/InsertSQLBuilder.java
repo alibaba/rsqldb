@@ -16,20 +16,15 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import org.apache.rocketmq.streams.common.channel.sink.ISink;
+import org.apache.rocketmq.streams.common.topology.stages.OutputChainStage;
+import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.utils.PrintUtil;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.rocketmq.streams.common.channel.sink.ISink;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
-import org.apache.rocketmq.streams.common.topology.stages.OutputChainStage;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-import org.apache.rocketmq.streams.common.utils.PrintUtil;
-import com.alibaba.rsqldb.parser.util.ColumnUtil;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
 
 public class InsertSQLBuilder extends AbstractSQLBuilder {
 

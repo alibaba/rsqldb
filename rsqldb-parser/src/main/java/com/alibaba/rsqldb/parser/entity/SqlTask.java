@@ -16,12 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.alibaba.rsqldb.parser.builder.SQLTreeBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configurable.AbstractConfigurable;
 import org.apache.rocketmq.streams.common.configurable.IConfigurable;
@@ -31,8 +27,9 @@ import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-import com.alibaba.rsqldb.parser.builder.SQLTreeBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SqlTask {
 

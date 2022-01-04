@@ -16,14 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
-import org.apache.rocketmq.streams.common.topology.model.IWindow;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
+import org.apache.rocketmq.streams.common.topology.model.IWindow;
 import org.apache.rocketmq.streams.window.builder.WindowBuilder;
 
 public class HopParser extends TumbleParser {

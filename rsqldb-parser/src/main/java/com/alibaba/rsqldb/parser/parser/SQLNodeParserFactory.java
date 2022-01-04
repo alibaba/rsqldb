@@ -16,30 +16,24 @@
  */
 package com.alibaba.rsqldb.parser.parser;
 
-import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.expression.BlinkRuleV2Parser;
-
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.rocketmq.streams.common.model.NameCreator;
-import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
+import org.apache.rocketmq.streams.common.model.NameCreator;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 可以通过扩展来增加sql解析能力，主体框架不变化

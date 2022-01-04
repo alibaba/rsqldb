@@ -16,6 +16,21 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
+import org.apache.rocketmq.streams.filter.operator.expression.Expression;
+import org.apache.rocketmq.streams.filter.optimization.dependency.ScriptDependent;
+import org.apache.rocketmq.streams.script.service.IScriptExpression;
+import org.apache.rocketmq.streams.window.operator.AbstractWindow;
+import org.apache.rocketmq.streams.window.operator.impl.SessionOperator;
+import org.apache.rocketmq.streams.window.operator.impl.ShuffleOverWindow;
+import org.apache.rocketmq.streams.window.operator.impl.WindowOperator;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,21 +40,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-
-import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
-import org.apache.rocketmq.streams.filter.operator.expression.Expression;
-import org.apache.rocketmq.streams.filter.optimization.dependency.ScriptDependent;
-import org.apache.rocketmq.streams.script.service.IScriptExpression;
-import org.apache.rocketmq.streams.window.operator.AbstractWindow;
-import org.apache.rocketmq.streams.common.utils.CollectionUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
-import org.apache.rocketmq.streams.window.operator.impl.SessionOperator;
-import org.apache.rocketmq.streams.window.operator.impl.ShuffleOverWindow;
-import org.apache.rocketmq.streams.window.operator.impl.WindowOperator;
 
 public class WindowBuilder extends SelectSQLBuilder {
 
@@ -83,52 +83,54 @@ public class WindowBuilder extends SelectSQLBuilder {
      */
     protected String type;
 
-
     /**
      * 时间字段
      */
     protected String timeFieldName;
-    protected int timeUnitAdjust=60;
+    protected int timeUnitAdjust = 60;
 
     protected List<String> groupByFieldNames = new ArrayList<>();
 
     protected SelectSQLBuilder owner;
-    protected boolean isLocalStorageOnly = true;//是否只用本地存储
+    /**
+     * 是否只用本地存储
+     */
+    protected boolean isLocalStorageOnly = true;
     protected String having;
     protected List<String> havingScript;
     /**
-     * over window
+     * over window, 值为over时，是over window
      */
-    protected String overWindowName;//值为over时，是over window
-    protected boolean isShuffleOverWindow=false;
+    protected String overWindowName;
+    protected boolean isShuffleOverWindow = false;
     protected List<String> shuffleOverWindowOrderByFieldNames;
-    protected int overWindowTopN=100;
+    protected int overWindowTopN = 100;
+
     @Override
     protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
-            if(!isShuffleOverWindow){
+            if (!isShuffleOverWindow) {
                 buildOverWindow();
                 return;
             }
-
             return;
         }
 
-
         window = org.apache.rocketmq.streams.window.builder.WindowBuilder.createWindow(type);
-        if(window.getEmitBeforeValue()==null||window.getEmitBeforeValue()==0){
-            window.setEmitBeforeValue( StreamsConfigure.getEmitBeforeValue());
+        if (window.getEmitBeforeValue() == null || window.getEmitBeforeValue() == 0) {
+            window.setEmitBeforeValue(StreamsConfigure.getEmitBeforeValue());
         }
-        if(window.getEmitAfterValue()==null||window.getEmitAfterValue()==0){
+        if (window.getEmitAfterValue() == null || window.getEmitAfterValue() == 0) {
             window.setEmitAfterValue(StreamsConfigure.getEmitAfterValue());
-            if(StreamsConfigure.getEmitMaxDelay()!=null){
+            if (StreamsConfigure.getEmitMaxDelay() != null) {
                 window.setMaxDelay(StreamsConfigure.getEmitMaxDelay());
             }
         }
         window.setLocalStorageOnly(isLocalStorageOnly);
         window.setTimeFieldName(timeFieldName);
         window.setWindowType(type);
+        window.setTimeUnitAdjust(1);
 
         if (window instanceof WindowOperator) {
             window.setSizeInterval(Optional.ofNullable(size).orElse(AbstractWindow.DEFAULT_WINDOW_SIZE));
@@ -138,16 +140,12 @@ public class WindowBuilder extends SelectSQLBuilder {
             window.setSlideInterval(Optional.ofNullable(slide).orElse(AbstractWindow.DEFAULT_WINDOW_SLIDE));
             window.setSlideVariable(slideVariable);
             window.setSlideAdjust(slideAdjust);
-
-
-            window.setTimeUnitAdjust(Optional.ofNullable(timeUnitAdjust).orElse(60));
         }
 
         if (window instanceof SessionOperator) {
-            SessionOperator theWindow = (SessionOperator) window;
+            SessionOperator theWindow = (SessionOperator)window;
             theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
         }
-
 
         Map<String, String> selectMap = new HashMap<>(32);
         if (owner.getFieldName2ParseResult() != null) {
@@ -173,18 +171,18 @@ public class WindowBuilder extends SelectSQLBuilder {
     }
 
     protected void buildHaving(AbstractWindow window) {
-        if(StringUtil.isEmpty(having)){
+        if (StringUtil.isEmpty(having)) {
             return;
         }
         window.setHavingExpression(having);
-        if(havingScript!=null){
-            List<Expression> expressions=new ArrayList<>();
-            ExpressionBuilder.createExpression("tmp","tmp",having,expressions,new ArrayList<>());
-            for(Expression expression:expressions){
-                String varName=expression.getVarName();
-                List<String> dependentScripts=getDependentScripts(varName,havingScript);
-                if(CollectionUtil.isNotEmpty(dependentScripts)){
-                    window.getSelectMap().put(varName,MapKeyUtil.createKey(";",dependentScripts)+";");
+        if (havingScript != null) {
+            List<Expression> expressions = new ArrayList<>();
+            ExpressionBuilder.createExpression("tmp", "tmp", having, expressions, new ArrayList<>());
+            for (Expression expression : expressions) {
+                String varName = expression.getVarName();
+                List<String> dependentScripts = getDependentScripts(varName, havingScript);
+                if (CollectionUtil.isNotEmpty(dependentScripts)) {
+                    window.getSelectMap().put(varName, MapKeyUtil.createKey(";", dependentScripts) + ";");
                 }
             }
         }
@@ -192,28 +190,28 @@ public class WindowBuilder extends SelectSQLBuilder {
     }
 
     private List<String> getDependentScripts(String varName, List<String> script) {
-        ScriptDependent scriptDependent=new ScriptDependent(null,MapKeyUtil.createKey(";",script)+";");
-        List<IScriptExpression> scriptExpressions= scriptDependent.getDependencyExpression(varName);
-        List<String> expressions=new ArrayList<>();
-        for(IScriptExpression scriptExpression:scriptExpressions){
+        ScriptDependent scriptDependent = new ScriptDependent(null, MapKeyUtil.createKey(";", script) + ";");
+        List<IScriptExpression> scriptExpressions = scriptDependent.getDependencyExpression(varName);
+        List<String> expressions = new ArrayList<>();
+        for (IScriptExpression scriptExpression : scriptExpressions) {
             expressions.add(scriptExpression.toString());
         }
         return expressions;
     }
 
     protected void buildOverWindow() {
-        AbstractWindow overWindow=null;
-        String groupBy=MapKeyUtil.createKey(";", groupByFieldNames);
-        if(!isShuffleOverWindow){
-             overWindow = org.apache.rocketmq.streams.window.builder.WindowBuilder.createOvertWindow(groupBy, overWindowName);
-        }else {
-            ShuffleOverWindow shuffleOverWindow=new ShuffleOverWindow();
+        AbstractWindow overWindow = null;
+        String groupBy = MapKeyUtil.createKey(";", groupByFieldNames);
+        if (!isShuffleOverWindow) {
+            overWindow = org.apache.rocketmq.streams.window.builder.WindowBuilder.createOvertWindow(groupBy, overWindowName);
+        } else {
+            ShuffleOverWindow shuffleOverWindow = new ShuffleOverWindow();
             shuffleOverWindow.setTimeFieldName("");
             shuffleOverWindow.setGroupByFieldName(groupBy);
             shuffleOverWindow.setRowNumerName(overWindowName);
             shuffleOverWindow.setTopN(overWindowTopN);
             shuffleOverWindow.setOrderFieldNames(shuffleOverWindowOrderByFieldNames);
-            overWindow=shuffleOverWindow;
+            overWindow = shuffleOverWindow;
         }
 
         getPipelineBuilder().addChainStage(overWindow);
