@@ -106,8 +106,7 @@ public class WindowBuilder extends SelectSQLBuilder {
     protected List<String> shuffleOverWindowOrderByFieldNames;
     protected int overWindowTopN = 100;
 
-    @Override
-    protected void build() {
+    @Override protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
             if (!isShuffleOverWindow) {
@@ -133,17 +132,17 @@ public class WindowBuilder extends SelectSQLBuilder {
         window.setTimeUnitAdjust(1);
 
         if (window instanceof WindowOperator) {
-            window.setSizeInterval(Optional.ofNullable(size).orElse(AbstractWindow.DEFAULT_WINDOW_SIZE));
+            window.setSizeInterval(Optional.ofNullable(size).orElse(AbstractWindow.DEFAULT_WINDOW_SIZE * 60));
             window.setSizeVariable(sizeVariable);
             window.setSizeAdjust(sizeAdjust);
 
-            window.setSlideInterval(Optional.ofNullable(slide).orElse(AbstractWindow.DEFAULT_WINDOW_SLIDE));
+            window.setSlideInterval(Optional.ofNullable(slide).orElse(window.getSizeInterval()));
             window.setSlideVariable(slideVariable);
             window.setSlideAdjust(slideAdjust);
         }
 
         if (window instanceof SessionOperator) {
-            SessionOperator theWindow = (SessionOperator)window;
+            SessionOperator theWindow = (SessionOperator) window;
             theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
         }
 
@@ -153,7 +152,7 @@ public class WindowBuilder extends SelectSQLBuilder {
             Iterator<Entry<String, IParseResult>> it = owner.getFieldName2ParseResult().entrySet().iterator();
             while (it.hasNext()) {
                 Entry<String, IParseResult> entry = it.next();
-                ScriptParseResult scriptParseResult = (ScriptParseResult)entry.getValue();
+                ScriptParseResult scriptParseResult = (ScriptParseResult) entry.getValue();
                 if (CollectionUtil.isEmpty(scriptParseResult.getScriptValueList())) {
                     selectMap.put(entry.getKey(), entry.getKey());
                 } else {
@@ -217,8 +216,7 @@ public class WindowBuilder extends SelectSQLBuilder {
         getPipelineBuilder().addChainStage(overWindow);
     }
 
-    @Override
-    public Set<String> parseDependentTables() {
+    @Override public Set<String> parseDependentTables() {
         return new HashSet<>();
     }
 
