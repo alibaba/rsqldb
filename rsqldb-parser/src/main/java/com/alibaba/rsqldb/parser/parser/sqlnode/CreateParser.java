@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import java.util.List;
-
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -26,6 +24,8 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+
+import java.util.List;
 
 /**
  * Create Table Parser

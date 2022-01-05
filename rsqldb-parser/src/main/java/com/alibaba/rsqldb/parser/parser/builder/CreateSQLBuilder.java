@@ -68,7 +68,10 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             return;
         }
         this.source = createSource();
-        this.source.setGroupName(getPipelineBuilder().getPipelineName());
+        if(StringUtil.isEmpty(this.source.getGroupName())){
+            this.source.setGroupName(StringUtil.getUUID());
+        }
+
         getPipelineBuilder().setSource(source);
         getPipelineBuilder().setChannelMetaData(metaData);
         if(this.getScripts()!=null&&this.getScripts().size()>0){

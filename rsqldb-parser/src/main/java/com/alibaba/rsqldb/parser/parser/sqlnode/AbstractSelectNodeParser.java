@@ -16,11 +16,11 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
 
 public abstract class AbstractSelectNodeParser<T> extends AbstractSqlNodeParser<T, SelectSQLBuilder> {
 

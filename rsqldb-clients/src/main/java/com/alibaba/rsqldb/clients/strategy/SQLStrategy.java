@@ -16,13 +16,14 @@
  */
 package com.alibaba.rsqldb.clients.strategy;
 
-import java.util.Properties;
+import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
 import org.apache.rocketmq.streams.client.strategy.Strategy;
 import org.apache.rocketmq.streams.common.classloader.IsolationClassLoader;
 import org.apache.rocketmq.streams.common.component.AbstractComponent;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.script.ScriptComponent;
-import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
+
+import java.util.Properties;
 
 public class  SQLStrategy implements Strategy {
 

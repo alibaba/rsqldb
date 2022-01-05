@@ -16,8 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.AbstractSqlParser;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 
 public abstract class AbstractSqlNodeParser<T, DESCRIPTOR extends AbstractSQLBuilder>
     extends AbstractSqlParser<T, DESCRIPTOR> implements

@@ -16,13 +16,12 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 
@@ -34,8 +33,7 @@ public class CountParser extends AbstractSelectNodeParser<SqlBasicCall> {
         SqlNode varNode = nodeList.get(0);
         String fieldName = parseSqlNode(tableDescriptor, varNode).getReturnValue();
         ScriptParseResult scriptParseResult = new ScriptParseResult();
-        if (sqlBasicCall.getFunctionQuantifier() != null && sqlBasicCall.getFunctionQuantifier().toValue().toLowerCase()
-            .equals("distinct")) {
+        if (sqlBasicCall.getFunctionQuantifier() != null && sqlBasicCall.getFunctionQuantifier().toValue().toLowerCase().equals("distinct")) {
             String returnName = ParserNameCreator.createName("distinct", null);
             scriptParseResult.addScript(tableDescriptor, returnName + "=distinct(" + fieldName + ");");
             fieldName = returnName;
@@ -53,7 +51,7 @@ public class CountParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("count")) {
                 return true;
             }

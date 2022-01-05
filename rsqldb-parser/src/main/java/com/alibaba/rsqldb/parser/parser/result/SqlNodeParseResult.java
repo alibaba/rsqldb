@@ -16,16 +16,16 @@
  */
 package com.alibaba.rsqldb.parser.parser.result;
 
+import com.alibaba.rsqldb.parser.parser.ISqlParser;
+import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import org.apache.calcite.sql.SqlNode;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.ISqlParser;
-import org.apache.calcite.sql.SqlNode;
 
 /**
  * 每个解析的返回结果。需要考虑变量，常量和脚本的情况

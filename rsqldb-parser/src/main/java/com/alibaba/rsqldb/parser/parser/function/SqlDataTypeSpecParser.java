@@ -16,12 +16,12 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.AbstractSqlParser;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
 
 public class SqlDataTypeSpecParser extends AbstractSqlParser<SqlDataTypeSpec, AbstractSQLBuilder> {
 

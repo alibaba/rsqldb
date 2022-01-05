@@ -16,11 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
-import java.util.Map;
-
 import com.alibaba.rsqldb.parser.entity.SqlTask;
-
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
+import java.util.Map;
 
 /**
  * 同源,相同数据源的sql会动态装配在一起 可以通过getInsertSql 插入数据库完成任务发布，会自动和正在运行的数据源完成装配

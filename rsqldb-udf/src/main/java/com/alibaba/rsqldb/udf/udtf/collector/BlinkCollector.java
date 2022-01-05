@@ -18,14 +18,13 @@ package com.alibaba.rsqldb.udf.udtf.collector;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
-import org.apache.rocketmq.streams.common.context.IMessage;
-
-import org.apache.rocketmq.streams.common.context.Message;
-import org.apache.rocketmq.streams.script.context.FunctionContext;
-import org.apache.rocketmq.streams.common.model.ThreadContext;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
+import org.apache.rocketmq.streams.common.context.IMessage;
+import org.apache.rocketmq.streams.common.context.Message;
+import org.apache.rocketmq.streams.common.model.ThreadContext;
+import org.apache.rocketmq.streams.script.context.FunctionContext;
 import org.apache.rocketmq.streams.script.function.model.FunctionType;
 
 public class BlinkCollector implements Collector {

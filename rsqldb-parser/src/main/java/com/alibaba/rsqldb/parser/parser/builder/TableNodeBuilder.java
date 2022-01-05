@@ -16,10 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 
 public class TableNodeBuilder extends SelectSQLBuilder {
 

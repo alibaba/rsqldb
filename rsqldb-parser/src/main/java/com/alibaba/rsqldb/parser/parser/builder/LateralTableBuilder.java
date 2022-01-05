@@ -16,14 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.script.function.model.FunctionType;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.rocketmq.streams.script.function.model.FunctionType;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
-import org.apache.calcite.sql.SqlNode;
 
 public class LateralTableBuilder extends SelectSQLBuilder {
 

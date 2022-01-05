@@ -16,17 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import org.apache.rocketmq.streams.script.operator.expression.ScriptExpression;
+import org.apache.rocketmq.streams.script.operator.expression.ScriptParameter;
+import org.apache.rocketmq.streams.script.operator.impl.FunctionScript;
+import org.apache.rocketmq.streams.script.service.IScriptExpression;
+import org.apache.rocketmq.streams.script.service.IScriptParamter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.rocketmq.streams.script.operator.impl.FunctionScript;
-import org.apache.rocketmq.streams.script.service.IScriptExpression;
-import org.apache.rocketmq.streams.script.service.IScriptParamter;
-import org.apache.rocketmq.streams.script.operator.expression.ScriptExpression;
-import org.apache.rocketmq.streams.script.operator.expression.ScriptParameter;
 
 public class JoinConditionSQLBuilder extends SelectSQLBuilder {
     protected Set<String> dimFieldNames;

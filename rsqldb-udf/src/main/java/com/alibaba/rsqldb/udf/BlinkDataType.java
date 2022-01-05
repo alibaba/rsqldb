@@ -16,9 +16,9 @@
  */
 package com.alibaba.rsqldb.udf;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.utils.DataTypeUtil;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 public class BlinkDataType {
 

@@ -16,8 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
