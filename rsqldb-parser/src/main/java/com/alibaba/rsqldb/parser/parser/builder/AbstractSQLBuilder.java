@@ -62,7 +62,6 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         if (tableName != null) {
             dependentTables.add(tableName);
         }
-
     }
 
     @Override

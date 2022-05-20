@@ -48,7 +48,7 @@ import org.apache.commons.logging.LogFactory;
 public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     private static final Log LOG = LogFactory.getLog(CreateSQLBuilder.class);
-    private static String TABLE_NAME="sql_create_table_name";
+    private static String TABLE_NAME = "sql_create_table_name";
     private List<String> headerFieldNames;
     protected MetaData metaData = new MetaData();//保存存储的字段结构
     protected List<SqlNode> property;//sql中with部分的内容，主要是连接参数
@@ -68,18 +68,18 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             return;
         }
         this.source = createSource();
-        if(StringUtil.isEmpty(this.source.getGroupName())){
+        if (StringUtil.isEmpty(this.source.getGroupName())) {
             this.source.setGroupName(StringUtil.getUUID());
         }
 
         getPipelineBuilder().setSource(source);
+        //todo streams中没有用到
         getPipelineBuilder().setChannelMetaData(metaData);
-        if(this.getScripts()!=null&&this.getScripts().size()>0){
-            ScriptParseResult scriptParseResult=new ScriptParseResult();
+        if (this.getScripts() != null && this.getScripts().size() > 0) {
+            ScriptParseResult scriptParseResult = new ScriptParseResult();
             scriptParseResult.setScriptValueList(this.getScripts());
             getPipelineBuilder().addChainStage(new ScriptOperator(scriptParseResult.getScript()));
         }
-        //this.outputChannel=createOutputChannel(maskProperty);
     }
 
     @Override
@@ -96,9 +96,9 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         }
 
         this.properties = createProperty();
-        this.properties.put(TABLE_NAME,getTableName());
-        this.properties.put("headerFieldNames",this.headerFieldNames);
-        this.properties.put("metaData",this.metaData);
+        this.properties.put(TABLE_NAME, getTableName());
+        this.properties.put("headerFieldNames", this.headerFieldNames);
+        this.properties.put("metaData", this.metaData);
         ISource source = ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(),
             pipelineBuilder.getPipelineName(), properties, metaData);
 
@@ -113,7 +113,7 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         }
 
         this.properties = createProperty();
-        this.properties.put(TABLE_NAME,getTableName());
+        this.properties.put(TABLE_NAME, getTableName());
         ISink sink = ChannelCreatorFactory.createSink(pipelineBuilder.getPipelineNameSpace(),
             pipelineBuilder.getPipelineName(), properties, metaData);
 
@@ -134,12 +134,12 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                 i++;
                 continue;
             }
-            SqlProperty property = (SqlProperty)sqlNode;
+            SqlProperty property = (SqlProperty) sqlNode;
             String value = property.getValueString();
             if (ContantsUtil.isContant(value)) {
                 value = value.substring(1, value.length() - 1);
             }
-            String key=property.getKeyString().toLowerCase();
+            String key = property.getKeyString().toLowerCase();
             properties.put(property.getKeyString(), value);
             properties.put(key, value);
             if ("type".equals(key)) {
@@ -229,10 +229,10 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
      * @param sqlNodes
      */
     public void createColumn(SqlNodeList sqlNodes) {
-        List<String> headerFieldNames=new ArrayList<>();
-        MetaData metaData = ColumnUtil.createMetadata(this,sqlNodes, headerFieldNames);
+        List<String> headerFieldNames = new ArrayList<>();
+        MetaData metaData = ColumnUtil.createMetadata(this, sqlNodes, headerFieldNames);
         this.metaData = metaData;
-        this.headerFieldNames=headerFieldNames;
+        this.headerFieldNames = headerFieldNames;
     }
 
     public List<SqlNode> getProperty() {

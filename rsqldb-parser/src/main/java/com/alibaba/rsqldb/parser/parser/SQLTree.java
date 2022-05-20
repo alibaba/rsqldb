@@ -208,6 +208,7 @@ public class SQLTree {
     protected PipelineBuilder builderPipeline(AbstractSQLBuilder builder, String parentName) {
 
         PipelineBuilder pipelineBuilder = new PipelineBuilder(namespace, pipelineName);
+        //todo streams 也没有用这个参数
         pipelineBuilder.setParentTableName(parentName);
         builder.setPipelineBuilder(pipelineBuilder);
         //如果是双流join，且是join中的右流join

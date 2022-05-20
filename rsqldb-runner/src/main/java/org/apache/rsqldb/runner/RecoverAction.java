@@ -37,14 +37,13 @@ public class RecoverAction {
         if (args.length < 1) {
             return;
         }
-        String namespace = null;
-        if (args.length > 0) {
-            namespace = args[0];
-        }
+        String namespace = args[0];
         String jobName = null;
+
         if (args.length > 1) {
             jobName = args[1];
         }
+
         List<ChainPipeline> runningPipelines = Lists.newArrayList();
         if (namespace == null && jobName == null) {
             return;

@@ -4,16 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.apache.rocketmq</groupId>
-        <artifactId>rocketmq-streams</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
     <groupId>com.alibaba</groupId>
     <artifactId>rsqldb</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>ROCKETMQ STREAMS SQL</name>
+    <name>rsqldb</name>
     <packaging>pom</packaging>
 
     <modules>
@@ -30,6 +24,7 @@
         <blink.version>blink-3.4.0</blink.version>
         <flink.version>1.13.1</flink.version>
         <scala-library.version>2.12.4</scala-library.version>
+        <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
     </properties>
     <build>
         <plugins>
@@ -129,10 +124,34 @@
                 <artifactId>rsqldb-udf</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+
             <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-runner</artifactId>
-                <version>${project.version}</version>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-clients</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-dim</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-window</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-commons</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-script</artifactId>
+                <version>${rocketmq-streams.version}</version>
             </dependency>
 
             <dependency>

@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rsqldb-parser</artifactId>
-    <name>ROCKETMQ STREAMS SQL :: rocketmq-streams-sql-parser</name>
+    <name>rsqldb-parser</name>
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>

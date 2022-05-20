@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.parser.builder;
 
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import org.apache.rocketmq.streams.client.transform.window.WindowInfo;
 import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
@@ -106,7 +107,8 @@ public class WindowBuilder extends SelectSQLBuilder {
     protected List<String> shuffleOverWindowOrderByFieldNames;
     protected int overWindowTopN = 100;
 
-    @Override protected void build() {
+    @Override
+    protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
             if (!isShuffleOverWindow) {
@@ -128,7 +130,6 @@ public class WindowBuilder extends SelectSQLBuilder {
         }
         window.setLocalStorageOnly(isLocalStorageOnly);
         window.setTimeFieldName(timeFieldName);
-        window.setWindowType(type);
         window.setTimeUnitAdjust(1);
 
         if (window instanceof WindowOperator) {
@@ -141,10 +142,11 @@ public class WindowBuilder extends SelectSQLBuilder {
             window.setSlideAdjust(slideAdjust);
         }
 
-        if (window instanceof SessionOperator) {
-            SessionOperator theWindow = (SessionOperator) window;
-            theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
-        }
+        //will be no use in rstreams
+//        if (window instanceof SessionOperator) {
+//            SessionOperator theWindow = (SessionOperator) window;
+//            theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
+//        }
 
         Map<String, String> selectMap = new HashMap<>(32);
         if (owner.getFieldName2ParseResult() != null) {

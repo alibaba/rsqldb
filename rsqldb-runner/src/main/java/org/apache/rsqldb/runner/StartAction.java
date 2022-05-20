@@ -65,7 +65,7 @@ public class StartAction {
         } else if (namespace != null && jobName != null) {
             String finalNamespace = namespace;
             final List<?> jobNames = CollectionUtils.arrayToList(jobName.split(","));
-            runningTasks = allSqlTasks.stream().filter(runnerEntity -> finalNamespace.equals(runnerEntity.getNamespace()) && jobNames.contains(runnerEntity.getNamespace())).collect(Collectors.toList());
+            runningTasks = allSqlTasks.stream().filter(runnerEntity -> finalNamespace.equals(runnerEntity.getNamespace()) && jobNames.contains(runnerEntity.getPipelineName())).collect(Collectors.toList());
         }
         Properties properties1 = PropertiesUtils.getResourceProperties("dipper.properties");
         if (properties1.isEmpty()) {
