@@ -16,19 +16,20 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.topology.stages.OutputChainStage;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
 import org.apache.rocketmq.streams.common.utils.PrintUtil;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class InsertSQLBuilder extends AbstractSQLBuilder {
 
-    protected AbstractSQLBuilder builder;
+    protected AbstractSQLBuilder<?> builder;
     private List<String> columnNames;
 
     //protected MetaData metaData;
@@ -38,44 +39,60 @@ public class InsertSQLBuilder extends AbstractSQLBuilder {
      */
     protected CreateSQLBuilder createBuilder;
 
+
     @Override
     public void build() {
+        buildSql();
+    }
 
+    @Override
+    public SQLBuilderResult buildSql() {
+        SQLBuilderResult sqlBuilderResult=null;
         if (builder != null) {
-            //   builder.setTreeSQLBulider(getTreeSQLBulider());
+            PipelineBuilder pipelineBuilder=createPipelineBuilder();
             builder.setPipelineBuilder(pipelineBuilder);
-            builder.buildSQL();
+            sqlBuilderResult=builder.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
         }
-        /**
-         * 如果是规则引擎，需要输出出去，则在这里生成channel
-         */
+
+        //如果是规则引擎，需要输出出去，则在这里生成channel
         if (createBuilder != null) {
             createBuilder.setPipelineBuilder(getPipelineBuilder());
-            ISink channel = createBuilder.createSink();
-            channel.setConfigureName(null);//让自动生成名字，否则会和数据源的名字冲突
-            if (channel != null) {
-                if(columnNames!=null&&columnNames.size()>0&&SelectSQLBuilder.class.isInstance(builder)){
-                    StringBuilder script=new StringBuilder();
-                    SelectSQLBuilder sqlBuilder=(SelectSQLBuilder)builder;
-                    int i=0;
-                    for(String column:columnNames){
-                        script.append(column+"="+sqlBuilder.getFieldNamesOrderByDeclare().get(i)+";");
-                        i++;
-                    }
-                    pipelineBuilder.addChainStage(new ScriptOperator(script.toString()));
-
+            ISink<?> channel = createBuilder.createSink();
+            //让自动生成名字，否则会和数据源的名字冲突
+            channel.setConfigureName(null);
+            if (columnNames != null && columnNames.size() > 0 && builder instanceof SelectSQLBuilder) {
+                StringBuilder script = new StringBuilder();
+                SelectSQLBuilder sqlBuilder = (SelectSQLBuilder) builder;
+                int i = 0;
+                for (String column : columnNames) {
+                    script.append(column).append("=").append(sqlBuilder.getFieldNamesOrderByDeclare().get(i)).append(";");
+                    i++;
                 }
-                OutputChainStage chainStage = pipelineBuilder.addOutput(channel);
-                if (chainStage == null) {
-                    return;
-                }
-                String type = createBuilder.createProperty().getProperty("type");
-                if (ContantsUtil.isContant(type)) {
-                    type = type.substring(1, type.length() - 1);
-                }
-                chainStage.setEntityName(type);
+                pipelineBuilder.addChainStage(new ScriptOperator(script.toString()));
             }
+            OutputChainStage<?> chainStage = pipelineBuilder.addOutput(channel);
+            pipelineBuilder.setHorizontalStages(chainStage);
+            pipelineBuilder.setCurrentChainStage(chainStage);
+            if (chainStage == null) {
+                return sqlBuilderResult;
+            }
+            String type = createBuilder.createProperty().getProperty("type");
+            if (ContantsUtil.isContant(type)) {
+                type = type.substring(1, type.length() - 1);
+            }
+            chainStage.setEntityName(type);
         }
+
+
+        SQLBuilderResult result= new SQLBuilderResult(pipelineBuilder,sqlBuilderResult.getFirstStage(),pipelineBuilder.getCurrentChainStage());
+        String sql=sqlBuilderResult.getStageGroup().getViewName();
+        if(!sql.toLowerCase().startsWith("from")){
+            sql="FROM "+sql;
+        }
+        result.getStageGroup().setSql("INSERT INOT "+getTableName()+" "+sql);
+        result.getStageGroup().setViewName("INSERT INOT "+getTableName());
+        return result;
     }
 
     @Override
@@ -84,33 +101,32 @@ public class InsertSQLBuilder extends AbstractSQLBuilder {
     }
 
     @Override
-    public String createSQL() {
+    public String createSql() {
         String sql = null;
         if (createBuilder != null) {
-            sql = createBuilder.createSQL() + ";" + PrintUtil.LINE;
+            sql = createBuilder.createSql() + ";" + PrintUtil.LINE;
         }
-        sql += super.createSQL();
+        sql += super.createSql();
         return sql;
     }
 
-    public AbstractSQLBuilder getSqlDescriptor() {
+    public AbstractSQLBuilder<?> getSqlDescriptor() {
         return builder;
     }
 
-    public void setSqlDescriptor(AbstractSQLBuilder sqlDescriptor) {
+    public void setSqlDescriptor(AbstractSQLBuilder<?> sqlDescriptor) {
         this.builder = sqlDescriptor;
     }
 
     @Override
     public Set<String> parseDependentTables() {
         Set<String> dependentTables = new HashSet<>();
-        //dependentTables.add(getTableName());
         if (builder != null) {
-            // builder.setTreeSQLBulider(getTreeSQLBulider());
             return builder.parseDependentTables();
         }
         return dependentTables;
     }
+
     public List<String> getColumnNames() {
         return columnNames;
     }

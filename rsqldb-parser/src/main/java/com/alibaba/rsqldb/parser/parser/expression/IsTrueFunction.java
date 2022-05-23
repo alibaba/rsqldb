@@ -20,25 +20,24 @@ import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
-
-import java.util.List;
 
 public class IsTrueFunction extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
     public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
         List<SqlNode> nodeList = sqlBasicCall.getOperandList();
-        boolean isWhereStage=tableDescriptor.isWhereStage();
-        if(isWhereStage){
+        boolean isWhereStage = tableDescriptor.isWhereStage();
+        if (isWhereStage) {
             tableDescriptor.switchSelect();
         }
-        IParseResult valueSqlVar  = parseSqlNode(tableDescriptor, nodeList.get(0));
-        if(isWhereStage){
+        IParseResult valueSqlVar = parseSqlNode(tableDescriptor, nodeList.get(0));
+        if (isWhereStage) {
             tableDescriptor.switchWhere();
         }
-        String varName=valueSqlVar.getReturnValue();
+        String varName = valueSqlVar.getReturnValue();
         ScriptParseResult sqlVar = null;
         sqlVar = new ScriptParseResult();
         sqlVar.addScript("(" + varName + ",==,true)");
@@ -48,7 +47,7 @@ public class IsTrueFunction extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("is true")) {
                 return true;
             }

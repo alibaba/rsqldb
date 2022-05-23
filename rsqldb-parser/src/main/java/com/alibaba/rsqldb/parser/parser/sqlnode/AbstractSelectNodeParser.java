@@ -27,7 +27,7 @@ public abstract class AbstractSelectNodeParser<T> extends AbstractSqlNodeParser<
     protected IParseResult createExpression(String varName, String functionName, IParseResult value) {
         String dataTypeValue = "";
         if (value instanceof ConstantParseResult) {
-            ConstantParseResult constantParseResult = (ConstantParseResult)value;
+            ConstantParseResult constantParseResult = (ConstantParseResult) value;
             String dataTypeName = constantParseResult.getDataType().getDataTypeName();
             if (!StringDataType.getTypeName().equals(dataTypeName)) {
                 dataTypeValue = "," + dataTypeName;

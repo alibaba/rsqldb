@@ -21,11 +21,10 @@ import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlLikeOperator;
-
-import java.util.List;
 
 public class LikeFunction extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -38,7 +37,7 @@ public class LikeFunction extends AbstractSelectNodeParser<SqlBasicCall> {
         String value = valueSqlVar.getValueForSubExpression();
         ScriptParseResult sqlVar = null;
         if (ConstantParseResult.class.isInstance(valueSqlVar) && valueSqlVar.isConstantString() == false) {
-            ConstantParseResult constantParseResult = (ConstantParseResult)valueSqlVar;
+            ConstantParseResult constantParseResult = (ConstantParseResult) valueSqlVar;
             sqlVar = new ScriptParseResult();
             sqlVar.addScript(
                 "(" + varName + "," + functionName + "," + constantParseResult.getDataType().getDataTypeName() + ","
@@ -53,7 +52,7 @@ public class LikeFunction extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator() instanceof SqlLikeOperator) {
                 return true;
             }

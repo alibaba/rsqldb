@@ -16,16 +16,23 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import com.alibaba.rsqldb.parser.parser.SQLParserContext;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 
 public class TableNodeBuilder extends SelectSQLBuilder {
 
     @Override
     protected void build() {
 
+    }
+
+    @Override public SQLBuilderResult buildSql() {
+        ChainStage first= CollectionUtil.isEmpty(this.pipelineBuilder.getFirstStages()) ?null:this.pipelineBuilder.getFirstStages().get(0);
+        return new SQLBuilderResult(this.pipelineBuilder,first,this.pipelineBuilder.getCurrentChainStage());
     }
 
     @Override
@@ -40,8 +47,6 @@ public class TableNodeBuilder extends SelectSQLBuilder {
 
         return SQLParserContext.getInstance().get().get(getTableName());
     }
-
-
 
     @Override
     public String getFieldName(String fieldName) {

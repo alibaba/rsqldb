@@ -16,14 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.model.NameCreator;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.script.service.udf.UDFScript;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.script.annotation.Function;
+import org.apache.rocketmq.streams.script.service.udf.UDFScript;
 
 /**
  * UDX's SQL Builder
@@ -38,6 +38,9 @@ public class FunctionSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     @Override
     public void build() {
+        if (Function.class.getName().equalsIgnoreCase(className)) {
+            return;
+        }
         UDFScript blinkUDFScript = blinkUDFScan.getScript(className, functionName);
         if (blinkUDFScript == null) {
             blinkUDFScan.scan(className, null, functionName);
@@ -45,16 +48,16 @@ public class FunctionSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             if (blinkUDFScript == null) {
                 blinkUDFScript = blinkUDFScan.getScript(className, null);
             }
-            if (blinkUDFScript == null) {
+            if (blinkUDFScript == null ) {
                 LOG.error("can not find udf, the udf is " + className);
                 return;
             }
         }
         blinkUDFScript.setFunctionName(functionName);
         //        blinkUDFScan.scan(null);
-        blinkUDFScript.setFunctionName(functionName);
+//        blinkUDFScript.setFunctionName(functionName);
         blinkUDFScript.setNameSpace(getPipelineBuilder().getPipelineNameSpace());
-        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(), NameCreator.createNewName(functionName));
+        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(), NameCreatorContext.get().createNewName(functionName));
         blinkUDFScript.setConfigureName(name);
         getPipelineBuilder().addConfigurables(blinkUDFScript);
     }

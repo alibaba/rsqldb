@@ -20,40 +20,39 @@ import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlNode;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlNode;
 
 public class FilterFunction extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
     public IParseResult parse(SelectSQLBuilder selectSQLBuilder, SqlBasicCall sqlBasicCall) {
         List<SqlNode> nodeList = sqlBasicCall.getOperandList();
-        if(nodeList.size()!=2){
-            throw new RuntimeException("can not support parser the node "+sqlBasicCall);
+        if (nodeList.size() != 2) {
+            throw new RuntimeException("can not support parser the node " + sqlBasicCall);
         }
-        SqlNode condition=nodeList.get(1);
-        SqlNode action=nodeList.get(0);
+        SqlNode condition = nodeList.get(1);
+        SqlNode action = nodeList.get(0);
 
         String varName = parseSqlNode(selectSQLBuilder, condition).getReturnValue();
-        List<String> scriptList=new ArrayList<>(selectSQLBuilder.getScripts());
-        IParseResult result=parseSqlNode(selectSQLBuilder, action);
-        if(ScriptParseResult.class.isInstance(result)){
-            ScriptParseResult scriptParseResult=(ScriptParseResult)result;
-            String script="if("+varName+"){"+scriptParseResult.getScript()+"};";
+        List<String> scriptList = new ArrayList<>(selectSQLBuilder.getScripts());
+        IParseResult result = parseSqlNode(selectSQLBuilder, action);
+        if (ScriptParseResult.class.isInstance(result)) {
+            ScriptParseResult scriptParseResult = (ScriptParseResult) result;
+            String script = "if(" + varName + "){" + scriptParseResult.getScript() + "};";
             scriptList.add(script);
             selectSQLBuilder.setScripts(scriptList);
             return scriptParseResult;
         }
-        throw new RuntimeException("can not support parser the node "+sqlBasicCall);
+        throw new RuntimeException("can not support parser the node " + sqlBasicCall);
     }
 
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("filter")) {
                 return true;
             }

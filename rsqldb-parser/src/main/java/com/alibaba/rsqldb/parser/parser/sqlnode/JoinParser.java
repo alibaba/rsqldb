@@ -27,6 +27,7 @@ import com.alibaba.rsqldb.parser.parser.function.SqlIndentifierParser;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -34,8 +35,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
 
@@ -52,11 +51,11 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
         IParseResult rigth = doProcessJoinElement(joinSQLBuilder, sqlJoin.getRight());
         joinSQLBuilder.setRight(rigth);
         SqlNode sqlNode = sqlJoin.getCondition();
-        if (sqlNode == null||"true".equals(sqlNode.toString().toLowerCase())) {
-            if(BuilderParseResult.class.isInstance(left)&&BuilderParseResult.class.isInstance(rigth)){
-                BuilderParseResult leftBuilder=(BuilderParseResult)left;
-                BuilderParseResult rigthBuilder=(BuilderParseResult)rigth;
-                if(TableNodeBuilder.class.isInstance(leftBuilder.getBuilder())&&TableNodeBuilder.class.isInstance(rigthBuilder.getBuilder())){
+        if (sqlNode == null || "true".equals(sqlNode.toString().toLowerCase())) {
+            if (BuilderParseResult.class.isInstance(left) && BuilderParseResult.class.isInstance(rigth)) {
+                BuilderParseResult leftBuilder = (BuilderParseResult) left;
+                BuilderParseResult rigthBuilder = (BuilderParseResult) rigth;
+                if (TableNodeBuilder.class.isInstance(leftBuilder.getBuilder()) && TableNodeBuilder.class.isInstance(rigthBuilder.getBuilder())) {
                     joinSQLBuilder.setNeedWhereToCondition(true);
                 }
             }
@@ -74,7 +73,7 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
             joinSQLBuilder.switchSelect();
         }
         joinSQLBuilder.setOnCondition(result.getValueForSubExpression());
-        joinSQLBuilder.setConditionSQLNode(sqlNode);
+        joinSQLBuilder.setConditionSqlNode(sqlNode);
         return new BuilderParseResult(joinSQLBuilder);
     }
 
@@ -98,7 +97,7 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
          * 单表名+ as
          */
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("as")) {
                 nodeList = sqlBasicCall.getOperandList();
                 node = nodeList.get(0);
@@ -113,9 +112,9 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
             return new BuilderParseResult(tableNodeBuilder);
         }
         if (node instanceof SqlBasicCall) {
-            SqlBasicCall basicCall = (SqlBasicCall)node;
+            SqlBasicCall basicCall = (SqlBasicCall) node;
             if (basicCall.getOperator().getName().toLowerCase().equals("lateral")) {
-                AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser)SQLNodeParserFactory.getParse(node);
+                AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser) SQLNodeParserFactory.getParse(node);
                 LateralTableBuilder lateralTableBuilder = new LateralTableBuilder();
                 IParseResult result = sqlParser.parse(lateralTableBuilder, node);
                 BuilderParseResult builderParseResult = new BuilderParseResult(lateralTableBuilder);
@@ -124,10 +123,12 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
                  * udtf场景，针对tateral table（） as t(a,b)括号中的名字做处理
                  */
                 if (LateralTableBuilder.class.isInstance(builderParseResult.getBuilder())) {
-                    lateralTableBuilder = (LateralTableBuilder)builderParseResult.getBuilder();
+                    lateralTableBuilder = (LateralTableBuilder) builderParseResult.getBuilder();
                     if (nodeList.size() > 2) {
 
                         lateralTableBuilder.addFields(nodeList);
+                    }else {
+                        lateralTableBuilder.addDefaultFields();
                     }
 
                 }
@@ -137,12 +138,12 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
         /**
          * 是 select 作为表的场景
          */
-        AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser)SQLNodeParserFactory.getParse(node);
+        AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser) SQLNodeParserFactory.getParse(node);
         if (sqlParser != null) {
             AbstractSQLBuilder sqlDescriptor = sqlParser.create();
             IParseResult parseResult = sqlParser.parse(sqlDescriptor, node);
             if (SelectSQLBuilder.class.isInstance(sqlDescriptor)) {
-                SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder)sqlDescriptor;
+                SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder) sqlDescriptor;
                 selectSQLBuilder.setAsName(asName);
             }
             // builder.addDependentTable(parseResult.getReturnValue());
@@ -154,7 +155,7 @@ public class JoinParser extends AbstractSqlNodeParser<SqlJoin, JoinSQLBuilder> {
                 sqlDescriptor.setAsName(asName);
                 return new BuilderParseResult(sqlDescriptor);
             } else if (parseResult instanceof ScriptParseResult) {
-                ScriptParseResult scriptParseResult = (ScriptParseResult)parseResult;
+                ScriptParseResult scriptParseResult = (ScriptParseResult) parseResult;
                 descriptor.addScript(scriptParseResult.getScript());
                 return parseResult;
             } else {

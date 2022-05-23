@@ -17,14 +17,13 @@
 package com.alibaba.rsqldb.parser.parser.expression;
 
 import com.alibaba.fastjson.JSONObject;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 
 public class BlinkRule {
     /**
@@ -35,10 +34,10 @@ public class BlinkRule {
      * key: varName
      * value: expression str list
      */
-    protected Map<String, List<String>> var2ExpressionList=new HashMap<>();
+    protected Map<String, List<String>> var2ExpressionList = new HashMap<>();
 
     public BlinkRule(JSONObject ruleJson, int ruleId) {
-        this.ruleId=ruleId;
+        this.ruleId = ruleId;
         Iterator iterator = ruleJson.keySet().iterator();
         while (iterator.hasNext()) {
             String varName = (String) iterator.next();
@@ -46,7 +45,7 @@ public class BlinkRule {
             String expression = null;
             if (ruleValue.startsWith("$") && ruleValue.endsWith("$")) {
                 String regex = ruleValue.substring(1, ruleValue.length() - 1);
-                regex=regex.replace("'","\'");
+                regex = regex.replace("'", "\'");
                 expression = "(" + varName + ",regex,'" + regex + "')";
             } else if (ruleValue.startsWith("[") && ruleValue.endsWith("]")) {
                 long start;
@@ -70,29 +69,31 @@ public class BlinkRule {
             expressions.add(expression);
         }
     }
-    public String createExpression(JSONObject msg){
-        List<String> expressions=new ArrayList<>();
-        for(String var:var2ExpressionList.keySet()){
-            if(!msg.containsKey(var)){
+
+    public String createExpression(JSONObject msg) {
+        List<String> expressions = new ArrayList<>();
+        for (String var : var2ExpressionList.keySet()) {
+            if (!msg.containsKey(var)) {
                 return null;
             }
-            String expression=createExpression(var);
+            String expression = createExpression(var);
             expressions.add(expression);
         }
-        if(expressions.size()==0){
+        if (expressions.size() == 0) {
             return null;
         }
-        return MapKeyUtil.createKey("&",expressions);
+        return MapKeyUtil.createKey("&", expressions);
     }
-    public String createExpression(String varName){
-        List<String> expressions=this.var2ExpressionList.get(varName);
-        if(expressions==null){
+
+    public String createExpression(String varName) {
+        List<String> expressions = this.var2ExpressionList.get(varName);
+        if (expressions == null) {
             return null;
         }
-        if(expressions.size()==1){
+        if (expressions.size() == 1) {
             return expressions.get(0);
         }
-        return "("+ MapKeyUtil.createKey("&",expressions) +")";
+        return "(" + MapKeyUtil.createKey("&", expressions) + ")";
 
     }
 

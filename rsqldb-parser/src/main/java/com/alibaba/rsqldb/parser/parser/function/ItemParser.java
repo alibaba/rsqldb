@@ -21,10 +21,9 @@ import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
-
-import java.util.List;
 
 public class ItemParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -37,8 +36,8 @@ public class ItemParser extends AbstractSelectNodeParser<SqlBasicCall> {
         String collectionVar = parseSqlNode(tableDescriptor, collectionNode).getReturnValue();
 
         String indexName = parseSqlNode(tableDescriptor, indexNameNode).getReturnValue();
-        String returnName = ParserNameCreator.createName("item", null);
-        String scriptValue = returnName + "=item("+collectionVar+","+indexName+");";
+        String returnName = ParserNameCreator.createName("item");
+        String scriptValue = returnName + "=item(" + collectionVar + "," + indexName + ");";
         ScriptParseResult scriptParseResult = new ScriptParseResult();
         scriptParseResult.setReturnValue(returnName);
         scriptParseResult.addScript(tableDescriptor, scriptValue);
@@ -48,7 +47,7 @@ public class ItemParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("item")) {
                 return true;
             }

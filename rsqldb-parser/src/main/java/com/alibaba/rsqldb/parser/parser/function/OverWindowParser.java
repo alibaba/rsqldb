@@ -21,6 +21,8 @@ import com.alibaba.rsqldb.parser.parser.builder.WindowBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -28,10 +30,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.model.NameCreator;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 
 public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -39,28 +38,28 @@ public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
     public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
-        SqlWindow sqlWindow = (SqlWindow)sqlBasicCall.getOperandList().get(1);
+        SqlWindow sqlWindow = (SqlWindow) sqlBasicCall.getOperandList().get(1);
         SqlNodeList sqlNodeList = sqlWindow.getPartitionList();
         List<String> partionFieldNames = new ArrayList<>();
         for (int i = 0; i < sqlNodeList.size(); i++) {
             IParseResult result = parseSqlNode(builder, sqlNodeList.get(i));
             partionFieldNames.add(result.getReturnValue());
         }
-        String rowNumberName = NameCreator.createNewName("over", "parition");
+        String rowNumberName = NameCreatorContext.get().createNewName("over", "parition");
         WindowBuilder windowBuilder = new WindowBuilder();
         windowBuilder.setGroupByFieldNames(partionFieldNames);
         windowBuilder.setOverWindowName(rowNumberName);
         builder.setWindowBuilder(windowBuilder);
         builder.setOverName(rowNumberName);
         VarParseResult varParseResult = new VarParseResult(rowNumberName);
-        boolean isShuffleOver=true;
-        if((sqlWindow.getOrderList()==null||sqlWindow.getOrderList().size()==0)||(sqlWindow.getOrderList().size()==1&&"`proctime`()".equals(sqlWindow.getOrderList().get(0).toString().toLowerCase()))){
-            isShuffleOver=false;
-        }else {
-            List<String> shuffleOverWindowOrderByFieldNames=new ArrayList<>();
-            SqlNodeList orderNodes= sqlWindow.getOrderList();
-            for(SqlNode sqlNode:orderNodes.getList()){
-                String orderByStr=createOrderByStr(sqlNode);
+        boolean isShuffleOver = true;
+        if ((sqlWindow.getOrderList() == null || sqlWindow.getOrderList().size() == 0) || (sqlWindow.getOrderList().size() == 1 && "`proctime`()".equals(sqlWindow.getOrderList().get(0).toString().toLowerCase()))) {
+            isShuffleOver = false;
+        } else {
+            List<String> shuffleOverWindowOrderByFieldNames = new ArrayList<>();
+            SqlNodeList orderNodes = sqlWindow.getOrderList();
+            for (SqlNode sqlNode : orderNodes.getList()) {
+                String orderByStr = createOrderByStr(sqlNode);
                 shuffleOverWindowOrderByFieldNames.add(orderByStr);
             }
             windowBuilder.setShuffleOverWindowOrderByFieldNames(shuffleOverWindowOrderByFieldNames);
@@ -69,11 +68,10 @@ public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
         return varParseResult;
     }
 
-
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("over")) {
                 return true;
             }
@@ -81,13 +79,12 @@ public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
         return false;
     }
 
-
     private String createOrderByStr(SqlNode node) {
-        if(SqlIdentifier.class.isInstance(node)){
-            return node.toString()+";true";
-        }else {
-            SqlBasicCall sqlBasicCall=(SqlBasicCall)node;
-            return sqlBasicCall.getOperandList().get(0)+";false";
+        if (SqlIdentifier.class.isInstance(node)) {
+            return node.toString() + ";true";
+        } else {
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) node;
+            return sqlBasicCall.getOperandList().get(0) + ";false";
         }
     }
 }

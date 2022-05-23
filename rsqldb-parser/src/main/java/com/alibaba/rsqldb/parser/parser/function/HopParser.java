@@ -32,8 +32,8 @@ public class HopParser extends TumbleParser {
     public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
         SqlNode[] operands = sqlBasicCall.getOperands();
         IParseResult fieldName = parseSqlNode(builder, operands[0]);
-        SqlIntervalLiteral slide = (SqlIntervalLiteral)operands[1];
-        SqlIntervalLiteral size = (SqlIntervalLiteral)operands[2];
+        SqlIntervalLiteral slide = (SqlIntervalLiteral) operands[1];
+        SqlIntervalLiteral size = (SqlIntervalLiteral) operands[2];
         createWindowBuilder(builder, size, slide, fieldName.getReturnValue());
         return new VarParseResult(null);
     }
@@ -56,9 +56,10 @@ public class HopParser extends TumbleParser {
         return windowBuilder;
     }
 
-    public static com.alibaba.rsqldb.parser.parser.builder.WindowBuilder createWindowBuilder(SelectSQLBuilder builder, SqlIntervalLiteral size,
-                                                                                                   SqlIntervalLiteral slide,
-                                                                                                   String timeFieldName) {
+    public static com.alibaba.rsqldb.parser.parser.builder.WindowBuilder createWindowBuilder(SelectSQLBuilder builder,
+        SqlIntervalLiteral size,
+        SqlIntervalLiteral slide,
+        String timeFieldName) {
         com.alibaba.rsqldb.parser.parser.builder.WindowBuilder
             windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
         windowBuilder.setType(IWindow.HOP_WINDOW);
@@ -73,7 +74,7 @@ public class HopParser extends TumbleParser {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("hop")) {
                 return true;
             }

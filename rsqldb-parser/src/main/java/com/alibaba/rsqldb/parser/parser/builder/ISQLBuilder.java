@@ -16,9 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-
+import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import java.util.Set;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 
 /**
  * 把一条独立sql对应的描述信息保存下来，并能够builder成dipper的pipeline的节点
@@ -37,12 +37,12 @@ public interface ISQLBuilder {
      *
      * @return
      */
-    String createSQL();
+    String createSql();
 
     /**
      * 把sql编译成pipline中的组件
      */
-    void buildSQL();
+    SQLBuilderResult buildSql();
 
     /**
      * 是否支持优化，如果不支持优化，则直接返回原来的sql

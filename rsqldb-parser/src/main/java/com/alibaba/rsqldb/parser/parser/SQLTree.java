@@ -19,19 +19,20 @@ package com.alibaba.rsqldb.parser.parser;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.rocketmq.streams.common.configurable.IConfigurable;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.common.topology.ChainPipeline;
 import org.apache.rocketmq.streams.common.topology.ChainStage;
 import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.metric.StageGroup;
 import org.apache.rocketmq.streams.common.topology.model.AbstractStage;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.PrintUtil;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.apache.rocketmq.streams.common.utils.SQLFormatterUtil;
 
 public class SQLTree {
 
@@ -65,6 +66,7 @@ public class SQLTree {
 
     /**
      * protected AbstractSource abstractSource;//最源头的数据源，主要提供输出文件目录和输出字段脚本
+     *
      * @param pipeline
      * @param sqlBuilder
      * @param functionBuilders
@@ -73,31 +75,37 @@ public class SQLTree {
         this.namespace = sqlBuilder.getNamespace();
         this.sqlBuilder = sqlBuilder;
         if (sqlBuilder instanceof CreateSQLBuilder) {
-            CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder)sqlBuilder;
-            rootTableName = createSQLBuilder.getTableName();
+            CreateSQLBuilder createSqlBuilder = (CreateSQLBuilder) sqlBuilder;
+            rootTableName = createSqlBuilder.getTableName();
         }
         this.functionBuilders = functionBuilders;
         this.pipelineName = pipeline;
     }
-
+    public static SQLFormatterUtil sqlFormatterUtil=new SQLFormatterUtil();
     public PipelineBuilder build() {
         PipelineBuilder rootCreator = new PipelineBuilder(namespace, pipelineName);
         if (functionBuilders != null) {
-            for (FunctionSQLBuilder functionSQLBuilder : functionBuilders) {
-                functionSQLBuilder.setPipelineBuilder(rootCreator);
-                functionSQLBuilder.build();
+            for (FunctionSQLBuilder functionSqlBuilder : functionBuilders) {
+                functionSqlBuilder.setPipelineBuilder(rootCreator);
+                functionSqlBuilder.build();
             }
         }
+        rootCreator.setRootTableName(sqlBuilder.getTableName());
         sqlBuilder.setPipelineBuilder(rootCreator);
-        sqlBuilder.buildSQL();
+        SQLBuilderResult sqlBuilderResult = sqlBuilder.buildSql();
+        if(sqlBuilderResult.getStages().size()>0){
+            addStageGroupPipeline(sqlBuilderResult.getStageGroup(),rootCreator.getPipeline());
+        }
+
 
         //TODO 拓扑结构在此
         Map<String, List<String>> tree = new HashMap<>();
         Map<AbstractSQLBuilder, BuilderNodeStage> builderBuilderNodeStageMap = new HashMap<>();
         build(namespace, sqlBuilder, rootCreator, tree, builderBuilderNodeStageMap);
         rootCreator.getPipeline().setMsgSourceName(sqlBuilder.getTableName());
+        rootCreator.getPipeline().setCreateTableSQL(sqlFormatterUtil.format(sqlBuilder.getSqlNode().toString()));
         StringBuilder stringBuilder = new StringBuilder();
-        printTree(sqlBuilder.getTableName(), tree, stringBuilder);
+//        printTree(sqlBuilder.getTableName(), tree, stringBuilder);
 
         this.rootCreator = rootCreator;
         return this.rootCreator;
@@ -112,56 +120,43 @@ public class SQLTree {
      */
     protected void build(String namespace, AbstractSQLBuilder sqlBuilder, final PipelineBuilder currentBuilder,
         Map<String, List<String>> tree, Map<AbstractSQLBuilder, BuilderNodeStage> nodeStageMap) {
-        List<AbstractSQLBuilder> list = sqlBuilder.getChildren();
+        List<AbstractSQLBuilder<?>> list = sqlBuilder.getChildren();
 
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
         List<String> subTables = new ArrayList<>();
-        for (AbstractSQLBuilder tmp : list) {
+        for (AbstractSQLBuilder<?> tmp : list) {
             subTables.add(tmp.getTableName());
         }
         tree.put(sqlBuilder.getTableName(), subTables);
         //一层对应的所有的分支。会从上层接收数据分成多份给每一个分支
-        List<ChainStage> chainStages = new ArrayList<>();
+        List<ChainStage<?>> chainStages = new ArrayList<>();
         //每个分支最后的输出节点
-        List<ChainStage> nextStages = new ArrayList<>();
+        List<ChainStage<?>> nextStages = new ArrayList<>();
         //有产生阶段的build，则会进入下一次构建
-        List<AbstractSQLBuilder> nextBuilders = new ArrayList<>();
+        List<AbstractSQLBuilder<?>> nextBuilders = new ArrayList<>();
         //对此节点所有child进行编译，并把每个分支最后一个节点形成列表，做递归
-        for (AbstractSQLBuilder builder : list) {
+        for (AbstractSQLBuilder<?> builder : list) {
 
             BuilderNodeStage nodeStage = nodeStageMap.get(builder);
             ChainStage first = null;
             ChainStage last = null;
-            boolean isBreak = false;
+            boolean isRightJoin = false;
+            SQLBuilderResult sqlBuilderResult =null;
             if (nodeStage == null) {
-                PipelineBuilder pipelineBuilder = builderPipeline(builder, sqlBuilder.getTableName());
-                isBreak = pipelineBuilder.isBreak();
-                List<IConfigurable> configurableList = pipelineBuilder.getConfigurables();
-                ChainPipeline chainPipeline = pipelineBuilder.getPipeline();
-                configurableList.remove(chainPipeline);
-                currentBuilder.addConfigurables(configurableList);
-                ChainPipeline pipeline = pipelineBuilder.getPipeline();
-                currentBuilder.getPipeline().getStages().addAll(pipeline.getStages());
-
-                if (pipeline.getStages() != null && pipeline.getStages().size() > 0) {
-                    List<AbstractStage> stages = pipeline.getStages();
-                    for (int i = 0; i < stages.size() - 1; i++) {
-                        AbstractStage current = stages.get(i);
-                        current.setOwnerSqlNodeTableName(builder.getTableName());
-                        AbstractStage next = stages.get(i + 1);
-                        current.setMsgSourceName(builder.getTableName());
-                        List<String> labels = new ArrayList<>();
-                        labels.add(next.getLabel());
-                        current.setNextStageLabels(labels);
-                        if (!next.getPrevStageLabels().contains(current.getLabel())) {
-                            next.getPrevStageLabels().add(current.getLabel());
-                        }
-
-                    }
-                    first = (ChainStage)pipeline.getStages().get(0);
-                    last = (ChainStage)pipeline.getStages().get(pipeline.getStages().size() - 1);
+                sqlBuilderResult = builderPipeline(builder, sqlBuilder.getTableName(),this.sqlBuilder.getTableName()  );
+                isRightJoin = sqlBuilderResult.isRightJoin();
+                List<IConfigurable> configurableList = sqlBuilderResult.getConfigurables();
+                if(CollectionUtil.isNotEmpty(configurableList)){
+                    currentBuilder.addConfigurables(configurableList);
+                }
+                if(CollectionUtil.isNotEmpty(sqlBuilderResult.getStages())){
+                    currentBuilder.getPipeline().getStages().addAll(sqlBuilderResult.getStages());
+                }
+                if (sqlBuilderResult.getStages() != null && sqlBuilderResult.getStages().size() > 0) {
+                   first=sqlBuilderResult.getFirstStage();
+                   last=sqlBuilderResult.getLastStage();
                 } else {
                     last = currentBuilder.getCurrentChainStage();
                 }
@@ -170,9 +165,14 @@ public class SQLTree {
                 first = nodeStage.firstStage;
                 last = nodeStage.lastStage;
             }
+            if(sqlBuilderResult!=null){
+                addStageGroupPipeline(sqlBuilderResult.getStageGroup(),currentBuilder.getPipeline());
+            }
+
             last.setOwnerSqlNodeTableName(builder.getTableName());
             last.setMsgSourceName(builder.getTableName());
-            if (!isBreak) {
+            //右流不需要再挂字节点，因为默认join 后续节点都走左流
+            if (!isRightJoin) {
                 nextStages.add(last);
                 nextBuilders.add(builder);
             }
@@ -199,23 +199,33 @@ public class SQLTree {
         }
     }
 
+    private void addStageGroupPipeline(StageGroup group, ChainPipeline<?> pipeline) {
+        pipeline.addStageGroup(group);
+        List<StageGroup> stageGroups=group.getChildren();
+        if(stageGroups!=null){
+            for(StageGroup stageGroup:stageGroups){
+                addStageGroupPipeline(stageGroup,pipeline);
+            }
+        }
+    }
+
     /**
      * build pipeline，如果是双流join的右分支，特殊处理，否则正常创建
      *
      * @param builder
      * @return
      */
-    protected PipelineBuilder builderPipeline(AbstractSQLBuilder builder, String parentName) {
+    protected SQLBuilderResult builderPipeline(AbstractSQLBuilder builder, String parentName,String rootTableName) {
 
         PipelineBuilder pipelineBuilder = new PipelineBuilder(namespace, pipelineName);
-        //todo streams 也没有用这个参数
         pipelineBuilder.setParentTableName(parentName);
+        pipelineBuilder.setRootTableName(rootTableName);
         builder.setPipelineBuilder(pipelineBuilder);
         //如果是双流join，且是join中的右流join
 
-        builder.buildSQL();
+        SQLBuilderResult sqlBuilderResult=  builder.buildSql();
 
-        return pipelineBuilder;
+        return sqlBuilderResult;
     }
 
     public PipelineBuilder getRootCreator() {
@@ -233,14 +243,15 @@ public class SQLTree {
      * @param stageMap
      * @param list
      */
-    protected void getLastChainStage(ChainStage chainStage, Map<String, AbstractStage> stageMap, List<ChainStage> list) {
+    protected void getLastChainStage(ChainStage chainStage, Map<String, AbstractStage> stageMap,
+        List<ChainStage> list) {
         if (chainStage.getNextStageLabels() == null || chainStage.getNextStageLabels().size() == 0) {
             list.add(chainStage);
             return;
         }
         List<String> nextStageLabels = chainStage.getNextStageLabels();
         for (String nextLabel : nextStageLabels) {
-            ChainStage stage = (ChainStage)stageMap.get(nextLabel);
+            ChainStage stage = (ChainStage) stageMap.get(nextLabel);
             getLastChainStage(stage, stageMap, list);
         }
     }

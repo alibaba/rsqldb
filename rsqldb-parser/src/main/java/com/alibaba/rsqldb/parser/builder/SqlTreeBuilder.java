@@ -29,88 +29,91 @@ import com.alibaba.rsqldb.parser.parser.builder.NotSupportSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SQLCreateTables;
 import com.alibaba.rsqldb.parser.parser.builder.ViewSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.flink.sql.parser.ddl.SqlNodeInfo;
-import org.apache.flink.sql.parser.util.SqlContextUtils;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.configurable.IConfigurable;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.topology.ChainPipeline;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.topology.model.PipelineSourceJoiner;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
-
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.flink.sql.parser.ddl.SqlNodeInfo;
+import org.apache.flink.sql.parser.util.SqlContextUtils;
+import org.apache.rocketmq.streams.common.channel.impl.view.ViewSource;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import org.apache.rocketmq.streams.common.configurable.IConfigurable;
+import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+import org.apache.rocketmq.streams.common.model.NameCreator;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+import org.apache.rocketmq.streams.common.topology.ChainPipeline;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-public class SQLTreeBuilder {
+public class SqlTreeBuilder {
 
-    private static final Log LOG = LogFactory.getLog(SQLTreeBuilder.class);
+    private static final Log LOG = LogFactory.getLog(SqlTreeBuilder.class);
 
     protected String namespace;
-    protected String pipelineName;//pipeline Name
-    protected String sql;//带解析的sql
-    protected boolean shareSource = true;//是否共享数据源，如果共享，则根据channel表名在sourceutil中找对应的数据源，如果没有，把channel name当数据源
-    protected Map<String, String> sourceNames;//数据源表名和数据源名字的映射关系，在多表join的场景应用
-    protected String sourceName;//如果是单表，可以直接指定
-    protected String sourcePipelineName;//数据源的pipeline name
+    protected String pipelineName;
+    protected String sql;
+
     protected ConfigurableComponent configurableComponent;
+    /**
+     * pipeline builder
+     */
+    protected List<PipelineBuilder> pipelineBuilders = new ArrayList<>();
 
-    protected List<PipelineBuilder> pipelineBuilders = new ArrayList<>();//pipeline builder
+    /**
+     * streamsTask实例
+     */
+    private StreamsTask streamsTask;
 
-    public SQLTreeBuilder(String namespace, String pipelineName, String sql, boolean shareSource, String sourceName, Map<String, String> sourceNames) {
+    @Deprecated protected boolean isCreateStreamTask = true;//默认不用修改，在专有云场景会用这个字段控制是否生成streamtask
+
+    public SqlTreeBuilder(String namespace, String pipelineName, String sql) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
         this.sql = sql.replace("\\\\", "\\");
-        this.shareSource = shareSource;
-        this.sourceNames = sourceNames;
-        this.sourceName = sourceName;
         this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
     }
 
-    public SQLTreeBuilder(String namespace, String pipelineName, String sql) {
+    public SqlTreeBuilder(String namespace, String pipelineName, String sql, ConfigurableComponent configurableComponent) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
         this.sql = sql.replace("\\\\", "\\");
-        this.shareSource = false;
-        this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
-    }
-
-    public SQLTreeBuilder(String namespace, String pipelineName, String sql, String sourcePipelineName) {
-        this.namespace = namespace;
-        this.pipelineName = pipelineName;
-        this.sql = sql.replace("\\\\", "\\");
-        this.sourcePipelineName = sourcePipelineName;
-        this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
-    }
-
-    public SQLTreeBuilder(String namespace, String pipelineName, String sql, ConfigurableComponent configurableComponent) {
-        this.namespace = namespace;
-        this.pipelineName = pipelineName;
-        this.sql = sql.replace("\\\\", "\\");
-        this.shareSource = false;
         this.configurableComponent = configurableComponent;
     }
 
-    /**
-     * 把整个sql解析成多棵树，后续会基于树做规则生成
-     *
-     * @return
-     */
-    public List<ChainPipeline> build() {
+    public List<ChainPipeline<?>> build() {
+        List<ChainPipeline<?>> pipelines=new ArrayList<>();
+        build(true,false,pipelines);
+        return pipelines;
+    }
+
+    public List<IConfigurable> build(Boolean isBuild) {
+        return build(isBuild,false,null);
+    }
+
+    public List<IConfigurable> build(Boolean isBuild, Boolean isStreamTaskStart,List<ChainPipeline<?>> pipelineList) {
+        NameCreatorContext.init(new NameCreator());
         //把sql编译成sql builder
         List<ISQLBuilder> sqlBuilders = parseSQL();
         //把sql builder 编译成sql tree
         List<SQLTree> trees = buildSQLBuilder(sqlBuilders);
         //把sql tree 编译成chain pipeline（configurable service基于配置文件生成）
-        return buildSQLTree(trees);
+        List<IConfigurable> configurables = Lists.newArrayList();
+        List<ChainPipeline<?>> pipelines=buildSqlTree(trees, isBuild, isStreamTaskStart, configurables);
+        if(pipelineList!=null){
+            pipelineList.addAll(pipelines);
+        }
+        NameCreatorContext.remove();
+        return configurables;
     }
 
     /**
@@ -130,10 +133,10 @@ public class SQLTreeBuilder {
             SQLCreateTables.getInstance().set(createBuilders);
             for (SqlNodeInfo sqlNodeInfo : sqlNodeInfoList) {
                 SqlNode sqlNode = sqlNodeInfo.getSqlNode();
-                AbstractSQLBuilder builder = null;
+                AbstractSQLBuilder<?> builder = null;
                 ISqlParser sqlParser = SQLNodeParserFactory.getParse(sqlNode);
                 if (sqlParser != null) {
-                    IBuilderCreator creator = (IBuilderCreator)sqlParser;
+                    IBuilderCreator<?> creator = (IBuilderCreator<?>) sqlParser;
                     builder = creator.create();
                     builder.setSqlNode(sqlNode);
                     sqlParser.parse(builder, sqlNode);
@@ -149,7 +152,7 @@ public class SQLTreeBuilder {
                 }
                 //设置所有的create builder
                 if (builder instanceof CreateSQLBuilder) {
-                    CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder)builder;
+                    CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder) builder;
                     createBuilders.put(builder.getTableName(), createSQLBuilder);
                 }
                 builders.add(builder);
@@ -170,15 +173,14 @@ public class SQLTreeBuilder {
     protected Set<String> getOutputFieldNames(AbstractSQLBuilder builder) {
         Set<String> fieldNames = new HashSet<>();
         if (builder instanceof CreateSQLBuilder) {
-            CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder)builder;
+            CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder) builder;
             List<MetaDataField> fields = createSQLBuilder.getMetaData().getMetaDataFields();
             for (MetaDataField field : fields) {
                 fieldNames.add(field.getFieldName());
             }
-
         }
         if (builder instanceof ViewSQLBuilder) {
-            ViewSQLBuilder viewSQLBuilder = (ViewSQLBuilder)builder;
+            ViewSQLBuilder viewSQLBuilder = (ViewSQLBuilder) builder;
             for (String filedName : viewSQLBuilder.getFieldNames()) {
                 String name = filedName;
                 if (name.contains(".")) {
@@ -206,40 +208,38 @@ public class SQLTreeBuilder {
         Map<String, AbstractSQLBuilder> roots = new HashMap<>(8);
         //
         for (ISQLBuilder builder : sqlBuilders) {
-            AbstractSQLBuilder sqlBuilder = (AbstractSQLBuilder)builder;
-            // setTreeSQLBulider(sqlBuilder);
+            AbstractSQLBuilder sqlBuilder = (AbstractSQLBuilder) builder;
             sqlBuilder.setNamespace(namespace);
             String createTable = builder.getCreateTable();
             if (StringUtil.isNotEmpty(createTable)) {
                 createTables.put(createTable, sqlBuilder);
             }
             if (builder instanceof FunctionSQLBuilder) {
-                functionBuilders.add((FunctionSQLBuilder)builder);
+                functionBuilders.add((FunctionSQLBuilder) builder);
                 continue;
             }
             Set<String> dependentTables = builder.parseDependentTables();
             if (dependentTables.size() == 0) {
-                ((AbstractSQLBuilder)builder).addRootTableName(((AbstractSQLBuilder<?>)builder).getTableName());
+                ((AbstractSQLBuilder) builder).addRootTableName(((AbstractSQLBuilder<?>) builder).getTableName());
                 continue;
             }
             /**
              * 如果是insert 节点，把对应的输出源节点设置进去
              */
             if (builder instanceof InsertSQLBuilder) {
-                AbstractSQLBuilder createSQLBuilder = createTables.get(((InsertSQLBuilder)builder).getTableName());
-                InsertSQLBuilder insertSQLBuilder = (InsertSQLBuilder)builder;
-                insertSQLBuilder.setCreateBuilder((CreateSQLBuilder)createSQLBuilder);
+                AbstractSQLBuilder createSQLBuilder = createTables.get(((InsertSQLBuilder) builder).getTableName());
+                InsertSQLBuilder insertSQLBuilder = (InsertSQLBuilder) builder;
+                insertSQLBuilder.setCreateBuilder((CreateSQLBuilder) createSQLBuilder);
             }
             for (String dependentName : dependentTables) {
                 AbstractSQLBuilder parent = createTables.get(dependentName);
                 //如果无父节点，把parent节点设置为跟节点
                 if (parent == null) {
                     roots.put(sqlBuilder.getTableName(), sqlBuilder);
-
                     continue;
                 }
                 parent.addChild(sqlBuilder);
-                ((AbstractSQLBuilder)builder).addRootTableName(parent.getRootTableNames());
+                ((AbstractSQLBuilder) builder).addRootTableName(parent.getRootTableNames());
                 boolean isRoot = isRoot(parent, sqlBuilder);
                 if (isRoot) {
                     parent.setNamespace(namespace);
@@ -265,56 +265,75 @@ public class SQLTreeBuilder {
         return sqlTrees;
     }
 
+
+    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isStreamTaskStart) {
+        return buildSqlTree(sqlTrees, true, isStreamTaskStart,null);
+    }
+
     /**
      * 把多棵树解析成多个pipline，生成元数据和sql在成员变量中 shareSource 是否共享数据源，如果共享，则根据channel的表名，来寻找共同的source，如果找到，则创建数据源joiner对象，否则是独立的pipline。 *        需要保障数据源对象的sql会提前创建
      *
      * @return pipline list
      */
-    public List<ChainPipeline> buildSQLTree(List<SQLTree> sqlTrees) {
+    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isNeedBuild, boolean isStreamTaskStart, List<IConfigurable> configurables) {
         if (sqlTrees == null || sqlTrees.size() == 0) {
             return null;
         }
-        List<ChainPipeline> piplines = new ArrayList<>();
+        IConfigurableService configurableService = configurableComponent.getService();
+        List<ChainPipeline<?>> pipelines = new ArrayList<>();
+        List<ChainPipeline<?>> pipelinesOfStreamTask = new ArrayList<>();
         for (SQLTree sqlTree : sqlTrees) {
             PipelineBuilder builder = sqlTree.getRootCreator();
-            if (shareSource) {
-                String tableName = sqlTree.getRootTableName();
-                String sourceName = getSourceName(tableName);
-                if (StringUtil.isEmpty(sourceName)) {
-                    sourceName = tableName;
-                } else {
-                    //如果有内置的数据源，创建连接对象，用来数据源动态加载这个pipeline
-                    PipelineSourceJoiner pipelineSourceJoiner = new PipelineSourceJoiner();
-                    pipelineSourceJoiner.setNameSpace(namespace);
-                    pipelineSourceJoiner.setConfigureName(builder.getPipelineName());
-                    pipelineSourceJoiner.setSourcePipelineName(sourceName);
-                    pipelineSourceJoiner.setPipelineName(builder.getPipelineName());
-                    sqlTree.getRootCreator().addConfigurables(pipelineSourceJoiner);
-                }
-                builder.getPipeline().setSourceIdentification(sourceName);
-            }
             this.pipelineBuilders.add(builder);
-            ChainPipeline pipline = builder.build(configurableComponent.getService());
-            piplines.add(pipline);
+            if (isNeedBuild) {
+                ChainPipeline<?> chainPipeline = builder.build(configurableService);
+                //If it is a view source, do not create a streamtask because it cannot be executed independently and must be merged into the sink
+                if (chainPipeline.getSource() != null && !(chainPipeline.getSource() instanceof ViewSource)) {
+                    pipelinesOfStreamTask.add(chainPipeline);
+                }
+                pipelines.add(chainPipeline);
+            } else {
+                //当不需要遍历时，直接获取当前的pipeline
+                pipelines.add(builder.getPipeline());
+                pipelinesOfStreamTask.add(builder.getPipeline());
+            }
+            if (configurables != null) {
+                configurables.addAll(builder.getAllConfigurables());
+            }
         }
-        return piplines;
-    }
+        if (pipelinesOfStreamTask.size() == 0) {
+            return pipelines;
+        }
+        if (!isCreateStreamTask) {
+            return pipelines;
+        }
+        //获取streamsTask实例
+        StreamsTask currentTask = null;
+        List<StreamsTask> streamsTasks = configurableComponent.queryConfigurableByType(StreamsTask.TYPE);
+        if (streamsTasks != null && !streamsTasks.isEmpty()) {
+            streamsTasks = streamsTasks.stream().filter(task -> task.getConfigureName().equals(this.pipelineName)).collect(Collectors.toList());
+        }
+        if (streamsTasks != null && !streamsTasks.isEmpty()) {
+            currentTask = streamsTasks.get(0);
+        }
+        StreamsTask copy = new StreamsTask();
+        if (currentTask != null) {
+            copy.toObject(currentTask.toJson());
+            copy.setUpdateFlag(currentTask.getUpdateFlag() + 1);
+        }
+        if (isStreamTaskStart) {
+            copy.setState(StreamsTask.STATE_STARTED);
+        }
+        copy.setPipelines(pipelinesOfStreamTask);
+        copy.setConfigureName(this.pipelineName);
+        copy.setNameSpace(this.namespace);
+        configurableService.insert(copy);
+        this.streamsTask = copy;
+        if (configurables != null) {
+            configurables.add(this.streamsTask);
+        }
 
-    /**
-     * 获取source name。如果是多表join，需要把每个表名和sourcename的映射关系映射进来。 如果是单表，则可以直接返回
-     *
-     * @param tableName
-     * @return
-     */
-    protected String getSourceName(String tableName) {
-        String name = null;
-        if (sourceNames != null) {
-            name = this.sourceNames.get(tableName);
-        }
-        if (StringUtil.isEmpty(name)) {
-            return this.sourceName;
-        }
-        return name;
+        return pipelines;
     }
 
     /**
@@ -366,43 +385,27 @@ public class SQLTreeBuilder {
         this.sql = sql;
     }
 
-    public boolean isShareSource() {
-        return shareSource;
-    }
-
-    public void setShareSource(boolean shareSource) {
-        this.shareSource = shareSource;
-    }
-
-    public Map<String, String> getSourceNames() {
-        return sourceNames;
-    }
-
-    public void setSourceNames(Map<String, String> sourceNames) {
-        this.sourceNames = sourceNames;
-    }
-
-    public String getSourceName() {
-        return sourceName;
-    }
-
-    public void setSourceName(String sourceName) {
-        this.sourceName = sourceName;
-    }
-
-    public String getSourcePipelineName() {
-        return sourcePipelineName;
-    }
-
-    public void setSourcePipelineName(String sourcePipelineName) {
-        this.sourcePipelineName = sourcePipelineName;
-    }
-
     public ConfigurableComponent getConfigurableComponent() {
         return configurableComponent;
     }
 
     public void setConfigurableComponent(ConfigurableComponent configurableComponent) {
         this.configurableComponent = configurableComponent;
+    }
+
+    public StreamsTask getStreamsTask() {
+        return streamsTask;
+    }
+
+    public void setStreamsTask(StreamsTask streamsTask) {
+        this.streamsTask = streamsTask;
+    }
+
+    public boolean isCreateStreamTask() {
+        return isCreateStreamTask;
+    }
+
+    public void setCreateStreamTask(boolean createStreamTask) {
+        isCreateStreamTask = createStreamTask;
     }
 }

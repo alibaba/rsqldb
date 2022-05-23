@@ -16,18 +16,21 @@
  */
 package com.alibaba.rsqldb.parser.parser.expression;
 
+import com.alibaba.rsqldb.parser.parser.builder.JoinConditionSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.JoinSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.datatype.StringDataType;
-
-import java.util.List;
+import org.apache.rocketmq.streams.filter.function.expression.CompareFunction;
 
 public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -44,6 +47,13 @@ public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
         IParseResult varSqlVar = parseSqlNode(tableDescriptor, nodeList.get(0));
 
         IParseResult valueSqlVar = parseSqlNode(tableDescriptor, nodeList.get(1));
+        if(!JoinSQLBuilder.class.isInstance(tableDescriptor)&&!JoinConditionSQLBuilder.class.isInstance(tableDescriptor) && VarParseResult.class.isInstance(valueSqlVar)&&tableDescriptor.isWhereStage()){
+            //VarParseResult valueParserResult=(VarParseResult)valueSqlVar;
+            /**
+             * 以前的逻辑会把值当常量，为了兼容变量，加前缀的目的是为了标识这个值是变量，在CompareFunction会根据这个标识对变量做特殊处理
+             */
+            ((VarParseResult) valueSqlVar).setValue(CompareFunction.VAR_PREFIX +valueSqlVar.getResultValue());
+        }
         if (tableDescriptor.isWhereStage() && varSqlVar instanceof ScriptParseResult
             && varSqlVar.getReturnValue() == null) {
             if (valueSqlVar.getReturnValue().toLowerCase().equals("true")) {
@@ -61,7 +71,7 @@ public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
         }
         DataType dataType = null;
         if (varSqlVar instanceof ConstantParseResult) {
-            ConstantParseResult constantPaseResult = (ConstantParseResult)varSqlVar;
+            ConstantParseResult constantPaseResult = (ConstantParseResult) varSqlVar;
             dataType = constantPaseResult.getDataType();
         }
         String varName = null;
@@ -109,7 +119,7 @@ public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().equals("=")) {
                 return true;
             }

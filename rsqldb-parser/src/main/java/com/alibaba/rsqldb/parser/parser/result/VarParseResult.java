@@ -60,4 +60,7 @@ public class VarParseResult implements IParseResult<String> {
         return false;
     }
 
+    public void setValue(String value) {
+        this.value = value;
+    }
 }

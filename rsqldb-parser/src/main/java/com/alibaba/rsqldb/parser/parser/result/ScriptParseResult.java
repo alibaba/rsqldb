@@ -17,10 +17,9 @@
 package com.alibaba.rsqldb.parser.parser.result;
 
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
 
 /**
  * 每个解析的返回结果。需要考虑变量，常量和脚本的情况

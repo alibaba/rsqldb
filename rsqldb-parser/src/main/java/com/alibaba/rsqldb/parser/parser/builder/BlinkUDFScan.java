@@ -20,20 +20,6 @@ import com.alibaba.rsqldb.udf.FunctionUDFScript;
 import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
 import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
 import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
-import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
-import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.utils.FileUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.script.annotation.Function;
-import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
-import org.apache.rocketmq.streams.script.service.udf.UDFScript;
-import sun.misc.JarFilter;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -48,6 +34,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableFunction;
+import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import org.apache.rocketmq.streams.common.utils.FileUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.script.annotation.Function;
+import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
+import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+import sun.misc.JarFilter;
 
 /**
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
@@ -78,7 +77,8 @@ public class BlinkUDFScan extends AbstractScan {
         notSupportUDF.add("UDFIPRegion");
     }
 
-    private BlinkUDFScan() {}
+    private BlinkUDFScan() {
+    }
 
     public static BlinkUDFScan getInstance() {
         return blinkUDFScan;
@@ -134,9 +134,6 @@ public class BlinkUDFScan extends AbstractScan {
         }
     }
 
-
-
-
     /**
      * 扫描某个目录下jar包的包名
      *
@@ -184,6 +181,11 @@ public class BlinkUDFScan extends AbstractScan {
                     jarDir = "file:" + jar.getCanonicalPath();
                     url = new URL(jarDir);
                     URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
+//                    URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+//                    Method add = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
+//                    add.setAccessible(true);
+//                    add.invoke(urlClassLoader, new Object[] { jar.toURI().toURL() });
+
                     //                    this.registBlinkUDF(file.getCanonicalPath(), packageName);
                     this.extendsDirFoUDF.put(packageName, jar.getCanonicalPath());
                     this.scanClassDir(jar, packageName, urlClassLoader, functionName);

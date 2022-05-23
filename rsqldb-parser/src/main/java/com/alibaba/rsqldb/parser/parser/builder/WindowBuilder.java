@@ -18,7 +18,15 @@ package com.alibaba.rsqldb.parser.parser.builder;
 
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
-import org.apache.rocketmq.streams.client.transform.window.WindowInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
@@ -31,16 +39,6 @@ import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 import org.apache.rocketmq.streams.window.operator.impl.SessionOperator;
 import org.apache.rocketmq.streams.window.operator.impl.ShuffleOverWindow;
 import org.apache.rocketmq.streams.window.operator.impl.WindowOperator;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 
 public class WindowBuilder extends SelectSQLBuilder {
 
@@ -107,8 +105,7 @@ public class WindowBuilder extends SelectSQLBuilder {
     protected List<String> shuffleOverWindowOrderByFieldNames;
     protected int overWindowTopN = 100;
 
-    @Override
-    protected void build() {
+    @Override protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
             if (!isShuffleOverWindow) {
@@ -142,11 +139,10 @@ public class WindowBuilder extends SelectSQLBuilder {
             window.setSlideAdjust(slideAdjust);
         }
 
-        //will be no use in rstreams
-//        if (window instanceof SessionOperator) {
-//            SessionOperator theWindow = (SessionOperator) window;
-//            theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
-//        }
+        if (window instanceof SessionOperator) {
+            SessionOperator theWindow = (SessionOperator) window;
+            theWindow.setSessionTimeOut(Optional.ofNullable(timeout).orElse(AbstractWindow.DEFAULT_WINDOW_SESSION_TIMEOUT));
+        }
 
         Map<String, String> selectMap = new HashMap<>(32);
         if (owner.getFieldName2ParseResult() != null) {
