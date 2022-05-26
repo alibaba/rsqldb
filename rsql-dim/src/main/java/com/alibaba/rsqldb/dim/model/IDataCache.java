@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.alibaba.rsqldb.dim.model;
 
-package com.alibaba.rsqldb.clients;
-
-import com.alibaba.rsqldb.clients.sql.RemoteSqlStream;
-
-public class SqlStreamBuilder {
-    public static RemoteSqlStream remoteSqlStream(String namespace) {
-        return RemoteSqlStream.create(namespace);
-    }
-
+/**
+ * @author zengyu.cw
+ * @program rocketmq-streams-apache
+ * @create 2021-11-17 09:43
+ * @description
+ */
+public interface IDataCache {
 }

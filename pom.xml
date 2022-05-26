@@ -15,6 +15,7 @@
         <module>rsqldb-udf</module>
         <module>rsqldb-clients</module>
         <module>rsqldb-runner</module>
+        <module>rsql-dim</module>
     </modules>
 
 
@@ -124,6 +125,11 @@
                 <artifactId>rsqldb-udf</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-dim</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
 
             <dependency>
@@ -132,11 +138,6 @@
                 <version>${rocketmq-streams.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-dim</artifactId>
-                <version>${rocketmq-streams.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-streams-window</artifactId>
@@ -151,6 +152,21 @@
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-streams-script</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-filter</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-configurable</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-db-operator</artifactId>
                 <version>${rocketmq-streams.version}</version>
             </dependency>
 

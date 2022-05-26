@@ -17,7 +17,7 @@
 
 package org.apache.rsqldb.runner;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
