@@ -22,45 +22,27 @@ limitations under the License.
     <fileSets>
         <fileSet>
             <fileMode>0775</fileMode>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/bin</directory>
-            <outputDirectory>bin</outputDirectory>
+            <directory>bin</directory>
+            <outputDirectory>/bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/conf</directory>
+            <directory>src/main/resources</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/jobs</directory>
-            <outputDirectory>jobs</outputDirectory>
-        </fileSet>
-        <fileSet>
             <fileMode>0775</fileMode>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/lib</directory>
-            <outputDirectory>lib</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <fileMode>0775</fileMode>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/ext</directory>
-            <outputDirectory>ext</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <fileMode>0775</fileMode>
-            <directory>target/rocketmq-streams-sql-${project.version}-standalone/log</directory>
-            <outputDirectory>log</outputDirectory>
+            <directory>log</directory>
+            <outputDirectory>/log</outputDirectory>
         </fileSet>
     </fileSets>
     <files>
         <file>
-            <source>target/rocketmq-streams-sql-${project.version}-standalone/LICENSE</source>
-            <outputDirectory/>
+            <source>../rsqldb-clients/target/rsqldb-clients-1.0.0-SNAPSHOT.jar</source>
+            <outputDirectory>lib</outputDirectory>
         </file>
         <file>
-            <source>target/rocketmq-streams-sql-${project.version}-standalone/NOTICE</source>
-            <outputDirectory/>
-        </file>
-        <file>
-            <source>target/rocketmq-streams-sql-${project.version}-standalone/README.md</source>
-            <outputDirectory/>
+            <source>target/rsqldb-runner-1.0.0-SNAPSHOT.jar</source>
+            <outputDirectory>lib</outputDirectory>
         </file>
     </files>
 </assembly>
