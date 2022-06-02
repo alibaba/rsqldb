@@ -13,9 +13,10 @@
     <modules>
         <module>rsqldb-parser</module>
         <module>rsqldb-udf</module>
-        <module>rsqldb-clients</module>
+        <module>rsqldb-server</module>
         <module>rsqldb-runner</module>
         <module>rsql-dim</module>
+        <module>rsqldb-disk</module>
     </modules>
 
 
@@ -112,7 +113,7 @@
         <dependencies>
             <dependency>
                 <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-clients</artifactId>
+                <artifactId>rsqldb-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -128,6 +129,11 @@
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-dim</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-runner</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

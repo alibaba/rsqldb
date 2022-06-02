@@ -10,47 +10,47 @@ Rocketmq Streams SQL 为 Rocketmq Streams 的开发提供了基于SQL的开发�
 ## TableStream Example
 
 ```java
-    import com.alibaba.rsqldb.clients.*;
+    import com.alibaba.rsqldb.server.*;
     String sql="CREATE FUNCTION now as 'com.sql.Function';\n"
-        +"CREATE TABLE source_table (\n"
-        +"  field1 varchar,\n"
-        +"  field2 varchar,\n"
-        +"  field3 varchar,\n"
-        +"  field4 varchar,\n"
-        +"  field5 varchar,\n"
-        +"  field6 varchar,\n"
-        +"  field7 varchar\n"
-        +") WITH (\n"
-        +" type='metaq',\n"
-        +" topic='TOPIC_01',\n"
-        +" pullIntervalMs='100',\n"
-        +" consumerGroup='CONSUMER_GROUP',\n"
-        +" fieldDelimiter='#'\n"
-        +");\n"
-        +"CREATE TABLE sink_table (\n"
-        +"  field1 varchar,\n"
-        +"  field2 varchar,\n"
-        +"  field3 varchar,\n"
-        +"  field4 varchar,\n"
-        +"  field5 varchar,\n"
-        +"  field6 varchar,\n"
-        +"  field7 varchar\n"
-        +") WITH (type = 'print');\n"
-        +"INSERT\n"
-        +"  INTO sink_table\n"
-        +"SELECT\n"
-        +"  field1,\n"
-        +"  field2,\n"
-        +"  field3,\n"
-        +"  field4,\n"
-        +"  field5,\n"
-        +"  field6,\n"
-        +"  field7\n"
-        +"FROM\n"
-        +"  source_table;";
-    
-        SQLStreamClient sqlStreamClient = new SQLStreamClient("test_namespace","test_pipeline",sql);
-        sqlStreamClient.start();
+            +"CREATE TABLE source_table (\n"
+            +"  field1 varchar,\n"
+            +"  field2 varchar,\n"
+            +"  field3 varchar,\n"
+            +"  field4 varchar,\n"
+            +"  field5 varchar,\n"
+            +"  field6 varchar,\n"
+            +"  field7 varchar\n"
+            +") WITH (\n"
+            +" type='metaq',\n"
+            +" topic='TOPIC_01',\n"
+            +" pullIntervalMs='100',\n"
+            +" consumerGroup='CONSUMER_GROUP',\n"
+            +" fieldDelimiter='#'\n"
+            +");\n"
+            +"CREATE TABLE sink_table (\n"
+            +"  field1 varchar,\n"
+            +"  field2 varchar,\n"
+            +"  field3 varchar,\n"
+            +"  field4 varchar,\n"
+            +"  field5 varchar,\n"
+            +"  field6 varchar,\n"
+            +"  field7 varchar\n"
+            +") WITH (type = 'print');\n"
+            +"INSERT\n"
+            +"  INTO sink_table\n"
+            +"SELECT\n"
+            +"  field1,\n"
+            +"  field2,\n"
+            +"  field3,\n"
+            +"  field4,\n"
+            +"  field5,\n"
+            +"  field6,\n"
+            +"  field7\n"
+            +"FROM\n"
+            +"  source_table;";
+
+            SQLStreamClient sqlStreamClient=new SQLStreamClient("test_namespace","test_pipeline",sql);
+            sqlStreamClient.start();
 
 ```
 
@@ -60,7 +60,7 @@ Rocketmq Streams SQL 为 Rocketmq Streams 的开发提供了基于SQL的开发�
 
 <dependency>
     <groupId>com.alibaba</groupId>
-    <artifactId>rsqldb-clients</artifactId>
+    <artifactId>rsqldb-server</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```

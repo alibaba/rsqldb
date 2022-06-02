@@ -65,7 +65,7 @@ public class StreamServer {
                 e1.printStackTrace();
             }
         }
-        Properties properties = PropertiesUtils.getResourceProperties("dipper.properties");
+        Properties properties = PropertiesUtils.getResourceProperties("conf/dipper.properties");
         String shuffleChannelType = properties.getProperty("window.shuffle.channel.type");
         if (RocketMQChannelBuilder.TYPE.equals(shuffleChannelType) && !mqNameServers.isEmpty()) {
             properties.setProperty("window.shuffle.channel.namesrvAddr", String.join(";", mqNameServers));

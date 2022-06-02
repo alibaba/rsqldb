@@ -37,11 +37,11 @@ limitations under the License.
     </fileSets>
     <files>
         <file>
-            <source>../rsqldb-clients/target/rsqldb-clients-1.0.0-SNAPSHOT.jar</source>
+            <source>../rsqldb-server/target/rsqldb-server-1.0.0-SNAPSHOT.jar</source>
             <outputDirectory>lib</outputDirectory>
         </file>
         <file>
-            <source>target/rsqldb-runner-1.0.0-SNAPSHOT.jar</source>
+            <source>../rsqldb-runner/target/rsqldb-runner-1.0.0-SNAPSHOT.jar</source>
             <outputDirectory>lib</outputDirectory>
         </file>
     </files>
