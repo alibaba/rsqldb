@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.rsqldb.runner;
+package org.alibaba.rsqldb.runner;
 
 import com.google.common.collect.Lists;
 import java.io.BufferedReader;

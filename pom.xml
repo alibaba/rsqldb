@@ -17,6 +17,7 @@
         <module>rsqldb-runner</module>
         <module>rsql-dim</module>
         <module>rsqldb-disk</module>
+        <module>rsqldb-cli</module>
     </modules>
 
 

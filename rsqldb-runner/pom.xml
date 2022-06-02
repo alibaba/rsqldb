@@ -43,7 +43,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>org.apache.rsqldb.runner.StreamServer</mainClass>
+                            <mainClass>org.alibaba.rsqldb.runner.StreamServer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
