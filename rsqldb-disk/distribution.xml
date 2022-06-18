@@ -34,6 +34,12 @@ limitations under the License.
             <directory>log</directory>
             <outputDirectory>/log</outputDirectory>
         </fileSet>
+
+        <fileSet>
+            <fileMode>0775</fileMode>
+            <directory>conf</directory>
+            <outputDirectory>/conf</outputDirectory>
+        </fileSet>
     </fileSets>
     <files>
         <file>

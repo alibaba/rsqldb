@@ -17,15 +17,17 @@
 
 package org.alibaba.rsqldb.runner;
 
-import com.google.common.collect.Lists;
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.streams.RocketMQChannelBuilder;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
@@ -36,36 +38,21 @@ import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 public class StreamServer {
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(5);
 
-    public static void main(String[] args) {
-        String namespace = "default";
-        if (args.length > 0) {
-            namespace = args[0];
+    public static void main(String[] args) throws Throwable {
+        if (args == null || args.length < 1) {
+            throw new IllegalArgumentException("rsqldb.conf is a required arg");
         }
 
-        //获取mqnamesrv文件信息
-        List<String> mqNameServers = Lists.newArrayList();
-        InputStream inputStream = null;
-        String line;
-        try {
-            inputStream = StreamServer.class.getClassLoader().getResourceAsStream("mqnamesrv");
-            if (inputStream != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                while ((line = reader.readLine()) != null) {
-                    mqNameServers.add(line.trim() + ":9876");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
-        }
-        Properties properties = PropertiesUtils.getResourceProperties("conf/dipper.properties");
+        String configFile = args[0];
+        InputStream in = new BufferedInputStream(new FileInputStream(configFile));
+        Properties properties = new Properties();
+        properties.load(in);
+
+        String namesrvAddrs = properties.getProperty(MixAll.NAMESRV_ADDR_ENV);
+
+        String[] temp = namesrvAddrs.trim().split(";");
+        List<String> mqNameServers = Arrays.asList(temp);
+
         String shuffleChannelType = properties.getProperty("window.shuffle.channel.type");
         if (RocketMQChannelBuilder.TYPE.equals(shuffleChannelType) && !mqNameServers.isEmpty()) {
             properties.setProperty("window.shuffle.channel.namesrvAddr", String.join(";", mqNameServers));
@@ -73,6 +60,12 @@ public class StreamServer {
             properties.setProperty("window.shuffle.channel.group", "default_shuffle_group");
         }
         ComponentCreator.setProperties(properties);
+
+        String namespace = properties.getProperty("namespace");
+        if (StringUtils.isEmpty(namespace)) {
+            namespace = "default";
+        }
+
         ConfigurableComponent configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
         final String finalNamespace = namespace;
 

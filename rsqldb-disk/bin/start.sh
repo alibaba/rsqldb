@@ -1,27 +1,16 @@
 #!/bin/sh
 set -e
 
-PROG_NAME=$0
-JOB_NAMESPACE=$1
-JOB_NAMES=$2
-JVM_CONFIG=$3
+[ ! -e "$JAVA_HOME/bin/java" ] && JAVA_HOME=$HOME/jdk/java
+[ ! -e "$JAVA_HOME/bin/java" ] && JAVA_HOME=/usr/java
+[ ! -e "$JAVA_HOME/bin/java" ] && error_exit "Please set the JAVA_HOME variable in your environment, We need java(x64)!"
 
+export JAVA_HOME
+export JAVA="$JAVA_HOME/bin/java"
+export BASE_DIR=$(dirname $0)/..
+export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/lib/*:${CLASSPATH}
 
-if [ -z "${JVM_CONFIG}" ]; then
-  JVM_CONFIG="-Xms2048m -Xmx2048m -Xss512k"
-fi
-ROCKETMQ_STREAMS_HOME=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
-ROCKETMQ_STREAMS_JOBS_DIR=$ROCKETMQ_STREAMS_HOME/jobs
-ROCKETMQ_STREAMS_CONFIGURATION=$ROCKETMQ_STREAMS_HOME/conf
-ROCKETMQ_STREAMS_EXT=$ROCKETMQ_STREAMS_HOME/ext
-ROCKETMQ_STREAMS_DEPENDENCIES=$ROCKETMQ_STREAMS_HOME/lib
-ROCKETMQ_STREAMS_LOGS=$ROCKETMQ_STREAMS_HOME/log/catalina.out
-
-if [ -z "${JAVA_HOME:-}" ]; then
-  JAVA="java -server"
-else
-  JAVA="$JAVA_HOME/bin/java -server"
-fi
+JVM_CONFIG="-Xms2048m -Xmx2048m -Xmn1024m"
 
 JAVA_OPTIONS=${JAVA_OPTIONS:-}
 
@@ -33,17 +22,14 @@ if [ ! -z "${JVM_CONFIG}" ]; then
   JVM_OPTS+=("${JVM_CONFIG}")
 fi
 
-JVM_OPTS+=( "-Dlog4j.configuration=$ROCKETMQ_STREAMS_CONFIGURATION/log4j.xml" )
+JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
+
+#JVM_OPTS+=( "-Dlog4j.configuration=$ROCKETMQ_STREAMS_CONFIGURATION/log4j.xml" )
 
 # shellcheck disable=SC2068
 # shellcheck disable=SC2039
 
-if [ ! -z "${JOB_NAMES}" -a ! -z "${JOB_NAMESPACE}" ]; then
-  eval exec $JAVA ${JVM_OPTS[@]} -classpath "$ROCKETMQ_STREAMS_DEPENDENCIES/*:$ROCKETMQ_STREAMS_EXT/*:$ROCKETMQ_STREAMS_CONFIGURATION/*" org.apache.rsqldb.runner.StartAction $ROCKETMQ_STREAMS_JOBS_DIR $JOB_NAMESPACE $JOB_NAMES "&" >>"$ROCKETMQ_STREAMS_LOGS" 2>&1
-elif [ ! -z "${JOB_NAMESPACE}" ]; then
-  eval exec $JAVA ${JVM_OPTS[@]} -classpath "$ROCKETMQ_STREAMS_DEPENDENCIES/*:$ROCKETMQ_STREAMS_EXT/*:$ROCKETMQ_STREAMS_CONFIGURATION/*" org.apache.rsqldb.runner.StartAction $ROCKETMQ_STREAMS_JOBS_DIR $JOB_NAMESPACE "&" >>"$ROCKETMQ_STREAMS_LOGS" 2>&1
-else
-  eval exec $JAVA ${JVM_OPTS[@]} -classpath "$ROCKETMQ_STREAMS_DEPENDENCIES/*:$ROCKETMQ_STREAMS_EXT/*:$ROCKETMQ_STREAMS_CONFIGURATION/*" org.apache.rsqldb.runner.StartAction $ROCKETMQ_STREAMS_JOBS_DIR "&" >>"$ROCKETMQ_STREAMS_LOGS" 2>&1
-fi
+$JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamServer ${BASE_DIR}/conf/rsqldb.conf
+
 
 
