@@ -24,12 +24,7 @@ fi
 
 JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
 
-#JVM_OPTS+=( "-Dlog4j.configuration=$ROCKETMQ_STREAMS_CONFIGURATION/log4j.xml" )
 
-# shellcheck disable=SC2068
-# shellcheck disable=SC2039
-
-$JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamServer ${BASE_DIR}/conf/rsqldb.conf
-
+$JAVA ${JVM_OPTS} -jar ${BASE_DIR}/lib/rsqldb-server-1.0.0-SNAPSHOT.jar
 
 
