@@ -30,7 +30,7 @@ public class LateralTableParser extends AbstractSqlNodeParser<SqlBasicCall, Abst
 
     @Override
     public IParseResult parse(AbstractSQLBuilder builder, SqlBasicCall sqlNode) {
-        SqlBasicCall tableNode = (SqlBasicCall)sqlNode.getOperands()[0];
+        SqlBasicCall tableNode = (SqlBasicCall) sqlNode.getOperands()[0];
         IParseResult valueResult = parseSqlNode(builder, tableNode.operand(0));
         return valueResult;
     }
@@ -38,7 +38,7 @@ public class LateralTableParser extends AbstractSqlNodeParser<SqlBasicCall, Abst
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("lateral")) {
                 return true;
             }

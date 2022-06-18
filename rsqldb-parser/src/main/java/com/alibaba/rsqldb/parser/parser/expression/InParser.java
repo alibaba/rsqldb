@@ -22,12 +22,11 @@ import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.rocketmq.streams.common.datatype.StringDataType;
-
-import java.util.List;
 
 public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -39,7 +38,7 @@ public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
             functionName = "!in";
         }
         String varName = parseSqlNode(tableDescriptor, sqlNodeList.get(0)).getReturnValue();
-        SqlNodeList nodes = (SqlNodeList)sqlNodeList.get(1);
+        SqlNodeList nodes = (SqlNodeList) sqlNodeList.get(1);
         StringBuilder stringBuilder = new StringBuilder();
         boolean isFirst = true;
         for (SqlNode sqlNode : nodes.getList()) {
@@ -74,7 +73,7 @@ public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toUpperCase().equals("IN")) {
                 return true;
             }

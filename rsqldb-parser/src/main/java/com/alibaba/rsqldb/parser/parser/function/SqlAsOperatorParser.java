@@ -21,13 +21,12 @@ import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.NotSupportParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlAsOperator;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 public class SqlAsOperatorParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -51,7 +50,7 @@ public class SqlAsOperatorParser extends AbstractSelectNodeParser<SqlBasicCall> 
             throw new RuntimeException(tableDescriptor.getTableName() + "." + sqlNode + " can not find field from "
                 + tableDescriptor.getTableName() + " table。the sql is " + tableDescriptor.getSqlNode().toString());
         }
-        if(tableDescriptor.getOverName()!=null&&value.equals(tableDescriptor.getOverName())){
+        if (tableDescriptor.getOverName() != null && value.equals(tableDescriptor.getOverName())) {
             tableDescriptor.setOverName(varName);
         }
         String scriptValue = varName + "=" + value + ";";
@@ -69,7 +68,7 @@ public class SqlAsOperatorParser extends AbstractSelectNodeParser<SqlBasicCall> 
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("as")) {
                 return true;
             }

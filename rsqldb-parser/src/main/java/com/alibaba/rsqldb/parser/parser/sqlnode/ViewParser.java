@@ -22,10 +22,9 @@ import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.ViewSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import java.util.Set;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
-
-import java.util.Set;
 
 public class ViewParser extends AbstractSqlNodeParser<SqlCreateView, ViewSQLBuilder> {
 
@@ -43,7 +42,7 @@ public class ViewParser extends AbstractSqlNodeParser<SqlCreateView, ViewSQLBuil
             /**
              * 主要是处理*的场景，把*转化成具体的字段值
              */
-            SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder)builder;
+            SelectSQLBuilder selectSQLBuilder = (SelectSQLBuilder) builder;
             Set<String> fieldNames = selectSQLBuilder.getAllFieldNames();
             viewSQLBuilder.setFieldNames(fieldNames);
         }

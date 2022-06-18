@@ -33,7 +33,7 @@ public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
     private void setWindowParameter(WindowBuilder builder, SqlIntervalLiteral intervalLiteral) {
         SqlIntervalLiteral.IntervalValue intervalValue = (SqlIntervalLiteral.IntervalValue) intervalLiteral.getValue();
         TimeUnit unit = intervalValue.getIntervalQualifier().getUnit();
-        builder.setLocalStorageOnly(TimeUnit.SECOND == unit);
+//        builder.setLocalStorageOnly(TimeUnit.SECOND == unit);
         int interval = -1;
         try {
             interval = Integer.valueOf(intervalValue.getIntervalLiteral());

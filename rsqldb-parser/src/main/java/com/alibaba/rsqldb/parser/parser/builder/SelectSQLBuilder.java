@@ -16,22 +16,11 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.SelectParser;
-import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.model.NameCreator;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.PrintUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.filter.operator.FilterOperator;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.PrintUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.filter.operator.FilterOperator;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
 
 /**
  * 这块是整个build的核心，因为所有的优化都是基于过滤的，过滤都体现在select的where部分
@@ -102,7 +104,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     protected boolean closeFieldCheck = false;
 
     @Override
-    public void buildSQL() {
+    public SQLBuilderResult buildSql() {
         if (pipelineBuilder == null) {
             pipelineBuilder = new PipelineBuilder(getSourceTable(), getSourceTable());
         }
@@ -111,12 +113,14 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
          * 无论这个select是否能优化，join查询也需要判断是否可以优化
          */
         if (joinSQLBuilder != null) {
-            joinSQLBuilder.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder joinPipelineBuilder=createPipelineBuilder();
+            joinSQLBuilder.setPipelineBuilder(joinPipelineBuilder);
             // joinSQLBuilder.setTreeSQLBulider(getTreeSQLBulider());
             joinSQLBuilder.setTableName2Builders(getTableName2Builders());
             joinSQLBuilder.setParentSelect(this);
             joinSQLBuilder.addRootTableName(this.getRootTableNames());
-            joinSQLBuilder.build();
+            SQLBuilderResult sqlBuilderResult=joinSQLBuilder.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
             // buildSelect();
         }
 
@@ -133,38 +137,63 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                 }
                 unionSQLBuilder.setTableName(pipelineBuilder.getParentTableName());
             }
-            unionSQLBuilder.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder unionPipelineBuilder=createPipelineBuilder();
+            unionSQLBuilder.setPipelineBuilder(unionPipelineBuilder);
             // unionSQLBuilder.setTreeSQLBulider(getTreeSQLBulider());
             unionSQLBuilder.setTableName2Builders(getTableName2Builders());
             unionSQLBuilder.setParentSelect(this);
             unionSQLBuilder.addRootTableName(this.getRootTableNames());
-            unionSQLBuilder.buildSQL();
+            SQLBuilderResult sqlBuilderResult= unionSQLBuilder.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
         }
         /**
          * 先build嵌套的子查询
          */
         if (subSelect != null) {
-            subSelect.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder subPipelineBuilder=createPipelineBuilder();
+            subSelect.setPipelineBuilder(subPipelineBuilder);
             // subSelect.setTreeSQLBulider(getTreeSQLBulider());
             subSelect.setTableName2Builders(getTableName2Builders());
             subSelect.addRootTableName(this.getRootTableNames());
-            subSelect.buildSQL();
+            SQLBuilderResult sqlBuilderResult=subSelect.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
         }
-
-        buildScript(getScripts());
-        bulidExpression();
-        buildGroup();
-        buildScript(getSelectScripts());
-        buildSelect();
+        PipelineBuilder subPipelineBuilder=createPipelineBuilder();
+        buildScript(subPipelineBuilder,getScripts(),false);
+        bulidExpression(subPipelineBuilder);
+        buildGroup(subPipelineBuilder);
+        buildScript(subPipelineBuilder,getSelectScripts(),true);
+        buildSelect(subPipelineBuilder);
+        SQLBuilderResult sqlBuilderResult=new SQLBuilderResult(subPipelineBuilder,this);
+        mergeSQLBuilderResult(sqlBuilderResult);
+        ChainStage<?> first=CollectionUtil.isNotEmpty(pipelineBuilder.getFirstStages())?pipelineBuilder.getFirstStages().get(0):null;
+        SQLBuilderResult result= new SQLBuilderResult(pipelineBuilder,first,pipelineBuilder.getCurrentChainStage());
+        result.getStageGroup().setSql(this.createSQLFromParser());
+        result.getStageGroup().setViewName(getFromSQL());
+        return result;
     }
+
+
 
     /**
      * 把解析字段过程中生成的脚本，生成pipline的stage
      */
-    protected void buildScript(List<String> scripts) {
+    protected void buildScript(PipelineBuilder pipelineBuilder, List<String> scripts,boolean isSelect) {
         String script = createScript(scripts);
         if (script != null) {
-            pipelineBuilder.addChainStage(new ScriptOperator(script));
+           ChainStage chainStage= pipelineBuilder.addChainStage(new ScriptOperator(script));
+           if(isSelect){
+               chainStage.setSql(selectSQL);
+               chainStage.setDiscription("SELECT Function Parser");
+           }else {
+               StringBuilder stringBuilder=new StringBuilder();
+               for(String sql:this.getExpressionFunctionSQL()){
+                   stringBuilder.append(sql+";"+PrintUtil.LINE);
+               }
+               chainStage.setSql(stringBuilder.toString());
+               chainStage.setDiscription("Where Function Parser");
+           }
+
         }
     }
 
@@ -191,12 +220,14 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     /**
      * 解析where部分生成的表达式
      */
-    protected void bulidExpression() {
+    protected void bulidExpression(PipelineBuilder pipelineBuilder) {
         if (StringUtil.isNotEmpty(expression)) {
-            SqlSelect sqlSelect = (SqlSelect)sqlNode;
+            SqlSelect sqlSelect = (SqlSelect) sqlNode;
             sqlSelect.setWhere(null);
-            String ruleName = NameCreator.createOrGet(this.getPipelineBuilder().getPipelineName()).createName(this.getPipelineBuilder().getPipelineName(), "rule");
-            pipelineBuilder.addChainStage(new FilterOperator(getNamespace(), ruleName, expression));
+            String ruleName = NameCreatorContext.get().createOrGet(this.getPipelineBuilder().getPipelineName()).createName(this.getPipelineBuilder().getPipelineName(), "rule");
+            ChainStage chainStage=pipelineBuilder.addChainStage(new FilterOperator(getNamespace(), ruleName, expression));
+            chainStage.setSql(whereSQL);
+            chainStage.setDiscription("Where Expression");
         }
 
     }
@@ -204,7 +235,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     /**
      * build group，创建window对象
      */
-    protected void buildGroup() {
+    protected void buildGroup(PipelineBuilder pipelineBuilder) {
         if (windowBuilder != null) {
             windowBuilder.setPipelineBuilder(pipelineBuilder);
             //windowBuilder.setTreeSQLBulider(getTreeSQLBulider());
@@ -216,7 +247,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     /**
      * 把select部分的字段做处理，如果解析时生成了脚本，且未在scripts中，生成脚本 同时根据select 字段列表，去除掉无用的字段
      */
-    protected void buildSelect() {
+    protected void buildSelect(PipelineBuilder pipelineBuilder) {
 
         StringBuilder stringBuilder = new StringBuilder();
         Set<String> allFieldNames = new HashSet<>();
@@ -258,7 +289,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                 IParseResult parseResult = entry.getValue();
 
                 if (ScriptParseResult.class.isInstance(parseResult)) {
-                    ScriptParseResult scriptParseResult = (ScriptParseResult)parseResult;
+                    ScriptParseResult scriptParseResult = (ScriptParseResult) parseResult;
                     List<String> scripts = scriptParseResult.getScriptValueList();
                     if (scripts != null) {
                         for (String script : scripts) {
@@ -289,7 +320,9 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                 String distinctScript = scriptValue.replace("retainField", "distinct");
                 scriptValue += distinctScript;
             }
-            pipelineBuilder.addChainStage(new ScriptOperator(scriptValue));
+            ChainStage chainStage=pipelineBuilder.addChainStage(new ScriptOperator(scriptValue));
+            chainStage.setSql(selectSQL);
+            chainStage.setDiscription("SELECT Fields");
             //optimizer.put(scriptValue,true);
         }
 
@@ -419,10 +452,10 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             int index = fieldName.indexOf(".");
             if (index != -1) {
                 String name = fieldName.substring(index + 1);
-                if (fieldNames.contains(name)) {
+               // if (fieldNames.contains(name)) {
                     stringBuilder.append(name).append("=").append(fieldName).append(";").append(PrintUtil.LINE);
                     list.add(name);
-                }
+                //}
             } else {
                 list.add(fieldName);
             }
@@ -444,7 +477,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             String key = entry.getKey();
             String value = null;
             if (entry.getValue() instanceof ScriptParseResult) {
-                ScriptParseResult scriptParseResult = (ScriptParseResult)entry.getValue();
+                ScriptParseResult scriptParseResult = (ScriptParseResult) entry.getValue();
                 value = scriptParseResult.getScript();
                 if (value.endsWith("=" + fieldName + ";")) {
                     return true;
@@ -485,7 +518,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     }
 
     @Override
-    public String createSQL() {
+    public String createSql() {
         return sqlNode.toSqlString(SqlDialect.DatabaseProduct.HSQLDB.getDialect()).toString();
     }
 
@@ -798,4 +831,6 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     public void setCloseFieldCheck(boolean closeFieldCheck) {
         this.closeFieldCheck = closeFieldCheck;
     }
+
+
 }

@@ -44,7 +44,7 @@ public class WindowStartParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (SqlBasicCall.class.isInstance(sqlNode)) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toLowerCase();
             if (tumbleFunction.equals(name) || hopFunction.equals(name)) {
                 return true;

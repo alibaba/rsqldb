@@ -118,41 +118,7 @@ Dipper的数据只有两种情况会被序列化和反序列化：
 ```sql
 create Function time_function as 'org.apache.rocketmq.streams.sql.local.runner.UDTFTest'
 
--- 数据源
-CREATE TABLE `data_source`
-(
-  `_index`  VARCHAR,
-  `_type`   VARCHAR,
-  `_id`     VARCHAR,
-  `_score`  VARCHAR,
-  `_source` VARCHAR
-) with (
-    type = 'file',
-    filePath = '/tmp/input-log.txt'
-    );
 
-CREATE TABLE `data_model`
-(
-  `_dm_timestamp` varchar,
-  `_dm_source`    VARCHAR,
-  `_dm_type`      VARCHAR,
-  `_dm_lable`     VARCHAR
-)
-  with (
-    type = 'print'
-    );
-
-CREATE TABLE `output_file`
-(
-  `_dm_timestamp` varchar,
-  `_dm_source`    VARCHAR,
-  `_dm_type`      VARCHAR,
-  `_dm_lable`     VARCHAR
-)
-  with (
-    type = 'file'
-    filePath = '/tmp/output'
-    );
 
 
 insert into data_model

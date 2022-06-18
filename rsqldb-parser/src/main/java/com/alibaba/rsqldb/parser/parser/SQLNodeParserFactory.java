@@ -22,18 +22,16 @@ import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
-import org.apache.rocketmq.streams.common.model.NameCreator;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 可以通过扩展来增加sql解析能力，主体框架不变化
@@ -88,31 +86,23 @@ public class SQLNodeParserFactory {
      * @return
      */
     public static ISqlParser getParse(Object sqlNode) {
-        Iterator<ISqlParser> it = sqlParsers.values().iterator();
-        while (it.hasNext()) {
-            ISqlParser sqlParser = it.next();
+        for (ISqlParser<?, ?> sqlParser : sqlParsers.values()) {
             if (sqlParser.support(sqlNode)) {
                 return sqlParser;
             }
         }
         if (sqlNode instanceof SqlBasicCall) {
-            final SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            final SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toUpperCase();
             if (udfsContains(name)) {
-                //                FunctionSQLBuilder functionSQLBuilder=udfSet.get(name.trim().toLowerCase());
-                //                if("com.lyra.xs.udf.ext.sas_black_rule_v2".equals(functionSQLBuilder.getClassName())){
-                //                    return new BlinkRuleV2Parser(udfSet.get(name.trim().toLowerCase()).getClassName(),name);
-                //                }
                 return new ISqlParser() {
 
                     @Override
                     public IParseResult parse(AbstractSQLBuilder builder, Object object) {
                         if (!(builder instanceof SelectSQLBuilder)) {
-                            throw new RuntimeException(
-                                "can not support parser udf " + name + ", expect select sql builder ,real is " + builder
-                                    .getClass().getName());
+                            throw new RuntimeException("can not support parser udf " + name + ", expect select sql builder ,real is " + builder.getClass().getName());
                         }
-                        String returnValue = NameCreator.createNewName("__", name);
+                        String returnValue = NameCreatorContext.get().createNewName("__", name);
                         String scriptValue = returnValue + "=" + name + "(";
                         boolean isFirst = true;
                         List<SqlNode> nodeList = sqlBasicCall.getOperandList();
@@ -123,13 +113,12 @@ public class SQLNodeParserFactory {
                                 } else {
                                     scriptValue = scriptValue + ",";
                                 }
-                                scriptValue = scriptValue + getParse(node).parse(builder, node)
-                                    .getValueForSubExpression();
+                                scriptValue = scriptValue + getParse(node).parse(builder, node).getValueForSubExpression();
                             }
                         }
                         scriptValue = scriptValue + ");";
                         ScriptParseResult scriptParseResult = new ScriptParseResult();
-                        scriptParseResult.addScript((SelectSQLBuilder)builder, scriptValue);
+                        scriptParseResult.addScript((SelectSQLBuilder) builder, scriptValue);
                         scriptParseResult.setReturnValue(returnValue);
                         return scriptParseResult;
                     }
@@ -141,7 +130,7 @@ public class SQLNodeParserFactory {
                 };
             }
         }
-        throw new RuntimeException("can not support this parser " + sqlNode.toString());
+        return null;
     }
 
     protected static boolean udfsContains(String name) {
@@ -160,10 +149,10 @@ public class SQLNodeParserFactory {
      */
     public static AbstractSQLBuilder parseBuilder(Object sqlNode) {
         ISqlParser parser = getParse(sqlNode);
-        if (!IBuilderCreator.class.isInstance(parser)) {
+        if (!(parser instanceof IBuilderCreator)) {
             throw new RuntimeException("sql node is can not parser to Descriptor " + sqlNode.toString());
         }
-        IBuilderCreator creator = (IBuilderCreator)parser;
+        IBuilderCreator creator = (IBuilderCreator) parser;
         AbstractSQLBuilder builder = creator.create();
         parser.parse(builder, sqlNode);
         return builder;

@@ -19,13 +19,12 @@ package com.alibaba.rsqldb.parser.parser.result;
 import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import org.apache.calcite.sql.SqlNode;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.calcite.sql.SqlNode;
 
 /**
  * 每个解析的返回结果。需要考虑变量，常量和脚本的情况
@@ -67,16 +66,16 @@ public class SqlNodeParseResult extends ScriptParseResult {
         //selectTableDesciptor.setOpenScriptDependent(true);
         ISqlParser sqlParser = SQLNodeParserFactory.getParse(sqlNode);
         if (NotSupportParseResult.class.isInstance(sqlParser)) {
-            NotSupportParseResult notSupportParseResult = (NotSupportParseResult)sqlParser;
+            NotSupportParseResult notSupportParseResult = (NotSupportParseResult) sqlParser;
             throw new RuntimeException("can not support this parser " + notSupportParseResult.getSqlNode().toString());
         }
         IParseResult sqlVar = sqlParser.parse(selectTableDesciptor, sqlNode);
         if (NotSupportParseResult.class.isInstance(sqlVar)) {
-            NotSupportParseResult notSupportParseResult = (NotSupportParseResult)sqlVar;
+            NotSupportParseResult notSupportParseResult = (NotSupportParseResult) sqlVar;
             throw new RuntimeException("can not support this parser " + notSupportParseResult.getSqlNode().toString());
         }
         if (ScriptParseResult.class.isInstance(sqlVar)) {
-            ScriptParseResult scriptParseResult = (ScriptParseResult)sqlVar;
+            ScriptParseResult scriptParseResult = (ScriptParseResult) sqlVar;
             if (scriptParseResult.getReturnValue() != null) {
                 List<String> scripts = selectTableDesciptor.getScripts();
                 if (scripts == null) {

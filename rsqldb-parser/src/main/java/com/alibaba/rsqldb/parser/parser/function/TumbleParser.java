@@ -34,7 +34,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
     public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
         SqlNode[] operands = sqlBasicCall.getOperands();
         IParseResult fieldName = parseSqlNode(builder, operands[0]);
-        SqlIntervalLiteral sqlIntervalLiteral = (SqlIntervalLiteral)operands[1];
+        SqlIntervalLiteral sqlIntervalLiteral = (SqlIntervalLiteral) operands[1];
         WindowBuilder windowBuilder = new WindowBuilder();
         windowBuilder.setType(AbstractWindow.TUMBLE_WINDOW);
         windowBuilder.setOwner(builder);
@@ -45,7 +45,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
     }
 
     public static void setWindowParameter(boolean isSize, WindowBuilder builder, SqlIntervalLiteral intervalLiteral) {
-        IntervalValue intervalValue = (IntervalValue)intervalLiteral.getValue();
+        IntervalValue intervalValue = (IntervalValue) intervalLiteral.getValue();
         TimeUnit unit = intervalValue.getIntervalQualifier().getUnit();
         builder.setLocalStorageOnly(TimeUnit.SECOND == unit && isSize);
         int interval = -1;
@@ -79,7 +79,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
      * @return
      */
     protected int getWindowPeriod(SqlIntervalLiteral sqlIntervalLiteral) {
-        IntervalValue intervalValue = (IntervalValue)sqlIntervalLiteral.getValue();
+        IntervalValue intervalValue = (IntervalValue) sqlIntervalLiteral.getValue();
         //TODO default value
         int interval = 10;
         try {
@@ -136,7 +136,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("tumble")) {
                 return true;
             }

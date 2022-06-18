@@ -23,12 +23,11 @@ import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SqlLiteralParser extends AbstractSqlParser<SqlLiteral, AbstractSQLBuilder> {
 
@@ -38,7 +37,7 @@ public class SqlLiteralParser extends AbstractSqlParser<SqlLiteral, AbstractSQLB
         if (value == null) {
             ScriptParseResult scriptParseResult = new ScriptParseResult();
             String returnValue = ParserNameCreator.createName("null");
-            List<String> scripts=new ArrayList<>();
+            List<String> scripts = new ArrayList<>();
             scriptParseResult.setScriptValueList(scripts);
             scriptParseResult.setReturnValue(returnValue);
             return scriptParseResult;

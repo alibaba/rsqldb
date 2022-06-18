@@ -21,14 +21,13 @@ import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.filter.function.expression.ScriptFunction;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -57,7 +56,6 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
         sqlFunctionName2ScriptFunctionName.put("window_end", "window_end");
         sqlFunctionName2ScriptFunctionName.put("STR_TO_MAP", "STR_TO_MAP");
 
-
         sqlFunctionName2ScriptFunctionName.put("UNIX_TIMESTAMP", "unixtime");
         sqlFunctionName2ScriptFunctionName.put("floor", "floor");
         sqlFunctionName2ScriptFunctionName.put("JSON_VALUE", "json_get");
@@ -75,8 +73,7 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
         sqlFunctionName2ScriptFunctionName.put("reverse", "reverse");
         sqlFunctionName2ScriptFunctionName.put("IS_DIGIT", "is_number");
         sqlFunctionName2ScriptFunctionName.put("UUID", "uuid");
-        sqlFunctionName2ScriptFunctionName.put("PROCTIME","curstamp");
-
+        sqlFunctionName2ScriptFunctionName.put("PROCTIME", "curstamp");
 
         sqlFunctionName2ScriptFunctionName.put("CHAR", "char");
         sqlFunctionName2ScriptFunctionName.put("UPPER", "upper");
@@ -93,67 +90,60 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
         sqlFunctionName2ScriptFunctionName.put("TO_BASE64", "tobase64");
         sqlFunctionName2ScriptFunctionName.put("FROM_BASE64", "frombase64");
 
-        sqlFunctionName2ScriptFunctionName.put("CONV","conv");
-        sqlFunctionName2ScriptFunctionName.put("LOG","log");
-        sqlFunctionName2ScriptFunctionName.put("CARDINALITY","cardinality");
-        sqlFunctionName2ScriptFunctionName.put("LN","ln");
-        sqlFunctionName2ScriptFunctionName.put("PI","pi");
-        sqlFunctionName2ScriptFunctionName.put("POWER","power");
+        sqlFunctionName2ScriptFunctionName.put("CONV", "conv");
+        sqlFunctionName2ScriptFunctionName.put("LOG", "log");
+        sqlFunctionName2ScriptFunctionName.put("CARDINALITY", "cardinality");
+        sqlFunctionName2ScriptFunctionName.put("LN", "ln");
+        sqlFunctionName2ScriptFunctionName.put("PI", "pi");
+        sqlFunctionName2ScriptFunctionName.put("POWER", "power");
         sqlFunctionName2ScriptFunctionName.put("*", "multiplication");
         sqlFunctionName2ScriptFunctionName.put("/", "division");
         sqlFunctionName2ScriptFunctionName.put("+", "addition");
         sqlFunctionName2ScriptFunctionName.put("-", "subtraction");
-        sqlFunctionName2ScriptFunctionName.put("COT","cot");
-        sqlFunctionName2ScriptFunctionName.put("ABS","abs");
-        sqlFunctionName2ScriptFunctionName.put("TAN","tan");
-        sqlFunctionName2ScriptFunctionName.put("ASIN","asin");
-        sqlFunctionName2ScriptFunctionName.put("ATAN","atan");
-        sqlFunctionName2ScriptFunctionName.put("SIN","sin");
-        sqlFunctionName2ScriptFunctionName.put("COS","cos");
-        sqlFunctionName2ScriptFunctionName.put("BITOR","bitor");
-        sqlFunctionName2ScriptFunctionName.put("BITXOR","bitxor");
-        sqlFunctionName2ScriptFunctionName.put("BITNOT","bitnot");
-        sqlFunctionName2ScriptFunctionName.put("BITAND","bitand");
-        sqlFunctionName2ScriptFunctionName.put("LOG10","log10");
-        sqlFunctionName2ScriptFunctionName.put("LOG2","log2");
-        sqlFunctionName2ScriptFunctionName.put("E","e");
-        sqlFunctionName2ScriptFunctionName.put("RAND","rand");
-        sqlFunctionName2ScriptFunctionName.put("BIN","bin");
-        sqlFunctionName2ScriptFunctionName.put("ROUND","round");
-        sqlFunctionName2ScriptFunctionName.put("FLOOR","floor");
-        sqlFunctionName2ScriptFunctionName.put("IS_DECIMAL","IS_DECIMAL");
-        sqlFunctionName2ScriptFunctionName.put("MOD","mod");
-
+        sqlFunctionName2ScriptFunctionName.put("COT", "cot");
+        sqlFunctionName2ScriptFunctionName.put("ABS", "abs");
+        sqlFunctionName2ScriptFunctionName.put("TAN", "tan");
+        sqlFunctionName2ScriptFunctionName.put("ASIN", "asin");
+        sqlFunctionName2ScriptFunctionName.put("ATAN", "atan");
+        sqlFunctionName2ScriptFunctionName.put("SIN", "sin");
+        sqlFunctionName2ScriptFunctionName.put("COS", "cos");
+        sqlFunctionName2ScriptFunctionName.put("BITOR", "bitor");
+        sqlFunctionName2ScriptFunctionName.put("BITXOR", "bitxor");
+        sqlFunctionName2ScriptFunctionName.put("BITNOT", "bitnot");
+        sqlFunctionName2ScriptFunctionName.put("BITAND", "bitand");
+        sqlFunctionName2ScriptFunctionName.put("LOG10", "log10");
+        sqlFunctionName2ScriptFunctionName.put("LOG2", "log2");
+        sqlFunctionName2ScriptFunctionName.put("E", "e");
+        sqlFunctionName2ScriptFunctionName.put("RAND", "rand");
+        sqlFunctionName2ScriptFunctionName.put("BIN", "bin");
+        sqlFunctionName2ScriptFunctionName.put("ROUND", "round");
+        sqlFunctionName2ScriptFunctionName.put("FLOOR", "floor");
+        sqlFunctionName2ScriptFunctionName.put("IS_DECIMAL", "IS_DECIMAL");
+        sqlFunctionName2ScriptFunctionName.put("MOD", "mod");
 
         sqlFunctionName2ScriptFunctionName.put("NOW", "curstamp_second");
-        sqlFunctionName2ScriptFunctionName.put("CURRENT_TIMESTAMP","now");
-        sqlFunctionName2ScriptFunctionName.put("DATE_FORMAT","dateFormat");
-        sqlFunctionName2ScriptFunctionName.put("UNIX_TIMESTAMP","curstamp_second");
-        sqlFunctionName2ScriptFunctionName.put("FROM_UNIXTIME","fromunixtime");
-        sqlFunctionName2ScriptFunctionName.put("DATEDIFF","dateDiff");
-        sqlFunctionName2ScriptFunctionName.put("DATE_SUB","");
-        sqlFunctionName2ScriptFunctionName.put("DATE_ADD","dateadd");
-        sqlFunctionName2ScriptFunctionName.put("WEEK","weekofyear");
-        sqlFunctionName2ScriptFunctionName.put("YEAR","year");
-        sqlFunctionName2ScriptFunctionName.put("DATE_FORMAT","format");
+        sqlFunctionName2ScriptFunctionName.put("CURRENT_TIMESTAMP", "now");
+        sqlFunctionName2ScriptFunctionName.put("DATE_FORMAT", "dateFormat");
+        sqlFunctionName2ScriptFunctionName.put("UNIX_TIMESTAMP", "curstamp_second");
+        sqlFunctionName2ScriptFunctionName.put("FROM_UNIXTIME", "fromunixtime");
+        sqlFunctionName2ScriptFunctionName.put("DATEDIFF", "dateDiff");
+        sqlFunctionName2ScriptFunctionName.put("DATE_SUB", "");
+        sqlFunctionName2ScriptFunctionName.put("DATE_ADD", "dateadd");
+        sqlFunctionName2ScriptFunctionName.put("WEEK", "weekofyear");
+        sqlFunctionName2ScriptFunctionName.put("YEAR", "year");
+        sqlFunctionName2ScriptFunctionName.put("DATE_FORMAT", "format");
 //        sqlFunctionName2ScriptFunctionName.put("DATE_FORMAT_TZ","");
-        sqlFunctionName2ScriptFunctionName.put("QUARTER","quarter");
-        sqlFunctionName2ScriptFunctionName.put("HOUR","hour");
-        sqlFunctionName2ScriptFunctionName.put("DAYOFMONTH","day");
-        sqlFunctionName2ScriptFunctionName.put("MINUTE","minute");
-        sqlFunctionName2ScriptFunctionName.put("MONTH","month");
-        sqlFunctionName2ScriptFunctionName.put("TO_TIMESTAMP","timestamp");
+        sqlFunctionName2ScriptFunctionName.put("QUARTER", "quarter");
+        sqlFunctionName2ScriptFunctionName.put("HOUR", "hour");
+        sqlFunctionName2ScriptFunctionName.put("DAYOFMONTH", "day");
+        sqlFunctionName2ScriptFunctionName.put("MINUTE", "minute");
+        sqlFunctionName2ScriptFunctionName.put("MONTH", "month");
+        sqlFunctionName2ScriptFunctionName.put("TO_TIMESTAMP", "timestamp");
 //        sqlFunctionName2ScriptFunctionName.put("TO_TIMESTAMP_TZ","");
-        sqlFunctionName2ScriptFunctionName.put("TO_DATE","to_date");
+        sqlFunctionName2ScriptFunctionName.put("TO_DATE", "to_date");
 //        sqlFunctionName2ScriptFunctionName.put("CONVERT_TZ","");
 
-
-
-
-
-
     }
-
 
     @Override
     public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
@@ -172,7 +162,7 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
                 }
                 IParseResult result = parseSqlNode(tableDescriptor, sqlNode);
                 if (result instanceof ScriptParseResult) {
-                    ScriptParseResult scriptParseResult = (ScriptParseResult)result;
+                    ScriptParseResult scriptParseResult = (ScriptParseResult) result;
                     if (!scriptParseResult.getScript().startsWith("(")) {
                         //  tableDescriptor.addScript(scriptParseResult.getScript());
                     }
@@ -205,7 +195,7 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toUpperCase();
             if (StringUtil.isNotEmpty(getFunctionName(name))) {
                 return true;

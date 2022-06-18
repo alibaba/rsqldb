@@ -21,14 +21,13 @@ import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.InsertSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.calcite.sql.SqlEmit;
 import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class InsertParser extends AbstractSqlNodeParser<SqlInsert, InsertSQLBuilder> {
 
@@ -39,48 +38,47 @@ public class InsertParser extends AbstractSqlNodeParser<SqlInsert, InsertSQLBuil
         AbstractSQLBuilder sqlDescriptor = null;
         //一般是insert的select部分
         if (sqlInsert.getSource() != null) {
-            AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser)SQLNodeParserFactory.getParse(sqlInsert.getSource());
+            AbstractSqlNodeParser sqlParser = (AbstractSqlNodeParser) SQLNodeParserFactory.getParse(sqlInsert.getSource());
             sqlDescriptor = sqlParser.create();
             sqlParser.parse(sqlDescriptor, sqlInsert.getSource());
         }
         insertSQLBuilder.setSqlDescriptor(sqlDescriptor);
-        SqlNodeList sqlNodeList=sqlInsert.getTargetColumnList();
-        if(sqlNodeList!=null){
-            List<String> fieldNames=new ArrayList<>();
-            List<SqlNode> columnNodes=sqlNodeList.getList();
-            if(columnNodes!=null){
-                for(SqlNode sqlNode:columnNodes){
-                    IParseResult parseResult=parseSqlNode(insertSQLBuilder,sqlNode);
+        SqlNodeList sqlNodeList = sqlInsert.getTargetColumnList();
+        if (sqlNodeList != null) {
+            List<String> fieldNames = new ArrayList<>();
+            List<SqlNode> columnNodes = sqlNodeList.getList();
+            if (columnNodes != null) {
+                for (SqlNode sqlNode : columnNodes) {
+                    IParseResult parseResult = parseSqlNode(insertSQLBuilder, sqlNode);
                     fieldNames.add(parseResult.getReturnValue());
                 }
                 insertSQLBuilder.setColumnNames(fieldNames);
             }
         }
 
-        parseEmit(insertSQLBuilder,sqlInsert);
+        parseEmit(insertSQLBuilder, sqlInsert);
 
         return new BuilderParseResult(insertSQLBuilder);
     }
 
     protected void parseEmit(InsertSQLBuilder builder, SqlInsert insert) {
-        SqlEmit sqlEmit= insert.getEmit();
-        if(sqlEmit==null){
+        SqlEmit sqlEmit = insert.getEmit();
+        if (sqlEmit == null) {
             return;
         }
-        if(sqlEmit.getBeforeDelay()!=null){
-            long beforeValue=sqlEmit.getBeforeDelayValue();
-            if(beforeValue>0){
-                StreamsConfigure.setEmitBeforeValue(beforeValue/1000);
+        if (sqlEmit.getBeforeDelay() != null) {
+            long beforeValue = sqlEmit.getBeforeDelayValue();
+            if (beforeValue > 0) {
+                StreamsConfigure.setEmitBeforeValue(beforeValue / 1000);
             }
 
         }
-        if(sqlEmit.getAfterDelay()!=null){
-            long afterValue=sqlEmit.getAfterDelayValue();
-            if(afterValue>0){
-                StreamsConfigure.setEmitAfterValue(afterValue/1000);
+        if (sqlEmit.getAfterDelay() != null) {
+            long afterValue = sqlEmit.getAfterDelayValue();
+            if (afterValue > 0) {
+                StreamsConfigure.setEmitAfterValue(afterValue / 1000);
             }
         }
-
 
     }
 

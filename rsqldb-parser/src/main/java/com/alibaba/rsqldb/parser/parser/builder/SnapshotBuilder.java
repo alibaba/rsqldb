@@ -17,37 +17,11 @@
 package com.alibaba.rsqldb.parser.parser.builder;
 
 import com.alibaba.rsqldb.parser.parser.ISqlParser;
+import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.db.driver.JDBCDriver;
-import org.apache.rocketmq.streams.dim.builder.IDimSQLParser;
-import org.apache.rocketmq.streams.dim.builder.SQLParserFactory;
-import org.apache.rocketmq.streams.dim.intelligence.AbstractIntelligenceCache;
-import org.apache.rocketmq.streams.dim.intelligence.AccountIntelligenceCache;
-import org.apache.rocketmq.streams.dim.intelligence.DomainIntelligenceCache;
-import org.apache.rocketmq.streams.dim.intelligence.IPIntelligenceCache;
-import org.apache.rocketmq.streams.dim.intelligence.URLIntelligenceCache;
-import org.apache.rocketmq.streams.dim.model.AbstractDim;
-import org.apache.rocketmq.streams.dim.model.DBDim;
-import org.apache.rocketmq.streams.dim.model.FileDim;
-import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
-import org.apache.rocketmq.streams.filter.function.expression.Equals;
-import org.apache.rocketmq.streams.filter.operator.Rule;
-import org.apache.rocketmq.streams.filter.operator.expression.Expression;
-import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
-import org.apache.rocketmq.streams.filter.operator.expression.SimpleExpression;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,6 +32,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
+import org.apache.rocketmq.streams.common.metadata.MetaData;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.db.driver.JDBCDriver;
+import com.alibaba.rsqldb.dim.builder.IDimSQLParser;
+import com.alibaba.rsqldb.dim.builder.SQLParserFactory;
+import com.alibaba.rsqldb.dim.intelligence.AbstractIntelligenceCache;
+import com.alibaba.rsqldb.dim.intelligence.AccountIntelligenceCache;
+import com.alibaba.rsqldb.dim.intelligence.DomainIntelligenceCache;
+import com.alibaba.rsqldb.dim.intelligence.IPIntelligenceCache;
+import com.alibaba.rsqldb.dim.intelligence.URLIntelligenceCache;
+import com.alibaba.rsqldb.dim.model.AbstractDim;
+import com.alibaba.rsqldb.dim.model.DBDim;
+import com.alibaba.rsqldb.dim.model.FileDim;
+import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
+import org.apache.rocketmq.streams.filter.function.expression.Equals;
+import org.apache.rocketmq.streams.filter.operator.Rule;
+import org.apache.rocketmq.streams.filter.operator.expression.Expression;
+import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
+import org.apache.rocketmq.streams.filter.operator.expression.SimpleExpression;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
 
 /**
  * dimension table join builder specially for url, ip and domain
@@ -79,7 +80,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
     }
 
     @Override
-    public void buildSQL() {
+    public SQLBuilderResult buildSql() {
         throw new RuntimeException("can not support this method, please use buildDimCondition");
     }
 
@@ -172,7 +173,8 @@ public class SnapshotBuilder extends SelectSQLBuilder {
      * @param properties
      * @return
      */
-    protected AbstractDim buildDBDim(long pollingTime, String tableName, CreateSQLBuilder builder, Properties properties) {
+    protected AbstractDim buildDBDim(long pollingTime, String tableName, CreateSQLBuilder builder,
+        Properties properties) {
         /**
          * 创建namelist，要起必须有pco rimary key，，否则抛出错误
          */
@@ -213,14 +215,15 @@ public class SnapshotBuilder extends SelectSQLBuilder {
      *
      * @param dbNameList
      */
-    protected void createIndexByJoinCondition(AbstractDim dbNameList, String expressionStr, CreateSQLBuilder createSQLBuilder) {
+    protected void createIndexByJoinCondition(AbstractDim dbNameList, String expressionStr,
+        CreateSQLBuilder createSQLBuilder) {
         List<Expression> expressions = new ArrayList<>();
         List<RelationExpression> relationExpressions = new ArrayList<>();
         Expression expression = ExpressionBuilder.createOptimizationExpression("tmp", "tmp", expressionStr, expressions, relationExpressions);
 
         RelationExpression relationExpression = null;
         if (RelationExpression.class.isInstance(expression)) {
-            relationExpression = (RelationExpression)expression;
+            relationExpression = (RelationExpression) expression;
             if (!"and".equals(relationExpression.getRelation())) {
                 return;
             }
@@ -287,7 +290,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
             return false;
         }
         MetaData metaData = createSQLBuilder.getMetaData();
-        if (metaData.getMetaDataField((String)value) != null) {
+        if (metaData.getMetaDataField((String) value) != null) {
             return true;
         }
         return false;
@@ -302,7 +305,8 @@ public class SnapshotBuilder extends SelectSQLBuilder {
      * @param joinType
      * @param selectFields
      */
-    protected void addDimJoib2Pipeline(AbstractDim dbNameList, JoinConditionSQLBuilder conditionSQLBuilder, String expression, String joinType, String selectFields) {
+    protected void addDimJoib2Pipeline(AbstractDim dbNameList, JoinConditionSQLBuilder conditionSQLBuilder,
+        String expression, String joinType, String selectFields) {
         List<String> scriptValue = conditionSQLBuilder.getScripts();
         String dimScript = conditionSQLBuilder.getDimScriptValue();
         if (dimScript == null) {
@@ -319,7 +323,8 @@ public class SnapshotBuilder extends SelectSQLBuilder {
             script = dim + "=left_join('" + namespace + "','" + name + "','" + expression + "'," + getAsName() + ",'" + dimScript + "'," + selectFields + ");if(!null(" + dim + ")){splitArray('" + dim + "');};";
         }
         scriptValue.add(script);
-        getPipelineBuilder().addChainStage(new ScriptOperator(conditionSQLBuilder.createScript(scriptValue)));
+        ChainStage chainStage=getPipelineBuilder().addChainStage(new ScriptOperator(conditionSQLBuilder.createScript(scriptValue)));
+        chainStage.setSql(conditionSQLBuilder.getJoinConditionSQL());
     }
 
     private Set<String> createFieldNames(String selectFields) {
@@ -339,7 +344,8 @@ public class SnapshotBuilder extends SelectSQLBuilder {
      * @param pollingTime       多长时间加载一次
      * @param intelligenceCache 情报对应的对象
      */
-    protected void buildIntelligence(long pollingTime, AbstractIntelligenceCache intelligenceCache, String joinType, String expressionStr) {
+    protected void buildIntelligence(long pollingTime, AbstractIntelligenceCache intelligenceCache, String joinType,
+        String expressionStr) {
         /**
          * 创建维表连接对象， 默认情报的数据连接是单独配置好的，不依赖sql中create语句
          */
@@ -441,7 +447,8 @@ public class SnapshotBuilder extends SelectSQLBuilder {
     /**
      * 维表不识别别名，需要做去除。维表join，要求维表字段必须在value字段，如果sql写反了，需要转换过来
      */
-    protected String convertExpression(JoinConditionSQLBuilder conditionSQLBuilder, SqlNode expressionSQLNode, String fieldNames, String aliasName, String selectFields) {
+    protected String convertExpression(JoinConditionSQLBuilder conditionSQLBuilder, SqlNode expressionSQLNode,
+        String fieldNames, String aliasName, String selectFields) {
 
         ISqlParser sqlParser = SQLNodeParserFactory.getParse(expressionSQLNode);
         conditionSQLBuilder.switchWhere();
@@ -466,7 +473,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
                 continue;
             }
 
-            String value = (String)valueObject;
+            String value = (String) valueObject;
             if (StringUtil.isNotEmpty(aliasName) && value.startsWith(aliasName)) {
                 value = value.replace(aliasName, "");
 
@@ -516,4 +523,13 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         return expression.toExpressionString(map);
     }
 
+    @Override public Set<String> getAllFieldNames() {
+        CreateSQLBuilder builder = SQLCreateTables.getInstance().get().get(getTableName());
+        Set<String> fields=new HashSet<>();
+        List<MetaDataField> metaDataFields=builder.getMetaData().getMetaDataFields();
+        for(MetaDataField metaDataField:metaDataFields){
+            fields.add(metaDataField.getFieldName());
+        }
+        return fields;
+    }
 }

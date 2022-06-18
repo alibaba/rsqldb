@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.namecreator;
 
-import org.apache.rocketmq.streams.common.model.NameCreator;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 
 public class ParserNameCreator {
     private static final String INNER_VAR_NAME_PREFIX = "___";
@@ -30,7 +30,7 @@ public class ParserNameCreator {
      */
     public static String createName(String functionName, String... names) {
         if (names == null || names.length == 0) {
-            return NameCreator.createNewName(INNER_VAR_NAME_PREFIX, functionName);
+            return NameCreatorContext.get().createNewName(INNER_VAR_NAME_PREFIX, functionName);
         }
         String[] values = new String[names.length + 2];
         values[0] = INNER_VAR_NAME_PREFIX;
@@ -38,6 +38,6 @@ public class ParserNameCreator {
         for (int i = 2; i < values.length; i++) {
             values[i] = names[i - 2];
         }
-        return NameCreator.createNewName(values);
+        return NameCreatorContext.get().createNewName(values);
     }
 }

@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.util;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -30,11 +31,8 @@ import org.apache.rocketmq.streams.common.datatype.StringDataType;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.metadata.MetaDataField;
 
-import java.util.List;
-
 public class ColumnUtil {
     private static final Log LOG = LogFactory.getLog(ColumnUtil.class);
-
 
     /**
      * 把列转换成metadata
@@ -42,7 +40,8 @@ public class ColumnUtil {
      * @param sqlNodes
      * @return
      */
-    public static MetaData createMetadata(CreateSQLBuilder builder,SqlNodeList sqlNodes, List<String> headerFildNames) {
+    public static MetaData createMetadata(CreateSQLBuilder builder, SqlNodeList sqlNodes,
+        List<String> headerFildNames) {
         if (sqlNodes == null) {
             return null;
         }
@@ -51,31 +50,31 @@ public class ColumnUtil {
         for (
             SqlNode sqlNode : sqlNodes) {
             if (!(sqlNode instanceof SqlTableColumn)) {
-                if(SqlBasicCall.class.isInstance(sqlNode)){
-                    SqlBasicCall sqlBasicCall=(SqlBasicCall)sqlNode;
-                    if(sqlBasicCall.getOperator().getName().toLowerCase().equals("as")){
+                if (SqlBasicCall.class.isInstance(sqlNode)) {
+                    SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
+                    if (sqlBasicCall.getOperator().getName().toLowerCase().equals("as")) {
                         String fieldName = sqlBasicCall.getOperandList().get(1).toString();
                         MetaDataField metaDataField = new MetaDataField();
                         metaDataField.setDataType(new StringDataType());
                         metaDataField.setFieldName(fieldName);
                         metaData.getMetaDataFields().add(metaDataField);
-                        SelectSQLBuilder sqlBuilder=new SelectSQLBuilder();
+                        SelectSQLBuilder sqlBuilder = new SelectSQLBuilder();
                         sqlBuilder.setCloseFieldCheck(true);
                         sqlBuilder.setTableName(builder.getTableName());
-                        SQLNodeParserFactory.getParse(sqlNode).parse(sqlBuilder,sqlNode);
+                        SQLNodeParserFactory.getParse(sqlNode).parse(sqlBuilder, sqlNode);
                         builder.getScripts().addAll(sqlBuilder.getScripts());
                         continue;
                     }
                 }
             }
-            SqlTableColumn sqlTableColumn = (SqlTableColumn)sqlNode;
+            SqlTableColumn sqlTableColumn = (SqlTableColumn) sqlNode;
             String fieldName = sqlTableColumn.getName().toString();
             String type = sqlTableColumn.getType().toString();
             DataType dataType = SqlDataTypeUtil.covert(type);
             if (dataType == null) {
                 LOG.warn("expect datatype, but convert fail.the sqlnode type is " + type);
             }
-            if(sqlTableColumn.isHeader()){
+            if (sqlTableColumn.isHeader()) {
                 headerFildNames.add(fieldName);
             }
             MetaDataField metaDataField = new MetaDataField();
