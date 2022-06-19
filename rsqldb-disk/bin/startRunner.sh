@@ -31,7 +31,7 @@ JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
 # shellcheck disable=SC2068
 # shellcheck disable=SC2039
 
-$JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamServer ${BASE_DIR}/conf/rsqldb.conf
+nohup $JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamRunner ${BASE_DIR}/conf/rsqldb.conf > ${BASE_DIR}/log/runner.log &
 
-
+echo "start runner success."
 
