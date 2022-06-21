@@ -25,6 +25,6 @@ fi
 JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
 
 
-$JAVA ${JVM_OPTS} -jar ${BASE_DIR}/lib/rsqldb-server-1.0.0-SNAPSHOT.jar
+nohup $JAVA ${JVM_OPTS} -jar ${BASE_DIR}/lib/rsqldb-server-1.0.0-SNAPSHOT.jar > ${BASE_DIR}/log/rsqldb-server.log 2>&1 &
 
-
+echo "start server success."

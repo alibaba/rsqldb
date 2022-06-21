@@ -35,7 +35,7 @@ import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.common.utils.PropertiesUtils;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-public class StreamServer {
+public class StreamRunner {
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(5);
 
     public static void main(String[] args) throws Throwable {
