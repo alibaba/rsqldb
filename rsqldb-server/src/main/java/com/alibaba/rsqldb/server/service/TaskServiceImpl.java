@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 public class TaskServiceImpl implements ITaskService {
 
     @Override public void submit(String namespace, String taskName, String sql) throws Exception {
-        SqlStreamBuilder.remoteSqlStream(namespace).init().name(taskName).sql(sql);
+        SqlStreamBuilder.remoteSqlStream(namespace).file().fileConfig().init().name(taskName).sql(sql);
     }
 
     @Override public void submitFile(String namespace, String taskName, String sqlPath) throws Exception {
