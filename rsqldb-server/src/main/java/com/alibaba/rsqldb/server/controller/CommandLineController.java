@@ -30,7 +30,7 @@ public class CommandLineController {
     }
 
     @PostMapping("/task/submit")
-    public String submitTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName, @RequestBody String sql) {
+    public String submitTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName, @RequestParam String sql) {
         try {
             taskService.submit(namespace, taskName, sql);
         } catch (Exception e) {

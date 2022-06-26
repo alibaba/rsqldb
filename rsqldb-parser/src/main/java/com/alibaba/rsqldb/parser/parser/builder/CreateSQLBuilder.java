@@ -172,6 +172,7 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         this.properties.put(TABLE_NAME, getTableName());
         this.properties.put("headerFieldNames", this.headerFieldNames);
         this.properties.put("metaData", this.metaData);
+        this.properties.put("fieldDelimiter",",");
 
         return ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(), pipelineBuilder.getPipelineName(), properties, metaData);
 

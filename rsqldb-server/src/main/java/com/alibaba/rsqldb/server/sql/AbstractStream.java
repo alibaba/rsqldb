@@ -57,7 +57,8 @@ public abstract class AbstractStream<T> {
     }
 
     public T fileConfig() {
-        return fileConfig("dipper.cs");
+        // 客户端生成流计算任务的保存位置，与rsqldb.conf中配置项filePathAndName，必须一致！
+        return fileConfig("absolutePath/dipper.cs");
     }
 
     public T fileConfig(String filePathAndName) {
