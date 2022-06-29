@@ -40,13 +40,23 @@ public class StreamRunner {
 
     public static void main(String[] args) throws Throwable {
         if (args == null || args.length < 1) {
-            throw new IllegalArgumentException("rsqldb.conf is a required arg");
+            throw new IllegalArgumentException("home.dir is required.");
         }
 
-        String configFile = args[0];
+        String homeDir = args[0];
+
+        String configFile = homeDir + "/conf/rsqldb.conf";
+
         InputStream in = new BufferedInputStream(new FileInputStream(configFile));
         Properties properties = new Properties();
         properties.load(in);
+
+        String filePathAndName = properties.getProperty("filePathAndName");
+        if (StringUtils.isEmpty(filePathAndName)) {
+            throw new IllegalArgumentException("filePathAndName is required.");
+        }
+
+        properties.put("filePathAndName", homeDir + "/server/" + filePathAndName);
 
         String namesrvAddrs = properties.getProperty(MixAll.NAMESRV_ADDR_ENV);
 

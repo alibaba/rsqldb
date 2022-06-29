@@ -11,7 +11,7 @@ CREATE TABLE `test_source`
     field_9 VARCHAR
 ) WITH (
       type = 'file',
-      filePath = '/Users/nize/code/github/rsqldb/rsqldb-client/src/main/resources/data.txt',
+      filePath = '/Users/nize/code/github/rsqldb/rsqldb-disk/client/data.txt',
       isJsonData = 'false',
       msgIsJsonArray = 'false'
       );

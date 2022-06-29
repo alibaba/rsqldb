@@ -28,3 +28,5 @@ nbdist/
 
 node_modules/
 _book/
+
+*/dependency-reduced-pom.xml
