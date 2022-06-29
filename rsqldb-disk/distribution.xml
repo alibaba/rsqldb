@@ -26,8 +26,9 @@ limitations under the License.
             <outputDirectory>/bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>src/main/resources</directory>
-            <outputDirectory>conf</outputDirectory>
+            <fileMode>0775</fileMode>
+            <directory>client</directory>
+            <outputDirectory>/client</outputDirectory>
         </fileSet>
         <fileSet>
             <fileMode>0775</fileMode>
@@ -44,11 +45,15 @@ limitations under the License.
     <files>
         <file>
             <source>../rsqldb-server/target/rsqldb-server-1.0.0-SNAPSHOT.jar</source>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>server</outputDirectory>
         </file>
         <file>
             <source>../rsqldb-runner/target/rsqldb-runner-1.0.0-SNAPSHOT.jar</source>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>server</outputDirectory>
+        </file>
+        <file>
+            <source>../rsqldb-client/target/rsqldb-client-1.0.0-SNAPSHOT.jar</source>
+            <outputDirectory>client</outputDirectory>
         </file>
     </files>
 </assembly>

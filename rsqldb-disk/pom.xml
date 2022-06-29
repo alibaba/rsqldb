@@ -19,7 +19,7 @@
 
     <profiles>
         <profile>
-            <id>client</id>
+            <id>server</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -32,7 +32,7 @@
         </profile>
 
         <profile>
-            <id>server</id>
+            <id>runner</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -40,6 +40,19 @@
                 <dependency>
                     <groupId>com.alibaba</groupId>
                     <artifactId>rsqldb-runner</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>client</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>rsqldb-client</artifactId>
                 </dependency>
             </dependencies>
         </profile>

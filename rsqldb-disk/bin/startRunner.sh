@@ -8,7 +8,7 @@ set -e
 export JAVA_HOME
 export JAVA="$JAVA_HOME/bin/java"
 export BASE_DIR=$(dirname $0)/..
-export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/lib/*:${CLASSPATH}
+export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/server/*:${BASE_DIR}/client/*:${CLASSPATH}
 
 JVM_CONFIG="-Xms2048m -Xmx2048m -Xmn1024m"
 
@@ -31,7 +31,7 @@ JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
 # shellcheck disable=SC2068
 # shellcheck disable=SC2039
 
-nohup $JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamRunner ${BASE_DIR}/conf/rsqldb.conf > ${BASE_DIR}/log/runner.log &
+nohup $JAVA ${JVM_OPTS} org.alibaba.rsqldb.runner.StreamRunner $1 > ${BASE_DIR}/log/rsqldb-runner.log &
 
 echo "start runner success."
 

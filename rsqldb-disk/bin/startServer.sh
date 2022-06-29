@@ -8,7 +8,7 @@ set -e
 export JAVA_HOME
 export JAVA="$JAVA_HOME/bin/java"
 export BASE_DIR=$(dirname $0)/..
-export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/lib/*:${CLASSPATH}
+export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/server/*:${BASE_DIR}/client/*:${CLASSPATH}}
 
 JVM_CONFIG="-Xms2048m -Xmx2048m -Xmn1024m"
 
@@ -25,6 +25,6 @@ fi
 JVM_OPTS="${JVM_OPTS} -cp ${CLASSPATH}"
 
 
-nohup $JAVA ${JVM_OPTS} -jar ${BASE_DIR}/lib/rsqldb-server-1.0.0-SNAPSHOT.jar > ${BASE_DIR}/log/rsqldb-server.log 2>&1 &
+nohup $JAVA ${JVM_OPTS} -jar ${BASE_DIR}/server/rsqldb-server-1.0.0-SNAPSHOT.jar $1 > ${BASE_DIR}/log/rsqldb-server.log 2>&1 &
 
 echo "start server success."

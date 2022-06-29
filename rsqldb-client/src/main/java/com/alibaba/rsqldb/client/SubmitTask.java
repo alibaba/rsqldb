@@ -44,7 +44,13 @@ import static com.alibaba.rsqldb.client.constant.Constants.submitTask;
 public class SubmitTask {
 
     public static void main(String[] args) throws Throwable {
-        String sqlPath = "standalone.sql";
+        if (args == null || args.length < 1) {
+            throw new IllegalArgumentException("home.dir is required.");
+        }
+        String homeDir = args[0];
+
+        String sqlPath = homeDir + "/client/standalone.sql";
+
         File file = FileUtil.getFile(sqlPath);
         byte[] bytes = Files.readAllBytes(file.toPath());
         String sql = new String(bytes, StandardCharsets.UTF_8);
