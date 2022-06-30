@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.alibaba.rsqldb.client.constant;
+package com.alibaba.rsqldb.client;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -33,12 +33,13 @@ package com.alibaba.rsqldb.client.constant;
  * limitations under the License.
  */
 
-public class Constants {
-    public static String submitTask = "http://localhost:8080/command/task/submit";
+import com.alibaba.rsqldb.client.http.HttpHelper;
 
-    public static String startTask = "http://localhost:8080/command/task/start";
+import static com.alibaba.rsqldb.client.constant.Constants.stopTask;
 
-    public static String queryTask = "http://localhost:8080/command/task/list";
-
-    public static String stopTask = "http://localhost:8080/command/task/stop";
+public class StopTask {
+    public static void main(String[] args) throws Throwable{
+        String result = HttpHelper.sendRequest(stopTask, "test", "test");
+        System.out.println(result);
+    }
 }

@@ -48,7 +48,7 @@ import org.apache.http.message.BasicNameValuePair;
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
 public class HttpHelper {
-    public static void submitTask(String url,String namespace, String taskName, String sql) throws Exception {
+    public static void submitTask(String url, String namespace, String taskName, String sql) throws Exception {
 
         HttpClient client = new DefaultHttpClient();
         HttpPost post = new HttpPost(url);
@@ -77,10 +77,9 @@ public class HttpHelper {
         }
 
         System.out.println(result);
-
     }
 
-    public static void startTask(String url, String namespace, String taskName) throws Throwable {
+    public static String sendRequest(String url, String namespace, String taskName) throws Throwable {
         HttpClient client = new DefaultHttpClient();
         HttpPost post = new HttpPost(url);
 
@@ -89,7 +88,9 @@ public class HttpHelper {
 
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
         urlParameters.add(new BasicNameValuePair("namespace", namespace));
-        urlParameters.add(new BasicNameValuePair("taskName", taskName));
+        if (taskName != null && !"".equals(taskName)) {
+            urlParameters.add(new BasicNameValuePair("taskName", taskName));
+        }
 
         post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
@@ -106,6 +107,6 @@ public class HttpHelper {
             result.append(line);
         }
 
-        System.out.println(result);
+        return result.toString();
     }
 }
