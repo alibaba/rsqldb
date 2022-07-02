@@ -27,7 +27,7 @@
         <blink.version>blink-3.4.0</blink.version>
         <flink.version>1.13.1</flink.version>
         <scala-library.version>2.12.4</scala-library.version>
-        <rocketmq-streams.version>1.0.3-preview-SNAPSHOT</rocketmq-streams.version>
+        <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
     </properties>
     <build>
         <plugins>

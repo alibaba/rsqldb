@@ -3,15 +3,11 @@ CREATE TABLE `test_source`
     field_1 VARCHAR,
     field_2 VARCHAR,
     field_3 VARCHAR,
-    field_4 VARCHAR,
-    field_5 VARCHAR,
-    field_6 VARCHAR,
-    field_7 VARCHAR,
-    field_8 VARCHAR,
-    field_9 VARCHAR
+    field_4 VARCHAR
 ) WITH (
       type = 'file',
-      filePath = '/Users/nize/code/github/rsqldb/rsqldb-disk/client/data.txt',
+-- 需要根据自身填写data.txt的绝对路径
+      filePath = '',
       isJsonData = 'false',
       msgIsJsonArray = 'false'
       );
@@ -24,21 +20,11 @@ select field_1
      , field_2
      , field_3
      , field_4
-     , field_5
-     , field_6
-     , field_7
-     , field_8
-     , field_9
 from (
          select field_1
               , field_2
               , field_3
               , field_4
-              , field_5
-              , field_6
-              , field_7
-              , field_8
-              , field_9
          from test_source
      )
 where (
@@ -50,12 +36,7 @@ CREATE TABLE `test_sink`
     field_1 VARCHAR,
     field_2 VARCHAR,
     field_3 VARCHAR,
-    field_4 VARCHAR,
-    field_5 VARCHAR,
-    field_6 VARCHAR,
-    field_7 VARCHAR,
-    field_8 VARCHAR,
-    field_9 VARCHAR
+    field_4 VARCHAR
 ) WITH (
       type = 'print'
       );
@@ -65,9 +46,4 @@ select field_1
      , field_2
      , field_3
      , field_4
-     , field_5
-     , field_6
-     , field_7
-     , field_8
-     , field_9
 from view_test

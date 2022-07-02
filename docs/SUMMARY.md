@@ -1,7 +1,6 @@
 # Summary
 
 * [Introduction](README.md)
-* [Quick Start](quick_start/README.md)
 * [Blink SQL兼容](stream_sql/README.md)
 * [创建源表](stream_source/README.md)
     * [创建metaq源表](stream_source/metaq/README.md)

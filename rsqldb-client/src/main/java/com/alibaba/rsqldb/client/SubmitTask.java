@@ -28,12 +28,14 @@ import static com.alibaba.rsqldb.client.constant.Constants.submitTask;
 public class SubmitTask {
 
     public static void main(String[] args) throws Throwable {
-        if (args == null || args.length < 1) {
-            throw new IllegalArgumentException("home.dir is required.");
+        if (args == null || args.length < 2) {
+            throw new IllegalArgumentException("home.dir and sql file name are required.");
         }
-        String homeDir = args[0];
 
-        String sqlPath = homeDir + "/client/standalone.sql";
+        String homeDir = args[0];
+        String sqlFileName = args[1];
+
+        String sqlPath = homeDir + "/client/" + sqlFileName;
 
         File file = FileUtil.getFile(sqlPath);
         byte[] bytes = Files.readAllBytes(file.toPath());
