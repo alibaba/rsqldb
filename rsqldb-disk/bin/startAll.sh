@@ -10,14 +10,14 @@ echo "homeDir=$homeDir"
 
 cd $binDir
 
-chmod +x startRunner.sh
-chmod +x startServer.sh
+chmod +x startTaskExecutor.sh
+chmod +x startSqlReceiver.sh
 
 
 
-sh startRunner.sh $homeDir
+sh startTaskExecutor.sh $homeDir
 
-sh startServer.sh $homeDir
+sh startSqlReceiver.sh $homeDir
 
 
 
