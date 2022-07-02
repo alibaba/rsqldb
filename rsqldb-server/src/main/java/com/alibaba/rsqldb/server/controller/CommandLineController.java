@@ -20,52 +20,61 @@ public class CommandLineController {
     }
 
     @PostMapping("/task/list")
-    public String listTasks(@RequestParam(value = "namespace", defaultValue = "default") String namespace) {
+    public String listTasks(@RequestParam(value = "namespace", defaultValue = "default") String namespace) throws Throwable {
         try {
             return taskService.list(namespace);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return String.format("Task for %s list success!", namespace);
+
     }
 
     @PostMapping("/task/submit")
-    public String submitTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName, @RequestParam String sql) {
+    public String submitTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace,
+                            @RequestParam(value = "taskName") String taskName, @RequestParam String sql) throws Throwable {
         try {
             taskService.submit(namespace, taskName, sql);
+            return String.format("Task %s|%s submit sql success!", namespace, taskName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return String.format("Task %s|%s submit success!", namespace, taskName);
     }
 
     @PostMapping("/task/submit/file")
-    public String submitTaskFile(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName, @RequestBody String sqlPath) {
+    public String submitTaskFile(@RequestParam(value = "namespace", defaultValue = "default") String namespace,
+                                @RequestParam(value = "taskName") String taskName, @RequestBody String sqlPath) throws Throwable {
         try {
             taskService.submitFile(namespace, taskName, sqlPath);
+            return String.format("Task %s|%s submit file success!", namespace, taskName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return String.format("Task %s|%s submit success!", namespace, taskName);
     }
 
     @PostMapping("/task/start")
-    public String startTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName) {
+    public String startTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace,
+                            @RequestParam(value = "taskName") String taskName) throws Throwable {
         try {
             taskService.start(namespace, taskName);
+            return String.format("Task %s|%s start success", namespace, taskName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return String.format("Task %s|%s start success", namespace, taskName);
     }
 
     @PostMapping("/task/stop")
-    public String stopTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace, @RequestParam(value = "taskName") String taskName) {
+    public String stopTask(@RequestParam(value = "namespace", defaultValue = "default") String namespace,
+                            @RequestParam(value = "taskName") String taskName) throws Throwable {
         try {
             taskService.stop(namespace, taskName);
+            return String.format("Task %s|%s stop success", taskName, taskName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return String.format("Task %s|%s start success", taskName, taskName);
     }
 }

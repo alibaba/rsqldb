@@ -39,6 +39,7 @@ import static com.alibaba.rsqldb.client.constant.Constants.startTask;
 
 public class StartTask {
     public static void main(String[] args) throws Throwable {
-        HttpHelper.startTask(startTask, "test", "test");
+        String result = HttpHelper.sendRequest(startTask, "test", "test");
+        System.out.println(result);
     }
 }
