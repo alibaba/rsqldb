@@ -16,6 +16,15 @@ rsqldb 为 Rocketmq Streams 的开发提供了基于SQL的开发体验， 让基
 - JDK 1.8及以上
 - Maven 3.2及以上
 
+### 在本地安装RocketMQ-Streams
+rsqldb依赖的RocketMQ-Streams版本为1.0.2-preview-SNAPSHOT（RocketMQ-Streams近期会做一次发版，发版之后省略该步骤）。
+
+```shell
+git clone https://github.com/apache/rocketmq-streams.git
+#切换到main分支
+mvn clean install -DskipTest -U
+```
+
 ### 下载rsqldb工程并本地构建
 ```xml
 git clone https://github.com/alibaba/rsqldb.git
