@@ -54,7 +54,7 @@ sendDataFromFile.sql中创建的任务，需要从本地文件指定位置读取
 ```shell
 chmod +x client/clientExector.sh;sh client/clientExector.sh submitTask sendDataFromFile.sql
 ```
-
+sendDataFromFile.sql会从本地文件data.txt中读取数据，过滤出只含有field_1=1的数据，并将结果数据输出到日志中。
 
 ### 启动任务
 在rsqldb解压目录下执行，tail运行日志，为查看结果做准备。
@@ -66,6 +66,8 @@ tail -f log/rsqldb-runner.log
 ```shell
 sh client/clientExector.sh startTask
 ```
+
+观察rsqldb-runner.log输出，输出结果中，只包含field_1=1的数据。
 
 ### 查询任务
 在rsqldb解压目录下执行
@@ -92,6 +94,9 @@ sh client/clientExector.sh stopTask
 ```shell
   chmod +x client/clientExector.sh;sh client/clientExector.sh submitTask rocketmq.sql
 ```
+
+rocketmq.sql会从RocketMQ的rsqldb-source中读取数据，过滤出field_1=1的数据，并将结果输出到日志文件中。
+
 - 查看输出
 ```shell
 tail -f log/rsqldb-runner.log
@@ -100,4 +105,6 @@ tail -f log/rsqldb-runner.log
 ```shell
 sh client/clientExector.sh startTask
 ```
-- 向RocketMQ中生产数据：topic为rsqldb-source，与rocketmq.sql任务中的topic名称保持一致，向该topic写入data.txt文件中的数据。观察rsqldb-runner.log日志输出。
+- 向RocketMQ中生产数据：topic为rsqldb-source，与rocketmq.sql任务中的topic名称保持一致，向该topic写入data.txt文件中的数据。
+
+- 观察输出，在输出结果中，只包含field_1=1的数据。
