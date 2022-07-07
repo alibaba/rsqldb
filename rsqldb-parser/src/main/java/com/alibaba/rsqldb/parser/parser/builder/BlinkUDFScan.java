@@ -46,7 +46,6 @@ import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.script.annotation.Function;
 import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
 import org.apache.rocketmq.streams.script.service.udf.UDFScript;
-import sun.misc.JarFilter;
 
 /**
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
@@ -170,7 +169,7 @@ public class BlinkUDFScan extends AbstractScan {
             File file = new File(jarDir);
             if (file.isDirectory()) {
                 System.out.println("BlinkUDFScan file is===" + file.getAbsolutePath());
-                File[] files = file.listFiles(new JarFilter());
+                File[] files = file.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
                 jars.addAll(Arrays.asList(files));
             } else if (file.getName().endsWith(".jar")) {
                 jars.add(file);
