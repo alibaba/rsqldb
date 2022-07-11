@@ -8,6 +8,11 @@ homeDir=$(pwd)
 
 echo "homeDir=$homeDir"
 
+cd $homeDir
+if [ ! -d log ]; then
+  mkdir log
+fi
+
 cd $binDir
 
 chmod +x startTaskExecutor.sh
