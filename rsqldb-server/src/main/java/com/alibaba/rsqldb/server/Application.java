@@ -1,5 +1,6 @@
 package com.alibaba.rsqldb.server;
 
+import java.io.File;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -13,7 +14,16 @@ public class Application {
         }
         String homeDir = args[0];
 
-        System.setProperty("cs.dir", homeDir + "/server");
+        String dipperCsParentPath = homeDir + "/server/";
+        File file = new File(dipperCsParentPath);
+        if (!file.exists()) {
+            boolean result = file.mkdirs();
+            if (!result) {
+                throw new RuntimeException("create dipper.cs path error");
+            }
+        }
+
+        System.setProperty("cs.dir", dipperCsParentPath);
 
         System.out.println(System.getProperty("cs.dir"));
 

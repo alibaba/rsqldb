@@ -18,6 +18,7 @@
 package org.alibaba.rsqldb.runner;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -56,7 +57,16 @@ public class StreamRunner {
             throw new IllegalArgumentException("filePathAndName is required.");
         }
 
-        properties.put("filePathAndName", homeDir + "/server/" + filePathAndName);
+        String dipperCsParentPath = homeDir + "/server/";
+        File file = new File(dipperCsParentPath);
+        if (!file.exists()) {
+            boolean result = file.mkdirs();
+            if (!result) {
+                throw new RuntimeException("create dipper.cs path error");
+            }
+        }
+
+        properties.put("filePathAndName", dipperCsParentPath + filePathAndName);
 
         String namesrvAddrs = properties.getProperty(MixAll.NAMESRV_ADDR_ENV);
 
