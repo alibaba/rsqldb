@@ -42,7 +42,7 @@ tar -zxvf rsqldb-distribution.tar.gz;cd rsqldb
 
 ### 启动rsqldb服务端
 ```shell
-chmod +x bin/startAll.sh;sh bin/startAll.sh
+sh bin/startAll.sh
 ```
 
 ### 配置sql文件
@@ -52,7 +52,7 @@ sendDataFromFile.sql中创建的任务，需要从本地文件指定位置读取
 ### 提交任务
 执行路径依然在rsqldb解压目录下
 ```shell
-chmod +x client/clientExector.sh;sh client/clientExector.sh submitTask sendDataFromFile.sql
+sh client/clientExector.sh submitTask sendDataFromFile.sql
 ```
 sendDataFromFile.sql会从本地文件data.txt中读取数据，过滤出只含有field_1=1的数据，并将结果数据输出到日志中。
 
@@ -88,11 +88,11 @@ sh client/clientExector.sh stopTask
 - 本地安装并启动RocketMQ，[安装文档](https://rocketmq.apache.org/docs/quick-start/)
 - 启动rsqldb服务端
 ```shell
-  chmod +x bin/startAll.sh;sh bin/startAll.sh
+  sh bin/startAll.sh
 ```
 - 提交任务
 ```shell
-  chmod +x client/clientExector.sh;sh client/clientExector.sh submitTask rocketmq.sql
+  sh client/clientExector.sh submitTask rocketmq.sql
 ```
 
 rocketmq.sql会从RocketMQ的rsqldb-source中读取数据，过滤出field_1=1的数据，并将结果输出到日志文件中。
@@ -108,3 +108,22 @@ sh client/clientExector.sh startTask
 - 向RocketMQ中生产数据：topic为rsqldb-source，与rocketmq.sql任务中的topic名称保持一致，向该topic写入data.txt文件中的数据。
 
 - 观察输出，在输出结果中，只包含field_1=1的数据。
+
+## 工程本地运行
+
+### 启动服务端
+- 启动rsqldb-runner执行任务；
+  
+  主方法中添加home.dir参数，home.dir指向rsqldb-disk的绝对路径；
+- 启动rsqldb-server接收任务；
+  
+  主方法中添加home.dir参数，home.dir指向rsqldb-disk的绝对路径；
+### 启动客户端
+- 提交任务
+  
+  给SubmitTask类添加启动参数，参数一：rsqldb-disk的绝对路径；参数二：sql任务的文件名称，例如sendDataFromFile.sql；
+  
+- 启动任务
+  
+  直接运行StartTask类，无须参数；
+
