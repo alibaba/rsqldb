@@ -17,6 +17,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
     </properties>
 
 
@@ -48,6 +49,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!--这里加了以后才能使用ServiceLoaderComponent加载，否则找不到类-->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-streams-channel-db</artifactId>
+            <version>${rocketmq-streams.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-streams-channel-es</artifactId>
+            <version>${rocketmq-streams.version}</version>
         </dependency>
     </dependencies>
 
