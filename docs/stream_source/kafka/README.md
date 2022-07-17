@@ -17,7 +17,7 @@ create table kafka_stream
       isJsonData = 'true',
       msgIsJsonArray = ‘ false ’,
       maxThread = '4',
-      maxFetchLogGroupSize = 100,
+      maxFetchLogGroupSize = '100',
       fieldDelimiter = '#',
       encoding = 'UTF-8'
       );
@@ -129,7 +129,7 @@ create table kafka_stream
       isJsonData = 'true',
       msgIsJsonArray = ‘ false ’,
       maxThread = '4',
-      maxFetchLogGroupSize = 100,
+      maxFetchLogGroupSize = '100',
       fieldDelimiter = '#',
       encoding = 'UTF-8'
       );
