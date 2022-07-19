@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -33,7 +34,6 @@ import org.apache.rocketmq.streams.RocketMQChannelBuilder;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
-import org.apache.rocketmq.streams.common.utils.PropertiesUtils;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
 public class StreamRunner {
@@ -51,6 +51,12 @@ public class StreamRunner {
         InputStream in = new BufferedInputStream(new FileInputStream(configFile));
         Properties properties = new Properties();
         properties.load(in);
+
+        Map<String, String> env = System.getenv();
+        String namesrvAddrEnv = env.get(MixAll.NAMESRV_ADDR_ENV);
+        if (namesrvAddrEnv != null) {
+            properties.put(MixAll.NAMESRV_ADDR_ENV, namesrvAddrEnv);
+        }
 
         String filePathAndName = properties.getProperty("filePathAndName");
         if (StringUtils.isEmpty(filePathAndName)) {

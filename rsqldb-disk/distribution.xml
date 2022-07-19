@@ -52,7 +52,7 @@ limitations under the License.
             <outputDirectory>server</outputDirectory>
         </file>
         <file>
-            <source>../rsqldb-client/target/rsqldb-client-1.0.0-SNAPSHOT.jar</source>
+            <source>../rsqldb-client/target/rsqldb-client.jar</source>
             <outputDirectory>client</outputDirectory>
         </file>
     </files>
