@@ -173,12 +173,22 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-channel-rocketmq</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-streams-configurable</artifactId>
                 <version>${rocketmq-streams.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-streams-db-operator</artifactId>
+                <version>${rocketmq-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-channel-db</artifactId>
                 <version>${rocketmq-streams.version}</version>
             </dependency>
 
