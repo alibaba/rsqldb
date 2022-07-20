@@ -11,21 +11,21 @@ cd $binDir
 mainClass=()
 if [ "x$1" == "xsubmitTask" ]; then
     mainClass=com.alibaba.rsqldb.client.SubmitTask
-    java -cp rsqldb-client-1.0.0-SNAPSHOT.jar ${mainClass} ${homeDir} $2
+    java -cp rsqldb-client.jar ${mainClass} ${homeDir} $2
 fi
 
 if [ "x$1" == "xstartTask" ]; then
     mainClass=com.alibaba.rsqldb.client.StartTask
-    java -cp rsqldb-client-1.0.0-SNAPSHOT.jar ${mainClass}
+    java -cp rsqldb-client.jar ${mainClass}
 fi
 
 if [ "x$1" == "xqueryTask" ]; then
     mainClass=com.alibaba.rsqldb.client.QueryTask
-    java -cp rsqldb-client-1.0.0-SNAPSHOT.jar ${mainClass}
+    java -cp rsqldb-client.jar ${mainClass}
 fi
 
 if [ "x$1" == "xstopTask" ]; then
     mainClass=com.alibaba.rsqldb.client.StopTask
-    java -cp rsqldb-client-1.0.0-SNAPSHOT.jar ${mainClass}
+    java -cp rsqldb-client.jar ${mainClass}
 fi
 

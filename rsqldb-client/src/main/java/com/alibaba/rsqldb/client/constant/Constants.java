@@ -34,11 +34,21 @@ package com.alibaba.rsqldb.client.constant;
  */
 
 public class Constants {
-    public static String submitTask = "http://localhost:8080/command/task/submit";
+    private static String rsqldb;
 
-    public static String startTask = "http://localhost:8080/command/task/start";
+    static {
+        rsqldb = System.getenv("rsqldb");
 
-    public static String queryTask = "http://localhost:8080/command/task/list";
+        if (rsqldb == null) {
+            rsqldb = "localhost:8080";
+        }
+    }
 
-    public static String stopTask = "http://localhost:8080/command/task/stop";
+    public static String submitTask = "http://" + rsqldb + "/command/task/submit";
+
+    public static String startTask = "http://" + rsqldb + "/command/task/start";
+
+    public static String queryTask = "http://" + rsqldb + "/command/task/list";
+
+    public static String stopTask = "http://" + rsqldb + "/command/task/stop";
 }

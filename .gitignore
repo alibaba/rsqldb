@@ -32,3 +32,4 @@ _book/
 
 */dependency-reduced-pom.xml
 /rsqldb-disk/log/
+/rsqldb-disk/server/dipper.cs
