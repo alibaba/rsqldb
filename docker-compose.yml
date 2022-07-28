@@ -8,6 +8,8 @@ services:
     hostname: namesrv
     container_name: rmqnamesrv
     user: root
+    networks:
+      - rsqldb-quickstart
     cap_add:
       - SYS_PTRACE
     ports:
@@ -20,6 +22,8 @@ services:
     hostname: broker
     container_name: rmqbroker
     user: root
+    networks:
+      - rsqldb-quickstart
     cap_add:
       - SYS_PTRACE
     depends_on:
@@ -36,6 +40,8 @@ services:
     image: unclerangoo/rsqldb:0.1
     hostname: rsqldb
     container_name: rsqldb
+    networks:
+      - rsqldb-quickstart
     cap_add:
       - SYS_PTRACE
     ports:
@@ -50,6 +56,8 @@ services:
     image: unclerangoo/rsqldb-client:0.1
     hostname: rsqldb-client
     container_name: rsqldb-client
+    networks:
+      - rsqldb-quickstart
     cap_add:
       - SYS_PTRACE
     depends_on:
@@ -57,4 +65,6 @@ services:
     environment:
       - rsqldb=rsqldb:8080
       - NAMESRV_ADDR=namesrv:9876
-
+networks:
+  rsqldb-quickstart:
+    name: rsqldb-quickstart
