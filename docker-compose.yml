@@ -1,0 +1,70 @@
+---
+version: '3.5'
+
+services:
+  #Service for nameserver
+  namesrv:
+    image: apache/rocketmq:4.9.4
+    hostname: namesrv
+    container_name: rmqnamesrv
+    user: root
+    networks:
+      - rsqldb-quickstart
+    cap_add:
+      - SYS_PTRACE
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+
+  #Service for broker
+  broker:
+    image: apache/rocketmq:4.9.4
+    hostname: broker
+    container_name: rmqbroker
+    user: root
+    networks:
+      - rsqldb-quickstart
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - namesrv
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    environment:
+      - NAMESRV_ADDR=namesrv:9876
+    command: sh mqbroker -c /home/rocketmq/rocketmq-4.9.4/conf/broker.conf
+
+  rsqldb:
+    image: unclerangoo/rsqldb:0.1
+    hostname: rsqldb
+    container_name: rsqldb
+    networks:
+      - rsqldb-quickstart
+    cap_add:
+      - SYS_PTRACE
+    ports:
+      - "8080:8080"
+    depends_on:
+      - namesrv
+      - broker
+    environment:
+      - NAMESRV_ADDR=namesrv:9876
+
+  rsqldb-client:
+    image: unclerangoo/rsqldb-client:0.1
+    hostname: rsqldb-client
+    container_name: rsqldb-client
+    networks:
+      - rsqldb-quickstart
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - rsqldb
+    environment:
+      - rsqldb=rsqldb:8080
+      - NAMESRV_ADDR=namesrv:9876
+networks:
+  rsqldb-quickstart:
+    name: rsqldb-quickstart

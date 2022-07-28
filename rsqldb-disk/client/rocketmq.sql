@@ -28,9 +28,8 @@ from (
               , field_4
          from rocketmq_source
      )
-where (
-              field_1='1'
-          );
+where (field_1='1');
+
 
 CREATE TABLE `task_sink_2`
 (

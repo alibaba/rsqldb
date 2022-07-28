@@ -8,9 +8,9 @@ set -e
 export JAVA_HOME
 export JAVA="$JAVA_HOME/bin/java"
 export BASE_DIR=$(dirname $0)/..
-export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/server/*:${BASE_DIR}/client/*:${CLASSPATH}}
+export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/server/*:${BASE_DIR}/client/*:${CLASSPATH}
 
-JVM_CONFIG="-Xms2048m -Xmx2048m -Xmn1024m"
+JVM_CONFIG="-Xms512m -Xmx512m -Xmn128m"
 
 JAVA_OPTIONS=${JAVA_OPTIONS:-}
 
