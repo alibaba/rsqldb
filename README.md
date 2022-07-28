@@ -12,118 +12,53 @@ rsqldb 为 Rocketmq Streams 的开发提供了基于SQL的开发体验， 让基
 
 
 ## Quickstart
-### 运行环境
-- JDK 1.8及以上
-- Maven 3.2及以上
+### 本地安装docker，[安装链接](https://docs.docker.com/desktop/install/mac-install/)
+安装后启动docker
 
-### 在本地安装RocketMQ-Streams
-rsqldb依赖的RocketMQ-Streams版本为1.0.2-preview-SNAPSHOT（RocketMQ-Streams近期会做一次发版，发版之后省略该步骤）。
-
+### 下载rsqldb工程
 ```shell
-git clone https://github.com/apache/rocketmq-streams.git
-#切换到main分支
-mvn clean install -DskipTest -U
-```
-
-### 下载rsqldb工程并本地构建
-```xml
 git clone https://github.com/alibaba/rsqldb.git
-
-mvn clean package -DskipTest -U
 ```
 
-### 拷贝安装压缩包并解压
+### 进入工程目录并执行启动docker
+```shell
+cd rsqldb
+docker-compose -f docker-compose.yml up
+```
 
-进入rsqldb-disk模块下，将rsqldb-distribution.tar.gz安装包拷贝到任意目录，并执行命令解压并进入解压目录：
+### 进入rsqldb-client容器
+#### 提交任务
+```shell
+sh clientExector.sh submitTask rocketmq.sql
+```
+任务为向RocketMQ写入数据，过滤出数据中field_1=1的数据；
+
+#### 开始任务
+```shell
+sh clientExector.sh startTask
+```
+
+#### 向RocketMQ中写入数据
+```shell
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer
+```
+向RocketMQ的rsqldb-source topic中写入RocketmqTest-1.0-SNAPSHOT.jar包中默认数据，数据如data.txt文件所示。
+使用Producer类发送消息时，允许带三个参数：topic、groupId、数据文件全路径，可以向RocketMQ任意topic发送任意数据。
+#### 查看结果输出
+```shell
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.consumer.Consumer
+```
+从RocketMQ的rsqldb-sink topic中读出结果数据，每执行一次producer会有一行输出(第一次需要等待1min轮询提交的任务)：
 ```xml
-tar -zxvf rsqldb-distribution.tar.gz;cd rsqldb
+Receive New Messages: body[{"field_3":"3","field_4":"4","field_1":"1","field_2":"2"}]
 ```
+Consumer类允许带两个参数：topic、groupId，可以指定topic消费RocketMQ数据。
 
 
-### 启动rsqldb服务端
-```shell
-sh bin/startAll.sh
-```
+## 其他启动方式
+### 本地jar包启动
+  [本地jar包启动](docs/other_quick_start/本地jar包启动.md)
+### 本地工程启动
+  [本地工程启动](docs/other_quick_start/本地工程启动.md)
 
-### 配置sql文件
-sendDataFromFile.sql中创建的任务，需要从本地文件指定位置读取数据，所以需要修改sendDataFromFile.sql中filePath变量的位置，修改为数据文件data.txt的绝对路径。
-
-
-### 提交任务
-执行路径依然在rsqldb解压目录下
-```shell
-sh client/clientExector.sh submitTask sendDataFromFile.sql
-```
-sendDataFromFile.sql会从本地文件data.txt中读取数据，过滤出只含有field_1=1的数据，并将结果数据输出到日志中。
-
-### 启动任务
-在rsqldb解压目录下执行，tail运行日志，为查看结果做准备。
-```shell
-tail -f log/rsqldb-runner.log
-```
-
-另开一个shell窗口，进入解压后的rsqldb目录，执行以下命令启动任务，1分钟后，查看日志输出，会将执行结果打印到日志中。
-```shell
-sh client/clientExector.sh startTask
-```
-
-观察rsqldb-runner.log输出，输出结果中，只包含field_1=1的数据。
-
-### 查询任务
-在rsqldb解压目录下执行
-```shell
-sh client/clientExector.sh queryTask
-```
-返回已经提交的任务列表。
-
-### 停止任务
-在rsqldb解压目录下执行
-```shell
-sh client/clientExector.sh stopTask
-```
-
-### 从RocketMQ中读取数据并处理
-上述示例为从本地文件data.txt中读取数据，更为常用的用法是从RocketMQ中读取数据处理，下面给出具体步骤：
-
-- 本地安装并启动RocketMQ，[安装文档](https://rocketmq.apache.org/docs/quick-start/)
-- 启动rsqldb服务端
-```shell
-  sh bin/startAll.sh
-```
-- 提交任务
-```shell
-  sh client/clientExector.sh submitTask rocketmq.sql
-```
-
-rocketmq.sql会从RocketMQ的rsqldb-source中读取数据，过滤出field_1=1的数据，并将结果输出到日志文件中。
-
-- 查看输出
-```shell
-tail -f log/rsqldb-runner.log
-```
-- 另开一个窗口，启动任务
-```shell
-sh client/clientExector.sh startTask
-```
-- 向RocketMQ中生产数据：topic为rsqldb-source，与rocketmq.sql任务中的topic名称保持一致，向该topic写入data.txt文件中的数据。
-
-- 观察输出，在输出结果中，只包含field_1=1的数据。
-
-## 工程本地运行
-
-### 启动服务端
-- 启动rsqldb-runner执行任务；
-  
-  主方法中添加home.dir参数，home.dir指向rsqldb-disk的绝对路径；
-- 启动rsqldb-server接收任务；
-  
-  主方法中添加home.dir参数，home.dir指向rsqldb-disk的绝对路径；
-### 启动客户端
-- 提交任务
-  
-  给SubmitTask类添加启动参数，参数一：rsqldb-disk的绝对路径；参数二：sql任务的文件名称，例如sendDataFromFile.sql；
-  
-- 启动任务
-  
-  直接运行StartTask类，无须参数；
 
