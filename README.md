@@ -1,6 +1,6 @@
 # rsqldb
 
-rsqldb 为 Rocketmq Streams 的开发提供了基于SQL的开发体验， 让基于消息队列的流式开发更加容易；
+rsqldb 为 RocketMQ Streams 的开发提供了基于 SQL 的开发体验， 让基于消息队列的流式开发更加容易；
 
 ## Features
 
