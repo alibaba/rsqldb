@@ -14,6 +14,7 @@ rsqldb 为 RocketMQ Streams 的开发提供了基于 SQL 的开发体验， 让�
 ## Quickstart
 ### 本地安装docker，[安装链接](https://docs.docker.com/desktop/install/mac-install/)
 安装后启动docker
+使用docker -v 能查看docker版本即是启动成功。
 
 ### 下载rsqldb工程
 ```shell
@@ -25,14 +26,21 @@ git clone https://github.com/alibaba/rsqldb.git
 cd rsqldb
 docker-compose -f docker-compose.yml up
 ```
-
+此为前台启动，也可使用 docker-compose -f docker-compose.yml up -d 方式后台启动。
 ### 进入rsqldb-client容器
+另开shell窗口，进入rsqldb-client容器，进入方式：
+```shell
+#查看容器
+docker ps
+#进入rsqldb-client容器
+docker exec -it ${rsqldb-client-containerId} bash
+```
 #### 提交任务
 ```shell
 sh clientExector.sh submitTask rocketmq.sql
 ```
-任务为向RocketMQ写入数据，过滤出数据中field_1=1的数据；
-
+rocketmq.sql任务从RocketMQ中rsqldb-source topic中读取数据，过滤出数据中首字段为1的数据，然后将结果写回到RocketMQ
+中的rsqldb-sink topic中。
 #### 开始任务
 ```shell
 sh clientExector.sh startTask
