@@ -46,31 +46,40 @@ CREATE TABLE perform
       msgIsJsonArray = 'false'
       );
 
-CREATE TABLE test_cdc_sync
+CREATE TABLE task_sink
 (
-    `ticket_id`    BIGINT,
-    `position`     VARCHAR,
-    `odeum_name`   VARCHAR,
-    `perform_name` VARCHAR,
-    primary key (ticket_id)
+    ticket_id    BIGINT,
+    `position`   VARCHAR,
+    odeum_name   VARCHAR,
+    perform_name VARCHAR
 ) WITH (
       type = 'print'
       );
 
-CREATE VIEW ticket_perform AS
-SELECT t.id         AS ticket_id,
-       t.`position`   AS `position`,
-       p.name       AS perform_name,
-       p.odeum_id   AS odeum_id
-FROM ticket AS t
-         JOIN perform FOR SYSTEM_TIME AS OF PROCTIME() AS p ON t.perform_id = p.id;
+CREATE VIEW test_view AS
+SELECT
+    a.ticket_id     AS ticket_id,
+    a.`position`    AS `position`,
+    b.name          AS odeum_name,
+    a.perform_name  AS perform_name
+FROM (SELECT t.id         AS ticket_id,
+             t.`position` AS `position`,
+             p.name       AS perform_name,
+             p.odeum_id   AS odeum_id
+      FROM ticket AS t JOIN perform AS p ON t.perform_id = p.id
+      ) a
+JOIN odeum AS b ON a.odeum_id = b.id;
 
-INSERT INTO test_cdc_sync
-SELECT t.ticket_id    AS ticket_id,
-       t.`position`     AS `position`,
-       o.name         AS odeum_name,
-       t.perform_name AS perform_name
-FROM ticket_perform AS t
-         JOIN odeum FOR SYSTEM_TIME AS OF PROCTIME() AS o ON t.odeum_id = o.id;
+INSERT INTO task_sink
+SELECT ticket_id,
+       `position`,
+       odeum_name,
+       perform_name
+FROM test_view;
+
+
+
+
+
 
 
