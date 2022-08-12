@@ -32,6 +32,8 @@ public class WindowStartParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     String hopFunction = "hop_start";
 
+    String sessionFunction = "session_start";
+
     @Override
     public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
         ScriptParseResult scriptParseResult = new ScriptParseResult();
@@ -46,7 +48,7 @@ public class WindowStartParser extends AbstractSelectNodeParser<SqlBasicCall> {
         if (SqlBasicCall.class.isInstance(sqlNode)) {
             SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toLowerCase();
-            if (tumbleFunction.equals(name) || hopFunction.equals(name)) {
+            if (tumbleFunction.equals(name) || hopFunction.equals(name) || sessionFunction.equals(name)) {
                 return true;
             }
         }

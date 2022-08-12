@@ -19,23 +19,24 @@ package com.alibaba.rsqldb.dim.builder;
 import com.alibaba.rsqldb.dim.model.AbstractDim;
 import com.alibaba.rsqldb.dim.model.FileDim;
 import com.google.auto.service.AutoService;
-import java.util.Properties;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.model.ServiceName;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 
+import java.util.Properties;
+
 @AutoService(IDimSQLParser.class)
 @ServiceName(value = FileDimSQLParser.TYPE, aliasName = "FILE")
-public class FileDimSQLParser extends AbstractDimParser{
-    public static final String TYPE="file";
+public class FileDimSQLParser extends AbstractDimParser {
+    public static final String TYPE = "file";
 
     @Override
     protected AbstractDim createDim(Properties properties, MetaData data) {
-        String filePath=properties.getProperty("filePath");
-        if(StringUtil.isEmpty(filePath)){
-            filePath=properties.getProperty("file_path");
+        String filePath = properties.getProperty("filePath");
+        if (StringUtil.isEmpty(filePath)) {
+            filePath = properties.getProperty("file_path");
         }
-        FileDim fileDim=new FileDim();
+        FileDim fileDim = new FileDim();
         fileDim.setFilePath(filePath);
         return fileDim;
     }

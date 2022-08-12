@@ -19,11 +19,12 @@ package com.alibaba.rsqldb.dim.builder;
 import com.alibaba.rsqldb.dim.model.AbstractDim;
 import com.alibaba.rsqldb.dim.model.DBDim;
 import com.google.auto.service.AutoService;
-import java.util.List;
-import java.util.Properties;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.metadata.MetaDataField;
 import org.apache.rocketmq.streams.common.model.ServiceName;
+
+import java.util.List;
+import java.util.Properties;
 
 @AutoService(IDimSQLParser.class)
 @ServiceName(value = DBDimSQLParser.TYPE, aliasName = "rds")

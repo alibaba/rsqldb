@@ -18,16 +18,17 @@
 package com.alibaba.rsqldb.server.sql;
 
 import com.alibaba.rsqldb.parser.builder.SqlTreeBuilder;
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.flink.util.FileUtils;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configurable.BasedConfigurable;
 import org.apache.rocketmq.streams.common.configurable.IConfigurable;
 import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RemoteSqlStream extends AbstractStream<RemoteSqlStream> {
 

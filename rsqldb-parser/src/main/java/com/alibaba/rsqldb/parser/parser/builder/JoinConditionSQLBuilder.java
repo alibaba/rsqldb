@@ -83,22 +83,22 @@ public class JoinConditionSQLBuilder extends SelectSQLBuilder {
                 }
                 List<IScriptParamter> parameters = scriptExpression
                     .getParameters();
-                List<IScriptParamter> paramterList = new ArrayList<>();
-                paramterList.addAll(parameters);
+                List<IScriptParamter> parameterList = new ArrayList<>();
+                parameterList.addAll(parameters);
                 if (parameters == null || parameters.size() == 0) {
                     continue;
                 }
                 int index = 0;
                 for (IScriptParamter tmp : parameters) {
                     if (ScriptParameter.class.isInstance(tmp)) {
-                        ScriptParameter scriptParamter = (ScriptParameter) tmp;
-                        String parameterStr = scriptParamter.getScriptParameterStr();
+                        ScriptParameter scriptParameter = (ScriptParameter) tmp;
+                        String parameterStr = scriptParameter.getScriptParameterStr();
                         String parameter = getFieldName(parameterStr);
                         if (parameter.startsWith(dimAsAlias + ".")) {
                             int startIndex = parameter.indexOf(".");
                             parameter = parameter.substring(startIndex + 1);
-                            scriptParamter = new ScriptParameter(parameter);
-                            parameters.set(index, scriptParamter);
+                            scriptParameter = new ScriptParameter(parameter);
+                            parameters.set(index, scriptParameter);
                         }
                     }
                     index++;

@@ -16,32 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.ISqlParser;
-import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
-import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.topology.ChainStage;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 import com.alibaba.rsqldb.dim.builder.IDimSQLParser;
 import com.alibaba.rsqldb.dim.builder.SQLParserFactory;
 import com.alibaba.rsqldb.dim.intelligence.AbstractIntelligenceCache;
@@ -52,6 +26,20 @@ import com.alibaba.rsqldb.dim.intelligence.URLIntelligenceCache;
 import com.alibaba.rsqldb.dim.model.AbstractDim;
 import com.alibaba.rsqldb.dim.model.DBDim;
 import com.alibaba.rsqldb.dim.model.FileDim;
+import com.alibaba.rsqldb.parser.parser.ISqlParser;
+import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
+import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
+import org.apache.rocketmq.streams.common.metadata.MetaData;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
 import org.apache.rocketmq.streams.filter.function.expression.Equals;
 import org.apache.rocketmq.streams.filter.operator.Rule;
@@ -59,6 +47,17 @@ import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
 import org.apache.rocketmq.streams.filter.operator.expression.SimpleExpression;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * dimension table join builder specially for url, ip and domain
@@ -80,7 +79,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
     }
 
     @Override
-    public SQLBuilderResult buildSql() {
+    public void buildSql() {
         throw new RuntimeException("can not support this method, please use buildDimCondition");
     }
 
@@ -161,7 +160,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
     protected AbstractDim buildDim(CreateSQLBuilder builder, Properties properties) {
         String type = getDimType(properties).toLowerCase();
         IDimSQLParser dimSQLParser = SQLParserFactory.getInstance().create(type);
-        return dimSQLParser.parseDim(namespace, properties, builder.getMetaData());
+        return dimSQLParser.parseDim(namespace, pipelineBuilder.getPipelineName(), properties, builder.getMetaData());
     }
 
     /**
@@ -323,8 +322,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
             script = dim + "=left_join('" + namespace + "','" + name + "','" + expression + "'," + getAsName() + ",'" + dimScript + "'," + selectFields + ");if(!null(" + dim + ")){splitArray('" + dim + "');};";
         }
         scriptValue.add(script);
-        ChainStage chainStage=getPipelineBuilder().addChainStage(new ScriptOperator(conditionSQLBuilder.createScript(scriptValue)));
-        chainStage.setSql(conditionSQLBuilder.getJoinConditionSQL());
+        getPipelineBuilder().addChainStage(new ScriptOperator(conditionSQLBuilder.createScript(scriptValue)));
     }
 
     private Set<String> createFieldNames(String selectFields) {
@@ -523,13 +521,4 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         return expression.toExpressionString(map);
     }
 
-    @Override public Set<String> getAllFieldNames() {
-        CreateSQLBuilder builder = SQLCreateTables.getInstance().get().get(getTableName());
-        Set<String> fields=new HashSet<>();
-        List<MetaDataField> metaDataFields=builder.getMetaData().getMetaDataFields();
-        for(MetaDataField metaDataField:metaDataFields){
-            fields.add(metaDataField.getFieldName());
-        }
-        return fields;
-    }
 }

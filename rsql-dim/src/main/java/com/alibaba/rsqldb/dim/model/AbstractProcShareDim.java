@@ -17,6 +17,10 @@
 package com.alibaba.rsqldb.dim.model;
 
 import com.alibaba.rsqldb.dim.index.DimIndex;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.cache.compress.AbstractMemoryTable;
+
 import java.io.File;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -24,9 +28,6 @@ import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.cache.compress.AbstractMemoryTable;
 
 /**
  * @description 基于本地文件存储的多进程共享的dim
@@ -73,10 +74,6 @@ public abstract class AbstractProcShareDim extends AbstractDim {
                 }
             }
         }
-//        boolean old = Boolean.parseBoolean(ComponentCreator.getProperties().getProperty(ConfigureFileKey.DIPPER_RUNNING_STATUS));
-//        ComponentCreator.getProperties().put(ConfigureFileKey.DIPPER_RUNNING_STATUS, false);
-//        boolean success = super.initConfigurable();
-//        ComponentCreator.getProperties().put(ConfigureFileKey.DIPPER_RUNNING_STATUS, old);
         return true;
     }
 
@@ -87,7 +84,7 @@ public abstract class AbstractProcShareDim extends AbstractDim {
             AbstractMemoryTable dataCacheVar = loadData();
             table = dataCacheVar;
             this.nameListIndex = buildIndex(dataCacheVar);
-            this.columnNames = this.dataCache.getCloumnName2Index().keySet();
+            this.columnNames = this.dataCache.getColumn2Index().keySet();
         } catch (Exception e) {
             logger.error("Load configurables error:" + e.getMessage(), e);
         }

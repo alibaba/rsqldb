@@ -16,14 +16,15 @@
  */
 package com.alibaba.rsqldb.dim.intelligence;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.cache.compress.impl.IntValueKV;
 import org.apache.rocketmq.streams.common.configurable.IAfterConfigurableRefreshListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class URLIntelligenceCache extends AbstractIntelligenceCache implements IAfterConfigurableRefreshListener {
 

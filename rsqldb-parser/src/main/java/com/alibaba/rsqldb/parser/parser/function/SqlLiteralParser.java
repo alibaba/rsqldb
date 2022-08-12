@@ -26,6 +26,7 @@ import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.rocketmq.streams.common.datatype.DataType;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
 
@@ -41,9 +42,6 @@ public class SqlLiteralParser extends AbstractSqlParser<SqlLiteral, AbstractSQLB
             scriptParseResult.setScriptValueList(scripts);
             scriptParseResult.setReturnValue(returnValue);
             return scriptParseResult;
-        }
-        if (value.contains("'")) {
-            System.out.println();
         }
         value = value.replace("'", "#######");
         value = ContantsUtil.replaceSpeciaSign(value);

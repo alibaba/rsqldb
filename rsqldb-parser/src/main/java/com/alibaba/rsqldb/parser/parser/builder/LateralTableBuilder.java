@@ -16,7 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import java.util.HashSet;
 import java.util.List;
@@ -35,16 +34,15 @@ public class LateralTableBuilder extends SelectSQLBuilder {
     protected Set<String> fieldNames = new HashSet<>();
 
     @Override
-    public SQLBuilderResult buildSql() {
+    public void buildSql() {
         if (scripts.size() == 0) {
-            return null;
+            return;
         }
         StringBuilder scriptValue = new StringBuilder();
         for (String script : scripts) {
             scriptValue.append(script);
         }
         getPipelineBuilder().addChainStage(new ScriptOperator(scriptValue.toString()));
-        return new SQLBuilderResult(getPipelineBuilder(),this);
     }
 
     @Override

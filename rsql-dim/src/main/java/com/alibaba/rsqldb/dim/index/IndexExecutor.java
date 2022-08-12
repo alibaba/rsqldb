@@ -18,13 +18,6 @@ package com.alibaba.rsqldb.dim.index;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.rsqldb.dim.model.AbstractDim;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.apache.rocketmq.streams.common.datatype.IntDataType;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
@@ -32,6 +25,14 @@ import org.apache.rocketmq.streams.filter.function.expression.Equals;
 import org.apache.rocketmq.streams.filter.operator.Rule;
 import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 执行索引的查询和构建。主要是完成表达式的解析，对于等值的表达式字段，如果有索引，根据索引查询，然后执行非等值部分的判断

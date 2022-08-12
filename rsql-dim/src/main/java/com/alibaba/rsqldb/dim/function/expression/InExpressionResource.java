@@ -17,7 +17,6 @@
 package com.alibaba.rsqldb.dim.function.expression;
 
 import com.alibaba.rsqldb.dim.model.DBDim;
-import java.util.Map;
 import org.apache.rocketmq.streams.common.context.AbstractContext;
 import org.apache.rocketmq.streams.common.context.IMessage;
 import org.apache.rocketmq.streams.filter.function.expression.AbstractExpressionFunction;
@@ -25,6 +24,8 @@ import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.script.annotation.Function;
 import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
 import org.apache.rocketmq.streams.script.annotation.FunctionMethodAilas;
+
+import java.util.Map;
 
 @Function
 public class InExpressionResource extends AbstractExpressionFunction {

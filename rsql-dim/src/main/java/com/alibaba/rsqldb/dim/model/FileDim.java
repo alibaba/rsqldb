@@ -18,18 +18,32 @@ package com.alibaba.rsqldb.dim.model;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.cache.compress.AbstractMemoryTable;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.FileUtil;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.rocketmq.streams.common.cache.compress.AbstractMemoryTable;
-import org.apache.rocketmq.streams.common.utils.FileUtil;
 
 public class FileDim extends AbstractDim {
+
+    private static final Log LOG = LogFactory.getLog(FileDim.class);
+
     protected String filePath;
 
     @Override
     protected void loadData2Memory(AbstractMemoryTable tableCompress) {
         List<String> rows = FileUtil.loadFileLine(filePath);
+        if (rows == null) {
+            throw new RuntimeException("there is no dim data from file " + filePath);
+        }
+        if (CollectionUtil.isEmpty(rows)) {
+            LOG.warn("there is no dim data from file " + filePath);
+            return;
+        }
         for (String row : rows) {
             JSONObject jsonObject = JSON.parseObject(row);
             Map<String, Object> values = new HashMap<>();
@@ -37,14 +51,6 @@ public class FileDim extends AbstractDim {
                 values.put(key, jsonObject.getString(key));
             }
             tableCompress.addRow(values);
-        }
-    }
-
-    public static void main(String[] args) {
-        List<String> lines = FileUtil.loadFileLine("/tmp/data_model_extractor_config.txt");
-        for (String row : lines) {
-            JSONObject jsonObject = JSON.parseObject(row);
-            System.out.println(jsonObject);
         }
     }
 

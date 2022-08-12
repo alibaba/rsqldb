@@ -33,7 +33,6 @@ public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
     private void setWindowParameter(WindowBuilder builder, SqlIntervalLiteral intervalLiteral) {
         SqlIntervalLiteral.IntervalValue intervalValue = (SqlIntervalLiteral.IntervalValue) intervalLiteral.getValue();
         TimeUnit unit = intervalValue.getIntervalQualifier().getUnit();
-//        builder.setLocalStorageOnly(TimeUnit.SECOND == unit);
         int interval = -1;
         try {
             interval = Integer.valueOf(intervalValue.getIntervalLiteral());
@@ -60,6 +59,8 @@ public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
                 timeout = interval * 60 * 60;
             } else if (TimeUnit.DAY == timeUnit) {
                 timeout = interval * 24 * 60 * 60;
+            } else if (TimeUnit.SECOND == timeUnit) {
+                timeout = interval;
             } else {
                 throw new RuntimeException("can not this time unit :" + timeUnit.toString()
                     + ", support second,minute,hour,day only!");

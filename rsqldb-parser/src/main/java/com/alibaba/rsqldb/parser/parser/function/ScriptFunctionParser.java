@@ -142,7 +142,10 @@ public class ScriptFunctionParser extends AbstractSelectNodeParser<SqlBasicCall>
 //        sqlFunctionName2ScriptFunctionName.put("TO_TIMESTAMP_TZ","");
         sqlFunctionName2ScriptFunctionName.put("TO_DATE", "to_date");
 //        sqlFunctionName2ScriptFunctionName.put("CONVERT_TZ","");
-
+        //
+        sqlFunctionName2ScriptFunctionName.put("json_field","json_field");
+        sqlFunctionName2ScriptFunctionName.put("unixtimestamp","unixtimestamp");
+        sqlFunctionName2ScriptFunctionName.put("exec_function","exec_function");
     }
 
     @Override

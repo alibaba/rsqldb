@@ -24,6 +24,7 @@ import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.SqlBasicCall;

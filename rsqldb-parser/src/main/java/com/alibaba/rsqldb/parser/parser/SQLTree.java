@@ -28,11 +28,9 @@ import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.common.topology.ChainPipeline;
 import org.apache.rocketmq.streams.common.topology.ChainStage;
 import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.topology.metric.StageGroup;
 import org.apache.rocketmq.streams.common.topology.model.AbstractStage;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.PrintUtil;
-import org.apache.rocketmq.streams.common.utils.SQLFormatterUtil;
 
 public class SQLTree {
 
@@ -81,7 +79,7 @@ public class SQLTree {
         this.functionBuilders = functionBuilders;
         this.pipelineName = pipeline;
     }
-    public static SQLFormatterUtil sqlFormatterUtil=new SQLFormatterUtil();
+
     public PipelineBuilder build() {
         PipelineBuilder rootCreator = new PipelineBuilder(namespace, pipelineName);
         if (functionBuilders != null) {
@@ -90,22 +88,16 @@ public class SQLTree {
                 functionSqlBuilder.build();
             }
         }
-        rootCreator.setRootTableName(sqlBuilder.getTableName());
         sqlBuilder.setPipelineBuilder(rootCreator);
-        SQLBuilderResult sqlBuilderResult = sqlBuilder.buildSql();
-        if(sqlBuilderResult.getStages().size()>0){
-            addStageGroupPipeline(sqlBuilderResult.getStageGroup(),rootCreator.getPipeline());
-        }
-
+        sqlBuilder.buildSql();
 
         //TODO 拓扑结构在此
         Map<String, List<String>> tree = new HashMap<>();
         Map<AbstractSQLBuilder, BuilderNodeStage> builderBuilderNodeStageMap = new HashMap<>();
         build(namespace, sqlBuilder, rootCreator, tree, builderBuilderNodeStageMap);
         rootCreator.getPipeline().setMsgSourceName(sqlBuilder.getTableName());
-        rootCreator.getPipeline().setCreateTableSQL(sqlFormatterUtil.format(sqlBuilder.getSqlNode().toString()));
         StringBuilder stringBuilder = new StringBuilder();
-//        printTree(sqlBuilder.getTableName(), tree, stringBuilder);
+        printTree(sqlBuilder.getTableName(), tree, stringBuilder);
 
         this.rootCreator = rootCreator;
         return this.rootCreator;
@@ -142,21 +134,34 @@ public class SQLTree {
             BuilderNodeStage nodeStage = nodeStageMap.get(builder);
             ChainStage first = null;
             ChainStage last = null;
-            boolean isRightJoin = false;
-            SQLBuilderResult sqlBuilderResult =null;
+            boolean isBreak = false;
             if (nodeStage == null) {
-                sqlBuilderResult = builderPipeline(builder, sqlBuilder.getTableName(),this.sqlBuilder.getTableName()  );
-                isRightJoin = sqlBuilderResult.isRightJoin();
-                List<IConfigurable> configurableList = sqlBuilderResult.getConfigurables();
-                if(CollectionUtil.isNotEmpty(configurableList)){
-                    currentBuilder.addConfigurables(configurableList);
-                }
-                if(CollectionUtil.isNotEmpty(sqlBuilderResult.getStages())){
-                    currentBuilder.getPipeline().getStages().addAll(sqlBuilderResult.getStages());
-                }
-                if (sqlBuilderResult.getStages() != null && sqlBuilderResult.getStages().size() > 0) {
-                   first=sqlBuilderResult.getFirstStage();
-                   last=sqlBuilderResult.getLastStage();
+                PipelineBuilder pipelineBuilder = builderPipeline(builder, sqlBuilder.getTableName());
+                isBreak = pipelineBuilder.isBreak();
+                List<IConfigurable> configurableList = pipelineBuilder.getConfigurables();
+                ChainPipeline chainPipeline = pipelineBuilder.getPipeline();
+                configurableList.remove(chainPipeline);
+                currentBuilder.addConfigurables(configurableList);
+                ChainPipeline pipeline = pipelineBuilder.getPipeline();
+                currentBuilder.getPipeline().getStages().addAll(pipeline.getStages());
+
+                if (pipeline.getStages() != null && pipeline.getStages().size() > 0) {
+                    List<AbstractStage> stages = pipeline.getStages();
+                    for (int i = 0; i < stages.size() - 1; i++) {
+                        AbstractStage current = stages.get(i);
+                        current.setOwnerSqlNodeTableName(builder.getTableName());
+                        AbstractStage next = stages.get(i + 1);
+                        current.setMsgSourceName(builder.getTableName());
+                        List<String> labels = new ArrayList<>();
+                        labels.add(next.getLabel());
+                        current.setNextStageLabels(labels);
+                        if (!next.getPrevStageLabels().contains(current.getLabel())) {
+                            next.getPrevStageLabels().add(current.getLabel());
+                        }
+
+                    }
+                    first = (ChainStage) pipeline.getStages().get(0);
+                    last = (ChainStage) pipeline.getStages().get(pipeline.getStages().size() - 1);
                 } else {
                     last = currentBuilder.getCurrentChainStage();
                 }
@@ -165,14 +170,9 @@ public class SQLTree {
                 first = nodeStage.firstStage;
                 last = nodeStage.lastStage;
             }
-            if(sqlBuilderResult!=null){
-                addStageGroupPipeline(sqlBuilderResult.getStageGroup(),currentBuilder.getPipeline());
-            }
-
             last.setOwnerSqlNodeTableName(builder.getTableName());
             last.setMsgSourceName(builder.getTableName());
-            //右流不需要再挂字节点，因为默认join 后续节点都走左流
-            if (!isRightJoin) {
+            if (!isBreak) {
                 nextStages.add(last);
                 nextBuilders.add(builder);
             }
@@ -199,33 +199,22 @@ public class SQLTree {
         }
     }
 
-    private void addStageGroupPipeline(StageGroup group, ChainPipeline<?> pipeline) {
-        pipeline.addStageGroup(group);
-        List<StageGroup> stageGroups=group.getChildren();
-        if(stageGroups!=null){
-            for(StageGroup stageGroup:stageGroups){
-                addStageGroupPipeline(stageGroup,pipeline);
-            }
-        }
-    }
-
     /**
      * build pipeline，如果是双流join的右分支，特殊处理，否则正常创建
      *
      * @param builder
      * @return
      */
-    protected SQLBuilderResult builderPipeline(AbstractSQLBuilder builder, String parentName,String rootTableName) {
+    protected PipelineBuilder builderPipeline(AbstractSQLBuilder builder, String parentName) {
 
         PipelineBuilder pipelineBuilder = new PipelineBuilder(namespace, pipelineName);
         pipelineBuilder.setParentTableName(parentName);
-        pipelineBuilder.setRootTableName(rootTableName);
         builder.setPipelineBuilder(pipelineBuilder);
         //如果是双流join，且是join中的右流join
 
-        SQLBuilderResult sqlBuilderResult=  builder.buildSql();
+        builder.buildSql();
 
-        return sqlBuilderResult;
+        return pipelineBuilder;
     }
 
     public PipelineBuilder getRootCreator() {

@@ -47,7 +47,6 @@ public class ChannelCreatorFactory {
         ISource<?> source= builder.createSource(namespace, name, properties, metaData);
         if(source instanceof AbstractSource){
             ((AbstractSource)source).setMetaData(metaData);
-            ((AbstractSource)source).setFieldDelimiter(properties.getProperty("fieldDelimiter"));
         }
         return source;
     }

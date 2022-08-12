@@ -16,12 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.topology.stages.OutputChainStage;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
 import org.apache.rocketmq.streams.common.utils.PrintUtil;
@@ -39,20 +37,12 @@ public class InsertSQLBuilder extends AbstractSQLBuilder {
      */
     protected CreateSQLBuilder createBuilder;
 
-
     @Override
     public void build() {
-        buildSql();
-    }
 
-    @Override
-    public SQLBuilderResult buildSql() {
-        SQLBuilderResult sqlBuilderResult=null;
         if (builder != null) {
-            PipelineBuilder pipelineBuilder=createPipelineBuilder();
             builder.setPipelineBuilder(pipelineBuilder);
-            sqlBuilderResult=builder.buildSql();
-            mergeSQLBuilderResult(sqlBuilderResult);
+            builder.buildSql();
         }
 
         //如果是规则引擎，需要输出出去，则在这里生成channel
@@ -72,10 +62,8 @@ public class InsertSQLBuilder extends AbstractSQLBuilder {
                 pipelineBuilder.addChainStage(new ScriptOperator(script.toString()));
             }
             OutputChainStage<?> chainStage = pipelineBuilder.addOutput(channel);
-            pipelineBuilder.setHorizontalStages(chainStage);
-            pipelineBuilder.setCurrentChainStage(chainStage);
             if (chainStage == null) {
-                return sqlBuilderResult;
+                return;
             }
             String type = createBuilder.createProperty().getProperty("type");
             if (ContantsUtil.isContant(type)) {
@@ -83,16 +71,6 @@ public class InsertSQLBuilder extends AbstractSQLBuilder {
             }
             chainStage.setEntityName(type);
         }
-
-
-        SQLBuilderResult result= new SQLBuilderResult(pipelineBuilder,sqlBuilderResult.getFirstStage(),pipelineBuilder.getCurrentChainStage());
-        String sql=sqlBuilderResult.getStageGroup().getViewName();
-        if(!sql.toLowerCase().startsWith("from")){
-            sql="FROM "+sql;
-        }
-        result.getStageGroup().setSql("INSERT INOT "+getTableName()+" "+sql);
-        result.getStageGroup().setViewName("INSERT INOT "+getTableName());
-        return result;
     }
 
     @Override
