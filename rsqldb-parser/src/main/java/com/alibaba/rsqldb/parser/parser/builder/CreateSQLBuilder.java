@@ -19,15 +19,6 @@ package com.alibaba.rsqldb.parser.parser.builder;
 import com.alibaba.rsqldb.parser.parser.builder.channel.ChannelCreatorFactory;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.util.ColumnUtil;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlProperty;
@@ -40,6 +31,16 @@ import org.apache.rocketmq.streams.common.metadata.MetaDataField;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * create sql的解析内容。主要完成channel的创建
@@ -113,6 +114,7 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         this.properties.put(TABLE_NAME, getTableName());
         this.properties.put("headerFieldNames", this.headerFieldNames);
         this.properties.put("metaData", this.metaData);
+        this.properties.put("fieldDelimiter",",");
 
         return ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(), pipelineBuilder.getPipelineName(), properties, metaData);
 

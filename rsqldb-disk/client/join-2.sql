@@ -14,22 +14,6 @@ CREATE TABLE ticket
       msgIsJsonArray = 'false'
       );
 
-
-CREATE TABLE odeum
-(
-    `id`           BIGINT,
-    `name`         VARCHAR,
-    `gmt_modified` TIMESTAMP,
-    primary key (id)
-) WITH (
-      type = 'rocketmq',
-      topic = 'rsqldb-odeum',
-      groupName = 'rsqldb-odeum',
-      namesrvAddr = '127.0.0.1:9876',
-      isJsonData = 'true',
-      msgIsJsonArray = 'false'
-      );
-
 CREATE TABLE perform
 (
     `id`           BIGINT,
@@ -48,33 +32,28 @@ CREATE TABLE perform
 
 CREATE TABLE task_sink
 (
-    ticket_id    BIGINT,
-    `position`   VARCHAR,
-    odeum_name   VARCHAR,
-    perform_name VARCHAR
+    ticket_id       BIGINT,
+    `position`      VARCHAR,
+    perform_name    VARCHAR,
+    odeum_id        BIGINT
 ) WITH (
       type = 'print'
       );
 
 CREATE VIEW test_view AS
-SELECT
-    a.ticket_id     AS ticket_id,
-    a.`position`    AS `position`,
-    b.name          AS odeum_name,
-    a.perform_name  AS perform_name
-FROM (SELECT t.id         AS ticket_id,
-             t.`position` AS `position`,
-             p.name       AS perform_name,
-             p.odeum_id   AS odeum_id
-      FROM ticket AS t JOIN perform AS p ON t.perform_id = p.id
-      ) a
-JOIN odeum AS b ON a.odeum_id = b.id;
+SELECT t.id         AS ticket_id,
+       t.`position` AS `position`,
+       p.name       AS perform_name,
+       p.odeum_id   AS odeum_id
+FROM ticket AS t
+         JOIN perform AS p ON t.perform_id = p.id;
+
 
 INSERT INTO task_sink
 SELECT ticket_id,
        `position`,
-       odeum_name,
-       perform_name
+       perform_name,
+       odeum_id
 FROM test_view;
 
 
