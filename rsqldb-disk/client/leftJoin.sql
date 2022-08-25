@@ -46,7 +46,7 @@ SELECT t.id         AS ticket_id,
        p.name       AS perform_name,
        p.odeum_id   AS odeum_id
 FROM ticket AS t
-         JOIN perform AS p ON t.perform_id = p.id;
+         LEFT JOIN perform AS p ON t.perform_id = p.id;
 
 
 INSERT INTO task_sink
