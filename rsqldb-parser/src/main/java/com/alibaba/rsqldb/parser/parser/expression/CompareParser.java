@@ -47,12 +47,11 @@ public class CompareParser extends AbstractSelectNodeParser<SqlBasicCall> {
         IParseResult varSqlVar = parseSqlNode(tableDescriptor, nodeList.get(0));
 
         IParseResult valueSqlVar = parseSqlNode(tableDescriptor, nodeList.get(1));
-        if(!JoinSQLBuilder.class.isInstance(tableDescriptor)&&!JoinConditionSQLBuilder.class.isInstance(tableDescriptor) && VarParseResult.class.isInstance(valueSqlVar)&&tableDescriptor.isWhereStage()){
-            //VarParseResult valueParserResult=(VarParseResult)valueSqlVar;
+        if (!JoinSQLBuilder.class.isInstance(tableDescriptor) && !JoinConditionSQLBuilder.class.isInstance(tableDescriptor) && VarParseResult.class.isInstance(valueSqlVar) && tableDescriptor.isWhereStage()) {
             /**
              * 以前的逻辑会把值当常量，为了兼容变量，加前缀的目的是为了标识这个值是变量，在CompareFunction会根据这个标识对变量做特殊处理
              */
-            ((VarParseResult) valueSqlVar).setValue(CompareFunction.VAR_PREFIX +valueSqlVar.getResultValue());
+            ((VarParseResult) valueSqlVar).setValue(CompareFunction.VAR_PREFIX + valueSqlVar.getResultValue());
         }
         if (tableDescriptor.isWhereStage() && varSqlVar instanceof ScriptParseResult
             && varSqlVar.getReturnValue() == null) {

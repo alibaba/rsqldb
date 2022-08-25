@@ -20,6 +20,20 @@ import com.alibaba.rsqldb.udf.FunctionUDFScript;
 import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
 import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
 import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
+import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableFunction;
+import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import org.apache.rocketmq.streams.common.utils.FileUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.script.annotation.Function;
+import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
+import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+import sun.misc.JarFilter;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -34,18 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
-import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.utils.FileUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.ReflectUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.script.annotation.Function;
-import org.apache.rocketmq.streams.script.annotation.FunctionMethod;
-import org.apache.rocketmq.streams.script.service.udf.UDFScript;
 
 /**
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
@@ -83,17 +85,6 @@ public class BlinkUDFScan extends AbstractScan {
         return blinkUDFScan;
     }
 
-    public static void main(String[] args) {
-        System.out.println(BlinkUDFScan.class.getClassLoader().getResource("").getPath());
-        BlinkUDFScan udf = BlinkUDFScan.getInstance();
-        String outSideJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
-        //        udf.scan("com.self.HexStrEncode");
-        //        udf.scanFromLocalFile(outSideJarFielPath,"com.self.HexStrEncode");
-        //        udf.scanFromFile("./","");
-        //        udf.scanFromUrl("https://softwaretk.oss-cn-beijing.aliyuncs.com/extudf_2.0.jar", "");
-        System.out.println("end");
-    }
-
     /**
      * 阿里内部使用
      *
@@ -102,13 +93,11 @@ public class BlinkUDFScan extends AbstractScan {
     @Deprecated
     public void scan(String jarFilePath, String classname, String functionName) {
         scanInnerBlinkUDF();
-
         String localJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
         if (localJarFielPath == null || "".equalsIgnoreCase(localJarFielPath)) {
             localJarFielPath = "./udflib";
         }
         scanFromLocalFile(localJarFielPath, jarFilePath, functionName);
-
     }
 
     /**
@@ -160,16 +149,17 @@ public class BlinkUDFScan extends AbstractScan {
     /**
      * 扫描本地目录下用户自定义的udf
      *
-     * @param jarDir      如果为null，在类路径扫描
+     * @param jarPath      如果为null，在类路径扫描
      * @param packageName
      */
-    public void scanFromLocalFile(String jarDir, String packageName, String functionName) {
+    public void scanFromLocalFile(String jarPath, String packageName, String functionName) {
+        String jarDir = decodeUrl(jarPath);
         if (StringUtil.isNotEmpty(jarDir)) {
             List<File> jars = new ArrayList<>();
             File file = new File(jarDir);
             if (file.isDirectory()) {
                 System.out.println("BlinkUDFScan file is===" + file.getAbsolutePath());
-                File[] files = file.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+                File[] files = file.listFiles(new JarFilter());
                 jars.addAll(Arrays.asList(files));
             } else if (file.getName().endsWith(".jar")) {
                 jars.add(file);
@@ -180,12 +170,6 @@ public class BlinkUDFScan extends AbstractScan {
                     jarDir = "file:" + jar.getCanonicalPath();
                     url = new URL(jarDir);
                     URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
-//                    URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-//                    Method add = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
-//                    add.setAccessible(true);
-//                    add.invoke(urlClassLoader, new Object[] { jar.toURI().toURL() });
-
-                    //                    this.registBlinkUDF(file.getCanonicalPath(), packageName);
                     this.extendsDirFoUDF.put(packageName, jar.getCanonicalPath());
                     this.scanClassDir(jar, packageName, urlClassLoader, functionName);
                 } catch (MalformedURLException e) {

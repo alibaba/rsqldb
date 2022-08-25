@@ -42,15 +42,13 @@ public class HopParser extends TumbleParser {
         /**
          * 如果只有group by，没有指定窗口，则通过配置获取默认窗口大小，如果未指定，默认1个小时
          */
-        int inteval = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_INERVAL_SIZE, 60);
-        int timeUnitAdjust = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_TIME_UNIT_ADJUST, 60);
+        int interval = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_INERVAL_SIZE, 60 * 10);
         com.alibaba.rsqldb.parser.parser.builder.WindowBuilder
             windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
         windowBuilder.setType(IWindow.HOP_WINDOW);
         windowBuilder.setOwner(builder);
-        windowBuilder.setSize(inteval);
-        windowBuilder.setSlide(inteval);
-        windowBuilder.setTimeUnitAdjust(timeUnitAdjust);
+        windowBuilder.setSize(interval);
+        windowBuilder.setSlide(interval);
         windowBuilder.setTimeFieldName("");
         builder.setWindowBuilder(windowBuilder);
         return windowBuilder;

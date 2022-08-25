@@ -17,19 +17,8 @@
 package com.alibaba.rsqldb.dim.model;
 
 import com.alibaba.fastjson.JSONObject;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import com.alibaba.rsqldb.dim.index.DimIndex;
+import com.alibaba.rsqldb.dim.index.IndexExecutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.cache.ByteArrayMemoryTable;
@@ -43,14 +32,26 @@ import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.utils.DataTypeUtil;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
-import com.alibaba.rsqldb.dim.index.DimIndex;
-import com.alibaba.rsqldb.dim.index.IndexExecutor;
 import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
 import org.apache.rocketmq.streams.filter.function.expression.Equals;
 import org.apache.rocketmq.streams.filter.operator.Rule;
 import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 import org.apache.rocketmq.streams.filter.operator.expression.RelationExpression;
 import org.apache.rocketmq.streams.script.ScriptComponent;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 这个结构代表一张表 存放表的全部数据和索引
@@ -67,7 +68,8 @@ public abstract class AbstractDim extends BasedConfigurable {
     protected Long pollingTimeMinute = 60L;
 
     /**
-     * 支持多组索引，如果一个索引是组合索引，需要拼接成一个string，用;分割 建立索引后，会创建索引的数据结构，类似Map<String,List<RowId>，可以快速定位，无索引会全表扫描，不建议使用 如有两组索引：1.name 2. ip;address
+     * 支持多组索引，如果一个索引是组合索引，需要拼接成一个string，用;分割 建立索引后，会创建索引的数据结构，类似Map<String,List<RowId>，可以快速定位，无索引会全表扫描，不建议使用
+     * 如有两组索引：1.name 2. ip;address
      */
     protected List<String> indexs = new ArrayList<>();
 
@@ -80,7 +82,8 @@ public abstract class AbstractDim extends BasedConfigurable {
     protected transient volatile AbstractMemoryTable dataCache;
 
     /**
-     * 建立名单的时候，可以指定多组索引，索引的值当作key，row在datacache的index当作value，可以快速匹配索引对应的row key：索引的值 value：row在dataCache的index当作value，可以快速匹配索引对应的row
+     * 建立名单的时候，可以指定多组索引，索引的值当作key，row在datacache的index当作value，可以快速匹配索引对应的row key：索引的值
+     * value：row在dataCache的index当作value，可以快速匹配索引对应的row
      */
     protected transient DimIndex nameListIndex;
     protected transient Set<String> columnNames;
@@ -124,7 +127,7 @@ public abstract class AbstractDim extends BasedConfigurable {
             AbstractMemoryTable dataCacheVar = loadData();
             this.dataCache = dataCacheVar;
             this.nameListIndex = buildIndex(dataCacheVar);
-            this.columnNames = this.dataCache.getCloumnName2Index().keySet();
+            this.columnNames = this.dataCache.getColumn2Index().keySet();
         } catch (Exception e) {
             LOG.error("Load configurables error:" + e.getMessage(), e);
         }
@@ -173,7 +176,7 @@ public abstract class AbstractDim extends BasedConfigurable {
         String script) {
         IndexExecutor indexNamelistExecutor = cache.get(expressionStr);
         if (indexNamelistExecutor == null) {
-            indexNamelistExecutor = new IndexExecutor(expressionStr, getNameSpace(), this.indexs, dataCache.getCloumnName2DatatType().keySet());
+            indexNamelistExecutor = new IndexExecutor(expressionStr, getNameSpace(), this.indexs, dataCache.getColumn2DataType().keySet());
             cache.put(expressionStr, indexNamelistExecutor);
         }
         if (indexNamelistExecutor.isSupport()) {
@@ -394,6 +397,8 @@ public abstract class AbstractDim extends BasedConfigurable {
             loadData2Memory(memoryTable);
         } else {
             LOG.info(String.format("init MappedByteBufferTable."));
+//            memoryTable = new MappedByteBufferTable();
+//            loadData2Memory(memoryTable);
             Date date = new Date();
             try {
                 memoryTable = MappedByteBufferTable.Creator.newCreator(filePath, date, pollingTimeMinute.intValue()).create(table -> loadData2Memory(table));

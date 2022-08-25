@@ -17,14 +17,15 @@
 package com.alibaba.rsqldb.dim.builder;
 
 import com.alibaba.rsqldb.dim.model.AbstractDim;
-import java.util.Properties;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
+
+import java.util.Properties;
 
 /**
  * create dim by sql parser
  */
 public interface IDimSQLParser {
 
-    AbstractDim parseDim(String namespace,Properties properties, MetaData metaData);
+    AbstractDim parseDim(String namespace, String pipelineName, Properties properties, MetaData metaData);
 
 }

@@ -9,7 +9,7 @@ CREATE TABLE `rocketmq_source`
       topic = 'rsqldb-source',
       groupName = 'rsqldb-group',
       namesrvAddr = '127.0.0.1:9876',
-      isJsonData = 'false',
+      isJsonData = 'true',
       msgIsJsonArray = 'false'
       );
 

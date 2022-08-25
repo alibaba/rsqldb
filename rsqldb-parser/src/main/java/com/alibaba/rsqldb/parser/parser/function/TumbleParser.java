@@ -39,6 +39,7 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
         windowBuilder.setType(AbstractWindow.TUMBLE_WINDOW);
         windowBuilder.setOwner(builder);
         setWindowParameter(true, windowBuilder, sqlIntervalLiteral);
+        setWindowParameter(false, windowBuilder, sqlIntervalLiteral);
         windowBuilder.setTimeFieldName(fieldName.getReturnValue());
         builder.setWindowBuilder(windowBuilder);
         return new VarParseResult(null);
@@ -47,7 +48,6 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
     public static void setWindowParameter(boolean isSize, WindowBuilder builder, SqlIntervalLiteral intervalLiteral) {
         IntervalValue intervalValue = (IntervalValue) intervalLiteral.getValue();
         TimeUnit unit = intervalValue.getIntervalQualifier().getUnit();
-        builder.setLocalStorageOnly(TimeUnit.SECOND == unit && isSize);
         int interval = -1;
         try {
             interval = Integer.valueOf(intervalValue.getIntervalLiteral());

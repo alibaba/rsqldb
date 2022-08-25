@@ -18,15 +18,6 @@ package com.alibaba.rsqldb.parser.parser.builder;
 
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
@@ -39,6 +30,16 @@ import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 import org.apache.rocketmq.streams.window.operator.impl.SessionOperator;
 import org.apache.rocketmq.streams.window.operator.impl.ShuffleOverWindow;
 import org.apache.rocketmq.streams.window.operator.impl.WindowOperator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 public class WindowBuilder extends SelectSQLBuilder {
 
@@ -108,10 +109,7 @@ public class WindowBuilder extends SelectSQLBuilder {
     @Override protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
-            if (!isShuffleOverWindow) {
-                buildOverWindow();
-                return;
-            }
+            buildOverWindow();
             return;
         }
 
@@ -127,6 +125,7 @@ public class WindowBuilder extends SelectSQLBuilder {
         }
         window.setLocalStorageOnly(isLocalStorageOnly);
         window.setTimeFieldName(timeFieldName);
+//        window.setWindowType(type);
         window.setTimeUnitAdjust(1);
 
         if (window instanceof WindowOperator) {

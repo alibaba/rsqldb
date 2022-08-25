@@ -8,7 +8,7 @@ CREATE TABLE `test_source`
       type = 'file',
 -- 需要根据自身填写data.txt的绝对路径
       filePath = '',
-      isJsonData = 'false',
+      isJsonData = 'true',
       msgIsJsonArray = 'false'
       );
 

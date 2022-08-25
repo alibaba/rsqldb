@@ -16,7 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder.channel;
 
-import java.util.Properties;
 import org.apache.rocketmq.streams.common.channel.builder.IChannelBuilder;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
 import org.apache.rocketmq.streams.common.channel.source.AbstractSource;
@@ -26,6 +25,8 @@ import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.serviceloader.ServiceLoaderComponent;
+
+import java.util.Properties;
 
 public class ChannelCreatorFactory {
 

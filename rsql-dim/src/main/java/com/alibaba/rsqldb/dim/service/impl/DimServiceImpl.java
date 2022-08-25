@@ -19,9 +19,10 @@ package com.alibaba.rsqldb.dim.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.rsqldb.dim.model.AbstractDim;
 import com.alibaba.rsqldb.dim.service.IDimService;
+import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
 import java.util.List;
 import java.util.Map;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
 public class DimServiceImpl implements IDimService {
     protected ConfigurableComponent configurableComponent;

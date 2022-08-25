@@ -22,8 +22,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.script.annotation.Function;
 import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+import org.apache.rocketmq.streams.script.annotation.Function;
 
 /**
  * UDX's SQL Builder

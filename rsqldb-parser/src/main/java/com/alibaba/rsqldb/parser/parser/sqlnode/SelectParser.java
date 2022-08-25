@@ -34,8 +34,6 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.SQLFormatterUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.filter.builder.ExpressionBuilder;
 import org.apache.rocketmq.streams.filter.operator.expression.Expression;
@@ -43,7 +41,7 @@ import org.apache.rocketmq.streams.filter.operator.expression.Expression;
 public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
 
     private static final Log LOG = LogFactory.getLog(SelectParser.class);
-    private SQLFormatterUtil sqlFormatterUtil=new SQLFormatterUtil();
+
     @Override
     public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlSelect sqlSelect) {
         //
@@ -69,7 +67,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
             return;
         }
         SqlNodeList groups = sqlSelect.getGroup();
-        builder.setGroupSQL(sqlFormatterUtil.format("GROUP \n"+groups.toString()));
         List<SqlNode> list = groups.getList();
         for (SqlNode sqlNode : list) {
             IParseResult result = parseSqlNode(builder, sqlNode);
@@ -85,7 +82,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
             boolean isFromStage = builder.isFromStage();
             builder.switchWhere();
             SqlNode sqlNode = sqlSelect.getHaving();
-            builder.setHavingSQL(sqlFormatterUtil.format("HAVING \n"+sqlNode.toString()));
             List<String> scripts = builder.getScripts();
             builder.setScripts(new ArrayList<>());
             boolean isCloseFieldCheck = builder.isCloseFieldCheck();
@@ -139,9 +135,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
         sqlBuilder.setScripts(new ArrayList<>());
         sqlBuilder.switchSelect();
         SqlNodeList sqlNodes = sqlSelect.getSelectList();
-        sqlBuilder.setSelectSQL( sqlFormatterUtil.format("SELECT \n"+sqlNodes.toString()));
-
-
         for (SqlNode sqlNode : sqlNodes.getList()) {
             ISqlParser sqlParser = SQLNodeParserFactory.getParse(sqlNode);
             if (sqlParser == null) {
@@ -215,7 +208,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
                 from = sqlBasicCall.getOperandList().get(0);
                 aliasName = sqlBasicCall.getOperandList().get(1).toString();
             }
-            rootSelectSQLBuilder.setFromSQL("FROM "+from+" as "+ aliasName);
         }
 
         /**
@@ -232,11 +224,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
             parse(selectSQLDescriptor, (SqlSelect) from);
             rootSelectSQLBuilder.setTableName(selectSQLDescriptor.getTableName());
 
-            if(aliasName!=null){
-                rootSelectSQLBuilder.setFromSQL("FROM "+aliasName);
-            }else {
-                rootSelectSQLBuilder.setFromSQL("FROM "+"sub_select_table");
-            }
             /**
              * join的场景
              */
@@ -255,7 +242,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
                 rootSelectSQLBuilder.setAsName(aliasName);
             }
             rootSelectSQLBuilder.setJoinSQLDescriptor(joinSQLBuilder);
-            rootSelectSQLBuilder.setFromSQL("FROM "+joinSQLBuilder.getLeft().getReturnValue()+ joinSQLBuilder.getJoinType()+" "+joinSQLBuilder.getRight().getReturnValue());
             return joinSQLBuilder.isNeedWhereToCondition();
             /**
              * union all场景
@@ -273,18 +259,11 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
 ////            String tableName = tableNames.iterator().next();
             rootSelectSQLBuilder.setTableName(unionSQLBuilder.getTableName());
             rootSelectSQLBuilder.setUnionSQLBuilder(unionSQLBuilder);
-
-            rootSelectSQLBuilder.setFromSQL("FROM "+"union("+MapKeyUtil.createKeyFromCollection(",",unionSQLBuilder.getTableNames())+")");
         } else {//单表名的场景
             rootSelectSQLBuilder.setTableName(from.toString());
             if (StringUtil.isNotEmpty(aliasName)) {
                 rootSelectSQLBuilder.setAsName(aliasName);
-                rootSelectSQLBuilder.setFromSQL(from.toString()+" as "+aliasName );
-            }else {
-                rootSelectSQLBuilder.setFromSQL(from.toString());
             }
-            rootSelectSQLBuilder.setFromSQL("FROM "+from.toString());
-
             //tableDescriptor.addDependentTable(tableDescriptor.getTableName());
         }
         return false;
@@ -299,7 +278,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
     protected void parseWhere(SelectSQLBuilder selectSQLBuilder, SqlSelect sqlSelect, boolean isNeedWhereToCondition) {
         if (isNeedWhereToCondition) {
             SqlNode sqlNode = sqlSelect.getWhere();
-            selectSQLBuilder.setJoinConditionSQL(sqlFormatterUtil.format("ON \n"+sqlNode.toString()));
             if (sqlNode == null) {
                 throw new RuntimeException("expect join condition from next where, but where is null " + sqlSelect.toString());
             }
@@ -325,7 +303,6 @@ public class SelectParser extends AbstractSelectNodeParser<SqlSelect> {
         if (sqlNode == null) {
             return;
         }
-            selectSQLBuilder.setWhereSQL(sqlFormatterUtil.format("WHERE \n"+sqlNode.toString()));
         String expression = parseSqlNode(selectSQLBuilder, sqlNode).getValueForSubExpression();
 
         if (StringUtil.isNotEmpty(expression)) {

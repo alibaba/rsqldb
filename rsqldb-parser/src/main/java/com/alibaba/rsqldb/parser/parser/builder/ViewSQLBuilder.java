@@ -16,7 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,10 +27,6 @@ public class ViewSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     @Override
     public void build() {
-        buildSql();
-    }
-
-    @Override public SQLBuilderResult buildSql() {
         if (builder != null) {
             builder.setPipelineBuilder(pipelineBuilder);
             if (AbstractSQLBuilder.class.isInstance(builder)) {
@@ -41,12 +36,9 @@ public class ViewSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             }
             AbstractSQLBuilder abstractSQLBuilder = (AbstractSQLBuilder) builder;
             abstractSQLBuilder.addRootTableName(this.getRootTableNames());
-            SQLBuilderResult sqlBuilderResult= abstractSQLBuilder.buildSql();
-            sqlBuilderResult.getStageGroup().setViewName("CREATE VIEW "+createTable);
-           // sqlBuilderResult.getStageGroup().setSql(sqlFormatterUtil.format("CREATE VIEW "+createTable+" as \n"+PrintUtil.LINE+sqlBuilderResult.getStageGroup().getSql()));
-            return sqlBuilderResult;
+            abstractSQLBuilder.buildSql();
         }
-        return null;
+
     }
 
     @Override

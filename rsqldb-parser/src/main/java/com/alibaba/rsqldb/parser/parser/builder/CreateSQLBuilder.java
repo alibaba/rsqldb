@@ -16,10 +16,22 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLBuilderResult;
 import com.alibaba.rsqldb.parser.parser.builder.channel.ChannelCreatorFactory;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.util.ColumnUtil;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlProperty;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.channel.sink.ISink;
+import org.apache.rocketmq.streams.common.channel.source.ISource;
+import org.apache.rocketmq.streams.common.metadata.MetaData;
+import org.apache.rocketmq.streams.common.metadata.MetaDataField;
+import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,25 +41,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlProperty;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.channel.sink.ISink;
-import org.apache.rocketmq.streams.common.channel.source.AbstractSource;
-import org.apache.rocketmq.streams.common.channel.source.ISource;
-import org.apache.rocketmq.streams.common.metadata.MetaData;
-import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.topology.ChainStage;
-import org.apache.rocketmq.streams.common.topology.builder.IStageBuilder;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.topology.stages.ShuffleConsumerChainStage;
-import org.apache.rocketmq.streams.common.topology.stages.ShuffleProducerChainStage;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
 
 /**
  * create sql的解析内容。主要完成channel的创建
@@ -94,66 +87,15 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         if (StringUtil.isEmpty(this.source.getGroupName())) {
             this.source.setGroupName(StringUtil.getUUID());
         }
+
         getPipelineBuilder().setSource(source);
         getPipelineBuilder().setChannelMetaData(metaData);
-
-
-        //this.outputChannel=createOutputChannel(maskProperty);
-    }
-
-    @Override public SQLBuilderResult buildSql() {
-        build();
-        PipelineBuilder builder=createPipelineBuilder();
-        boolean hasBuilder=false;
-        if(AbstractSource.class.isInstance(this.source)){
-
-            AbstractSource abstractSource=(AbstractSource)this.source;
-            if(abstractSource.getShuffleConcurrentCount()>0){
-                hasBuilder=true;
-                final ChainStage<?> producerChainStage = new ShuffleProducerChainStage();
-                ((ShuffleProducerChainStage) producerChainStage).setShuffleOwnerName(MapKeyUtil.createKey(this.getPipelineBuilder().getPipelineNameSpace(),this.getPipelineBuilder().getPipelineName(),this.getPipelineBuilder().getPipeline().getChannelName()));
-                ((ShuffleProducerChainStage) producerChainStage).setSplitCount(abstractSource.getShuffleConcurrentCount());
-                builder.addChainStage(new IStageBuilder<ChainStage>() {
-                    @Override public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
-                        return producerChainStage;
-                    }
-
-                    @Override public void addConfigurables(PipelineBuilder pipelineBuilder) {
-
-                    }
-                });
-
-                final ChainStage<?> consumerChainStage = new ShuffleConsumerChainStage<>();
-                ((ShuffleConsumerChainStage) consumerChainStage).setShuffleOwnerName(MapKeyUtil.createKey(this.getPipelineBuilder().getPipelineNameSpace(),this.getPipelineBuilder().getPipelineName(),this.getPipelineBuilder().getPipeline().getChannelName()));
-                builder.addChainStage(new IStageBuilder<ChainStage>() {
-                    @Override public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
-                        return consumerChainStage;
-                    }
-
-                    @Override public void addConfigurables(PipelineBuilder pipelineBuilder) {
-
-                    }
-                });
-
-            }
-        }
-
-
         if (this.getScripts() != null && this.getScripts().size() > 0) {
-            hasBuilder=true;
             ScriptParseResult scriptParseResult = new ScriptParseResult();
             scriptParseResult.setScriptValueList(this.getScripts());
-            builder.addChainStage(new ScriptOperator(scriptParseResult.getScript()));
+            getPipelineBuilder().addChainStage(new ScriptOperator(scriptParseResult.getScript()));
         }
-        if(hasBuilder){
-            mergeSQLBuilderResult(new SQLBuilderResult(builder,this));
-            SQLBuilderResult sqlBuilderResult= new SQLBuilderResult(this.pipelineBuilder);
-            sqlBuilderResult.getStageGroup().setViewName("Shuffle MSG");
-            sqlBuilderResult.getStageGroup().setSql("Shuffle MSG");
-        }
-        SQLBuilderResult sqlBuilderResult=  new SQLBuilderResult(pipelineBuilder,this);
-
-        return sqlBuilderResult;
+        //this.outputChannel=createOutputChannel(maskProperty);
     }
 
     @Override public String getFieldName(String fieldName, boolean containsSelf) {
@@ -166,7 +108,7 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         }
         if (property == null) {
             return null;
-            }
+        }
 
         this.properties = createProperty();
         this.properties.put(TABLE_NAME, getTableName());

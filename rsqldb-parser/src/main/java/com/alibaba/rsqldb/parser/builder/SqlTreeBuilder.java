@@ -29,7 +29,6 @@ import com.alibaba.rsqldb.parser.parser.builder.NotSupportSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SQLCreateTables;
 import com.alibaba.rsqldb.parser.parser.builder.ViewSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,7 +82,8 @@ public class SqlTreeBuilder {
         this.configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
     }
 
-    public SqlTreeBuilder(String namespace, String pipelineName, String sql, ConfigurableComponent configurableComponent) {
+    public SqlTreeBuilder(String namespace, String pipelineName, String sql,
+        ConfigurableComponent configurableComponent) {
         this.namespace = namespace;
         this.pipelineName = pipelineName;
         this.sql = sql.replace("\\\\", "\\");
@@ -91,27 +91,39 @@ public class SqlTreeBuilder {
     }
 
     public List<ChainPipeline<?>> build() {
-        List<ChainPipeline<?>> pipelines=new ArrayList<>();
-        build(true,false,pipelines);
-        return pipelines;
-    }
-
-    public List<IConfigurable> build(Boolean isBuild) {
-        return build(isBuild,false,null);
-    }
-
-    public List<IConfigurable> build(Boolean isBuild, Boolean isStreamTaskStart,List<ChainPipeline<?>> pipelineList) {
         NameCreatorContext.init(new NameCreator());
         //把sql编译成sql builder
         List<ISQLBuilder> sqlBuilders = parseSQL();
         //把sql builder 编译成sql tree
         List<SQLTree> trees = buildSQLBuilder(sqlBuilders);
         //把sql tree 编译成chain pipeline（configurable service基于配置文件生成）
-        List<IConfigurable> configurables = Lists.newArrayList();
-        List<ChainPipeline<?>> pipelines=buildSqlTree(trees, isBuild, isStreamTaskStart, configurables);
-        if(pipelineList!=null){
-            pipelineList.addAll(pipelines);
-        }
+        List<ChainPipeline<?>> chainPipelines = buildSqlTree(trees);
+        NameCreatorContext.remove();
+        return chainPipelines;
+    }
+
+    public List<IConfigurable> build(Boolean isBuild) {
+        NameCreatorContext.init(new NameCreator());
+        //把sql编译成sql builder
+        List<ISQLBuilder> sqlBuilders = parseSQL();
+        //把sql builder 编译成sql tree
+        List<SQLTree> trees = buildSQLBuilder(sqlBuilders);
+        //把sql tree 编译成chain pipeline（configurable service基于配置文件生成）
+        List<IConfigurable> configurables = new ArrayList<>();
+        buildSqlTree(trees, isBuild, false, configurables);
+        NameCreatorContext.remove();
+        return configurables;
+    }
+
+    public List<IConfigurable> build(Boolean isBuild, Boolean isStreamTaskStart) {
+        NameCreatorContext.init(new NameCreator());
+        //把sql编译成sql builder
+        List<ISQLBuilder> sqlBuilders = parseSQL();
+        //把sql builder 编译成sql tree
+        List<SQLTree> trees = buildSQLBuilder(sqlBuilders);
+        //把sql tree 编译成chain pipeline（configurable service基于配置文件生成）
+        List<IConfigurable> configurables = new ArrayList<>();
+        buildSqlTree(trees, isBuild, isStreamTaskStart, configurables);
         NameCreatorContext.remove();
         return configurables;
     }
@@ -265,17 +277,28 @@ public class SqlTreeBuilder {
         return sqlTrees;
     }
 
-
-    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isStreamTaskStart) {
-        return buildSqlTree(sqlTrees, true, isStreamTaskStart,null);
-    }
-
     /**
-     * 把多棵树解析成多个pipline，生成元数据和sql在成员变量中 shareSource 是否共享数据源，如果共享，则根据channel的表名，来寻找共同的source，如果找到，则创建数据源joiner对象，否则是独立的pipline。 *        需要保障数据源对象的sql会提前创建
+     * 把多棵树解析成多个pipline，生成元数据和sql在成员变量中 shareSource 是否共享数据源，如果共享，则根据channel的表名，来寻找共同的source，如果找到，则创建数据源joiner对象，否则是独立的pipline。
+     * *        需要保障数据源对象的sql会提前创建
      *
      * @return pipline list
      */
-    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isNeedBuild, boolean isStreamTaskStart, List<IConfigurable> configurables) {
+    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees) {
+        return buildSqlTree(sqlTrees, true, false, null);
+    }
+
+    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isStreamTaskStart) {
+        return buildSqlTree(sqlTrees, true, isStreamTaskStart, null);
+    }
+
+    /**
+     * 把多棵树解析成多个pipline，生成元数据和sql在成员变量中 shareSource 是否共享数据源，如果共享，则根据channel的表名，来寻找共同的source，如果找到，则创建数据源joiner对象，否则是独立的pipline。
+     * *        需要保障数据源对象的sql会提前创建
+     *
+     * @return pipline list
+     */
+    public List<ChainPipeline<?>> buildSqlTree(List<SQLTree> sqlTrees, boolean isNeedBuild, boolean isStreamTaskStart,
+        List<IConfigurable> configurables) {
         if (sqlTrees == null || sqlTrees.size() == 0) {
             return null;
         }

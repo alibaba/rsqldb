@@ -16,9 +16,6 @@
  */
 package com.alibaba.rsqldb.dim.model;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.cache.compress.AbstractMemoryTable;
@@ -30,6 +27,10 @@ import org.apache.rocketmq.streams.db.driver.DriverBuilder;
 import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 import org.apache.rocketmq.streams.db.driver.batchloader.BatchRowLoader;
 import org.apache.rocketmq.streams.db.driver.batchloader.IRowOperator;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DBDim extends AbstractDim {
 
@@ -50,7 +51,7 @@ public class DBDim extends AbstractDim {
 
     protected String idFieldName;
 
-    private static transient AtomicInteger nameCreator = new AtomicInteger(0);
+    public static transient AtomicInteger nameCreator = new AtomicInteger(0);
 
     /**
      * 是否支持批量查找
@@ -59,7 +60,7 @@ public class DBDim extends AbstractDim {
 
     public DBDim() {
         this.setConfigureName(MapKeyUtil.createKey(IPUtil.getLocalIdentification(), System.currentTimeMillis() + "",
-            nameCreator.incrementAndGet() + ""));
+                nameCreator.incrementAndGet() + ""));
         this.setType(TYPE);
     }
 

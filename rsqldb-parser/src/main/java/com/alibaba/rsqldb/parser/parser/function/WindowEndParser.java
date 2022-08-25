@@ -32,6 +32,8 @@ public class WindowEndParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     String hopFunction = "hop_end";
 
+    String sessionFunction = "session_end";
+
     @Override
     public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
 
@@ -47,7 +49,7 @@ public class WindowEndParser extends AbstractSelectNodeParser<SqlBasicCall> {
         if (sqlNode instanceof SqlBasicCall) {
             SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toLowerCase();
-            if (tumbleFunction.equals(name) || hopFunction.equals(name)) {
+            if (tumbleFunction.equals(name) || hopFunction.equals(name) || sessionFunction.equals(name)) {
                 return true;
             }
         }

@@ -18,12 +18,13 @@ package com.alibaba.rsqldb.dim;
 
 import com.alibaba.rsqldb.dim.service.IDimService;
 import com.alibaba.rsqldb.dim.service.impl.DimServiceImpl;
-import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.component.AbstractComponent;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
+import java.util.Properties;
 
 public class DimComponent extends AbstractComponent<IDimService> {
 

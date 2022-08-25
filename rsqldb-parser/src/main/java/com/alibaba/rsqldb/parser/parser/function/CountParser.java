@@ -34,8 +34,8 @@ public class CountParser extends AbstractSelectNodeParser<SqlBasicCall> {
         String fieldName = parseSqlNode(tableDescriptor, varNode).getReturnValue();
         ScriptParseResult scriptParseResult = new ScriptParseResult();
         if (sqlBasicCall.getFunctionQuantifier() != null && sqlBasicCall.getFunctionQuantifier().toValue().toLowerCase().equals("distinct")) {
-            String returnName = ParserNameCreator.createName("distinct", null);
-            scriptParseResult.addScript(tableDescriptor, returnName + "=distinct(" + fieldName + ");");
+            String returnName = ParserNameCreator.createName("distinct2", null);
+            scriptParseResult.addScript(tableDescriptor, returnName + "=distinct2(" + fieldName + ",HIT_WINDOW_INSTANCE_ID,SHUFFLE_KEY,'" + fieldName + "');");
             fieldName = returnName;
         }
 
