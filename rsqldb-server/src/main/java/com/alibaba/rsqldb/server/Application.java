@@ -1,9 +1,10 @@
 package com.alibaba.rsqldb.server;
 
-import java.io.File;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+
+import java.io.File;
 
 @SpringBootApplication(scanBasePackages = {"com.alibaba.rsqldb.server"}, exclude = DataSourceAutoConfiguration.class)
 public class Application {
@@ -13,8 +14,9 @@ public class Application {
             throw new IllegalArgumentException("home.dir is required.");
         }
         String homeDir = args[0];
+        System.setProperty("home.dir", homeDir);
 
-        String dipperCsParentPath = homeDir + "/server/";
+        String dipperCsParentPath = homeDir + "/server";
         File file = new File(dipperCsParentPath);
         if (!file.exists()) {
             boolean result = file.mkdirs();
@@ -23,7 +25,7 @@ public class Application {
             }
         }
 
-        System.setProperty("cs.dir", dipperCsParentPath);
+        System.setProperty("cs.dir", dipperCsParentPath + "/dipper.cs");
 
         System.out.println(System.getProperty("cs.dir"));
 

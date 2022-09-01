@@ -27,6 +27,9 @@ mvn clean package -DskipTest -U
 tar -zxvf rsqldb-distribution.tar.gz;cd rsqldb
 ```
 
+### 配置rsqldb服务端
+- 打开conf目录下rsqldb.conf文件；
+- 修改filePathAndName，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称;
 
 ### 启动rsqldb服务端
 ```shell
@@ -40,7 +43,7 @@ sendDataFromFile.sql中创建的任务，需要从本地文件指定位置读取
 ### 提交任务
 执行路径依然在rsqldb解压目录下
 ```shell
-sh client/clientExector.sh submitTask sendDataFromFile.sql
+sh client/clientExector.sh submitTask ${sendDataFromFile.sql文件绝对路径}
 ```
 sendDataFromFile.sql会从本地文件data.txt中读取数据，过滤出只含有field_1=1的数据，并将结果数据输出到日志中。
 
@@ -74,13 +77,21 @@ sh client/clientExector.sh stopTask
 上述示例为从本地文件data.txt中读取数据，更为常用的用法是从RocketMQ中读取数据处理，下面给出具体步骤：
 
 - 本地安装并启动RocketMQ，[安装文档](https://rocketmq.apache.org/docs/quick-start/)
+
+- 配置rsqldb服务端
+```xml
+打开conf目录下rsqldb.conf文件;
+修改filePathAndName，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称;
+如果有必要，可以修改NAMESRV_ADDR，执行自己配置的namesrv地址；
+```
+
 - 启动rsqldb服务端
 ```shell
   sh bin/startAll.sh
 ```
 - 提交任务
 ```shell
-  sh client/clientExector.sh submitTask rocketmq.sql
+  sh client/clientExector.sh submitTask ${rocketmq.sql文件绝对路径}
 ```
 
 rocketmq.sql会从RocketMQ的rsqldb-source中读取数据，过滤出field_1=1的数据，并将结果输出到日志文件中。

@@ -106,7 +106,8 @@ public class WindowBuilder extends SelectSQLBuilder {
     protected List<String> shuffleOverWindowOrderByFieldNames;
     protected int overWindowTopN = 100;
 
-    @Override protected void build() {
+    @Override
+    protected void build() {
         AbstractWindow window;
         if (overWindowName != null) {
             buildOverWindow();
@@ -213,7 +214,8 @@ public class WindowBuilder extends SelectSQLBuilder {
         getPipelineBuilder().addChainStage(overWindow);
     }
 
-    @Override public Set<String> parseDependentTables() {
+    @Override
+    public Set<String> parseDependentTables() {
         return new HashSet<>();
     }
 

@@ -2,16 +2,13 @@
 
 binDir=$(cd `dirname $0`;pwd)
 
-cd $binDir/..
-homeDir=$(pwd)
-
 cd $binDir
 
 
 mainClass=()
 if [ "x$1" == "xsubmitTask" ]; then
     mainClass=com.alibaba.rsqldb.client.SubmitTask
-    java -cp rsqldb-client.jar ${mainClass} ${homeDir} $2
+    java -cp rsqldb-client.jar ${mainClass} $2
 fi
 
 if [ "x$1" == "xstartTask" ]; then
