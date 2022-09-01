@@ -26,10 +26,11 @@ CREATE TABLE task_sink
 
 -- 验证count/avg/sum/max/min
 CREATE VIEW test_view AS
-SELECT `position`, count(num) AS nums
+SELECT `position`, avg(num) AS nums
 FROM source_function_0
 GROUP BY `position`;
-
+-- 也支持GROUP BY TUMBLE(`gmt_modified`, INTERVAL '5' SECOND), `position`;
+-- 使用avg/sum/max/min时，原数据类型需要Number类型，不能是String类型,不然会计算不准确
 
 INSERT INTO task_sink
 SELECT *

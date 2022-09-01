@@ -62,8 +62,8 @@ SELECT t.id         AS ticket_id,
        t.`position` AS `position`,
        p.name       AS perform_name,
        p.odeum_id   AS odeum_id
-FROM ticket AS t
-         JOIN perform FOR SYSTEM_TIME AS OF PROCTIME() AS p ON t.perform_id = p.id;
+FROM ticket AS t JOIN perform FOR SYSTEM_TIME AS OF PROCTIME() AS p
+ON t.perform_id = p.id;
 
 
 CREATE VIEW result_view AS
@@ -72,7 +72,8 @@ SELECT
     a.`position`    AS `position`,
     b.name          AS odeum_name,
     a.perform_name  AS perform_name
-FROM test_view as a JOIN odeum FOR SYSTEM_TIME AS OF PROCTIME() AS b ON a.odeum_id = b.id;
+FROM test_view as a JOIN odeum FOR SYSTEM_TIME AS OF PROCTIME() AS b
+ON a.odeum_id = b.id;
 
 
 INSERT INTO task_sink
