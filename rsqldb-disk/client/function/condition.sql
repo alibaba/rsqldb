@@ -25,12 +25,9 @@ CREATE TABLE task_sink
       type = 'print'
       );
 
-CREATE VIEW test_view as
-SELECT *
-FROM source_condition_0
-WHERE id >=5;
-
+-- 可以没有VIEW表
 
 INSERT INTO task_sink
 SELECT *
-FROM test_view;
+FROM source_condition_0
+WHERE id>=5;
