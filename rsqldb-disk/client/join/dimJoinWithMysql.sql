@@ -25,8 +25,8 @@ CREATE TABLE purchaser_dim
 )WITH (
     type = 'db',
     url='jdbc:mysql://localhost:3306/rocketmq_streams',
-    userName='root',
-    password='nize1989+',
+    userName='',
+    password='',
     tableName='purchaser_dim',
     cacheTTLMs='60000'
      );
