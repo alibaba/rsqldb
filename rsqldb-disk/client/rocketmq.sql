@@ -13,24 +13,6 @@ CREATE TABLE `rocketmq_source`
       msgIsJsonArray = 'false'
       );
 
-
--- 数据标准化
-
-create view rocketmq_view as
-select field_1
-     , field_2
-     , field_3
-     , field_4
-from (
-         select field_1
-              , field_2
-              , field_3
-              , field_4
-         from rocketmq_source
-     )
-where (field_1='1');
-
-
 CREATE TABLE `task_sink_2`
 (
     field_1 VARCHAR,
@@ -46,4 +28,4 @@ select field_1
      , field_2
      , field_3
      , field_4
-from rocketmq_view
+from rocketmq_source where field_1='1';
