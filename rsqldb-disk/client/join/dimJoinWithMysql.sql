@@ -1,4 +1,4 @@
-CREATE TABLE ticket
+CREATE TABLE movie_ticket
 (
     `id`                INT,
     `purchaser_id`      INT,
@@ -8,8 +8,8 @@ CREATE TABLE ticket
     primary key (id)
 ) WITH (
       type = 'rocketmq',
-      topic = 'rsqldb-ticket',
-      groupName = 'rsqldb-ticket',
+      topic = 'movie_ticket',
+      groupName = 'movie_ticket',
       namesrvAddr = '127.0.0.1:9876',
       isJsonData = 'true',
       msgIsJsonArray = 'false'
@@ -37,7 +37,7 @@ SELECT
     pd.name                 AS name,
     pd.gender               AS gender,
     t.movie_name            AS movie_name
-FROM ticket as t JOIN purchaser_dim FOR SYSTEM_TIME AS OF PROCTIME() AS pd
+FROM movie_ticket as t JOIN purchaser_dim FOR SYSTEM_TIME AS OF PROCTIME() AS pd
 ON t.purchaser_id = pd.purchaser_id;
 
 

@@ -40,6 +40,12 @@
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-streams-window</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>rsqldb-dim</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 

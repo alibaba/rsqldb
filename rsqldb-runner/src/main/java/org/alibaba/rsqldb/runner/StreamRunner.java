@@ -24,6 +24,7 @@ import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+import org.apache.rocketmq.streams.script.function.service.impl.ScanFunctionService;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -81,6 +82,8 @@ public class StreamRunner {
             namespace = "default";
         }
 
+        //在维表join时需要使用leftJoin名函数，需要先加载
+        ScanFunctionService.getInstance().scanePackage("com.alibaba.rsqldb.dim.function");
         ConfigurableComponent configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
         final String finalNamespace = namespace;
 
