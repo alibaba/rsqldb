@@ -19,10 +19,6 @@ package com.alibaba.rsqldb.parser.parser;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.rocketmq.streams.common.configurable.IConfigurable;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.common.topology.ChainPipeline;
@@ -31,6 +27,11 @@ import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.topology.model.AbstractStage;
 import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 import org.apache.rocketmq.streams.common.utils.PrintUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SQLTree {
 
@@ -94,7 +95,42 @@ public class SQLTree {
         //TODO 拓扑结构在此
         Map<String, List<String>> tree = new HashMap<>();
         Map<AbstractSQLBuilder, BuilderNodeStage> builderBuilderNodeStageMap = new HashMap<>();
-        build(namespace, sqlBuilder, rootCreator, tree, builderBuilderNodeStageMap);
+
+        List<AbstractStage<?>> stagesInRoot = rootCreator.getPipeline().getStages();
+
+        if (stagesInRoot != null && stagesInRoot.size() > 0) {
+            //这里逻辑处理tumble_processTime.sql中ts as PROCTIME()，语句接收到数据后，
+            // 在数据中加入处理时间的逻辑，不然不会有ts这个字段,目前只验证过有一个stagesInRoot.size()=1的情况
+            ChainStage last = null;
+
+            for (int i = 0; i < stagesInRoot.size() - 1; i++) {
+                AbstractStage current = stagesInRoot.get(i);
+
+                AbstractStage next = stagesInRoot.get(i + 1);
+
+                List<String> labels = new ArrayList<>();
+
+                labels.add(next.getLabel());
+
+                current.setNextStageLabels(labels);
+                if (!next.getPrevStageLabels().contains(current.getLabel())) {
+                    next.getPrevStageLabels().add(current.getLabel());
+                }
+            }
+
+            last = (ChainStage) stagesInRoot.get(stagesInRoot.size() - 1);
+            //最后一个ChainStage作为下个节点的父节点
+            rootCreator.setCurrentChainStage(last);
+            build(namespace, sqlBuilder, rootCreator, tree, builderBuilderNodeStageMap);
+
+            ArrayList<String> temp = new ArrayList<>();
+            temp.add(last.getLabel());
+            //channelNextStageLabel 不为null，window触发后的值才会被计算，不然只会到window触发
+            rootCreator.getPipeline().setChannelNextStageLabel(temp);
+        } else {
+            build(namespace, sqlBuilder, rootCreator, tree, builderBuilderNodeStageMap);
+        }
+
         rootCreator.getPipeline().setMsgSourceName(sqlBuilder.getTableName());
         StringBuilder stringBuilder = new StringBuilder();
         printTree(sqlBuilder.getTableName(), tree, stringBuilder);
@@ -111,7 +147,7 @@ public class SQLTree {
      * @param currentBuilder
      */
     protected void build(String namespace, AbstractSQLBuilder sqlBuilder, final PipelineBuilder currentBuilder,
-        Map<String, List<String>> tree, Map<AbstractSQLBuilder, BuilderNodeStage> nodeStageMap) {
+                         Map<String, List<String>> tree, Map<AbstractSQLBuilder, BuilderNodeStage> nodeStageMap) {
         List<AbstractSQLBuilder<?>> list = sqlBuilder.getChildren();
 
         if (CollectionUtil.isEmpty(list)) {
@@ -233,7 +269,7 @@ public class SQLTree {
      * @param list
      */
     protected void getLastChainStage(ChainStage chainStage, Map<String, AbstractStage> stageMap,
-        List<ChainStage> list) {
+                                     List<ChainStage> list) {
         if (chainStage.getNextStageLabels() == null || chainStage.getNextStageLabels().size() == 0) {
             list.add(chainStage);
             return;
