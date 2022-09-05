@@ -25,21 +25,36 @@ import org.apache.rocketmq.streams.common.configurable.IConfigurable;
 import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
-public class RemoteSqlStream extends AbstractStream<RemoteSqlStream> {
+public class RemoteSqlStream {
+    private Properties properties = new Properties();
+    private String namespace;
+    private String taskName;
 
-    protected String namespace;
-    protected String taskName;
-
-    public static RemoteSqlStream create(String namespace) {
+    public static RemoteSqlStream create(String namespace) throws IOException {
         return new RemoteSqlStream(namespace);
     }
 
-    private RemoteSqlStream(String namespace) {
+    private RemoteSqlStream(String namespace) throws IOException {
+        String homeDir = System.getProperty("home.dir");
+        String configFile = homeDir + "/conf/rsqldb.conf";
+
+        InputStream in = new BufferedInputStream(Files.newInputStream(Paths.get(configFile)));
+        Properties properties = new Properties();
+        properties.load(in);
+
+        this.properties.putAll(properties);
+
         this.namespace = namespace;
     }
 

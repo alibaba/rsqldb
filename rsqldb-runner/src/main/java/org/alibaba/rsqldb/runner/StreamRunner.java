@@ -17,8 +17,16 @@
 
 package org.alibaba.rsqldb.runner;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.streams.RocketMQChannelBuilder;
+import org.apache.rocketmq.streams.common.component.ComponentCreator;
+import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
+import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
+import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+import org.apache.rocketmq.streams.script.function.service.impl.ScanFunctionService;
+
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -28,13 +36,6 @@ import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.streams.RocketMQChannelBuilder;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
-import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
 public class StreamRunner {
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(5);
@@ -63,17 +64,6 @@ public class StreamRunner {
             throw new IllegalArgumentException("filePathAndName is required.");
         }
 
-        String dipperCsParentPath = homeDir + "/server/";
-        File file = new File(dipperCsParentPath);
-        if (!file.exists()) {
-            boolean result = file.mkdirs();
-            if (!result) {
-                throw new RuntimeException("create dipper.cs path error");
-            }
-        }
-
-        properties.put("filePathAndName", dipperCsParentPath + filePathAndName);
-
         String namesrvAddrs = properties.getProperty(MixAll.NAMESRV_ADDR_ENV);
 
         String[] temp = namesrvAddrs.trim().split(";");
@@ -92,6 +82,8 @@ public class StreamRunner {
             namespace = "default";
         }
 
+        //在维表join时需要使用leftJoin名函数，需要先加载
+        ScanFunctionService.getInstance().scanePackage("com.alibaba.rsqldb.dim.function");
         ConfigurableComponent configurableComponent = ComponentCreator.getComponent(namespace, ConfigurableComponent.class);
         final String finalNamespace = namespace;
 

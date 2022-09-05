@@ -7,29 +7,11 @@ CREATE TABLE `test_source`
 ) WITH (
       type = 'file',
 -- 需要根据自身填写data.txt的绝对路径
-      filePath = '',
+      filePath = '/Users/nize/code/github/rsqldb/rsqldb-disk/client/data.txt',
       isJsonData = 'true',
       msgIsJsonArray = 'false'
       );
 
-
--- 数据标准化
-
-create view view_test as
-select field_1
-     , field_2
-     , field_3
-     , field_4
-from (
-         select field_1
-              , field_2
-              , field_3
-              , field_4
-         from test_source
-     )
-where (
-              field_1='1'
-          );
 
 CREATE TABLE `test_sink`
 (
@@ -46,4 +28,4 @@ select field_1
      , field_2
      , field_3
      , field_4
-from view_test
+from test_source where field_1='1';
