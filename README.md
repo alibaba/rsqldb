@@ -50,8 +50,20 @@ sh clientExector.sh startTask
 ```shell
 java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer
 ```
-向RocketMQ的rsqldb-source topic中写入RocketmqTest-1.0-SNAPSHOT.jar包中默认数据，数据如data.txt文件所示。
-使用Producer类发送消息时，允许带三个参数：topic、groupId、数据文件全路径，可以向RocketMQ任意topic发送任意数据。
+执行上述语句，向RocketMQ的rsqldb-source topic中写入RocketmqTest-1.0-SNAPSHOT.jar包中默认数据，即向rocketmq发送的数据为：
+```xml
+1,2,3,4
+2,2,3,4
+3,2,3,4
+4,2,3,4
+```
+（也可以向rocketmq发送json数据，显式指定数据数据哪个字段，见rsqldb-disk/client中其他例子）
+根据执行的任务rocketmq.sql，期望能将field_1=1的数据过滤出来；
+
+另外，也可以使用RocketmqTest-1.0-SNAPSHOT.jar向任意topic发送任意数据，使用方式是：
+``shell
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer ${topic} ${groupId} ${数据文件权路径}
+``
 ### 查看结果输出
 ```shell
 java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.consumer.Consumer
