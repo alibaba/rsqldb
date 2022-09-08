@@ -28,9 +28,9 @@ import com.alibaba.rsqldb.dim.model.DBDim;
 import com.alibaba.rsqldb.dim.model.FileDim;
 import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
@@ -91,7 +91,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
      */
     public void buildDimCondition(SqlNode condition, String joinType, String onCondition) {
 
-        CreateSQLBuilder builder = SQLCreateTables.getInstance().get().get(getTableName());
+        CreateSQLBuilder builder =  ThreadLocalUtil.createSqlHolder.get().get(getTableName());
         Properties properties = builder.createProperty();
 
         String cacheTTLMs = properties.getProperty("cacheTTLMs");
@@ -417,7 +417,7 @@ public class SnapshotBuilder extends SelectSQLBuilder {
         if (name != null) {
             return name;
         }
-        Set<String> fieldNames = SQLParserContext.getInstance().get().get(getTableName());
+        Set<String> fieldNames = ThreadLocalUtil.stringSet.get().get(getTableName());
         String asName = null;
         String fieldValue = fieldName;
         String asNameStr = getAsName() == null ? "" : getAsName() + ".";

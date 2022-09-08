@@ -19,12 +19,13 @@ package com.alibaba.rsqldb.parser.parser.sqlnode;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import java.util.List;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+
+import java.util.List;
 
 /**
  * Create Table Parser
@@ -40,6 +41,9 @@ public class CreateParser extends AbstractSqlNodeParser<SqlCreateTable, CreateSQ
         tableDescriptor.setTableName(sqlCreateTable.getTableName().toString());
         tableDescriptor.createColumn(sqlCreateTable.getColumnList());
         tableDescriptor.addCreatedTable(tableDescriptor.getTableName());
+
+        tableDescriptor.setWatermark(sqlCreateTable.getWatermark());
+
         SqlNodeList sqlNodeList = sqlCreateTable.getPropertyList();
         List<SqlNode> property = sqlNodeList.getList();
         tableDescriptor.setProperty(property);

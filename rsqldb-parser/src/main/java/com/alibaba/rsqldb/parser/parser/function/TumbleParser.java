@@ -21,11 +21,13 @@ import com.alibaba.rsqldb.parser.parser.builder.WindowBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalLiteral.IntervalValue;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 
 public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
@@ -36,6 +38,16 @@ public class TumbleParser extends AbstractSelectNodeParser<SqlBasicCall> {
         IParseResult fieldName = parseSqlNode(builder, operands[0]);
         SqlIntervalLiteral sqlIntervalLiteral = (SqlIntervalLiteral) operands[1];
         WindowBuilder windowBuilder = new WindowBuilder();
+
+        SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
+        int watermarkOffset;
+        try {
+            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        windowBuilder.setWatermark(watermarkOffset);
+
         windowBuilder.setType(AbstractWindow.TUMBLE_WINDOW);
         windowBuilder.setOwner(builder);
         setWindowParameter(true, windowBuilder, sqlIntervalLiteral);

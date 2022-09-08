@@ -18,7 +18,6 @@ package com.alibaba.rsqldb.parser.builder;
 
 import com.alibaba.rsqldb.parser.parser.ISqlParser;
 import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 import com.alibaba.rsqldb.parser.parser.SQLTree;
 import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.CreateSQLBuilder;
@@ -26,20 +25,14 @@ import com.alibaba.rsqldb.parser.parser.builder.FunctionSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.ISQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.InsertSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.NotSupportSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.SQLCreateTables;
 import com.alibaba.rsqldb.parser.parser.builder.ViewSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flink.sql.parser.ddl.SqlNodeInfo;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.util.SqlContextUtils;
 import org.apache.rocketmq.streams.common.channel.impl.view.ViewSource;
 import org.apache.rocketmq.streams.common.component.ComponentCreator;
@@ -53,6 +46,14 @@ import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
 import org.apache.rocketmq.streams.common.topology.task.StreamsTask;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SqlTreeBuilder {
 
@@ -139,10 +140,15 @@ public class SqlTreeBuilder {
 
             //在某些地方会用到上游节点提供的字段，放到localthread，便于获取和查看
             Map<String, Set<String>> tableName2Fields = new HashMap<>(8);
-            SQLParserContext.getInstance().set(tableName2Fields);
+            ThreadLocalUtil.stringSet.set(tableName2Fields);
+
             //在insert场景，需要获取insert对应表的声明信息，可以在insert builder通过local thread根据表名获取createsqlbuilder 对象
             Map<String, CreateSQLBuilder> createBuilders = new HashMap<>(8);
-            SQLCreateTables.getInstance().set(createBuilders);
+            ThreadLocalUtil.createSqlHolder.set(createBuilders);
+
+            Map<String, SqlWatermark> tableName2Watermark = new HashMap<>(8);
+            ThreadLocalUtil.watermarkHolder.set(tableName2Watermark);
+
             for (SqlNodeInfo sqlNodeInfo : sqlNodeInfoList) {
                 SqlNode sqlNode = sqlNodeInfo.getSqlNode();
                 AbstractSQLBuilder<?> builder = null;
@@ -165,7 +171,14 @@ public class SqlTreeBuilder {
                 //设置所有的create builder
                 if (builder instanceof CreateSQLBuilder) {
                     CreateSQLBuilder createSQLBuilder = (CreateSQLBuilder) builder;
+
                     createBuilders.put(builder.getTableName(), createSQLBuilder);
+
+                    //保存起来后面使用
+                    SqlWatermark watermark = createSQLBuilder.getWatermark();
+                    if (watermark != null) {
+                        tableName2Watermark.put(builder.getTableName(), watermark);
+                    }
                 }
                 builders.add(builder);
             }
