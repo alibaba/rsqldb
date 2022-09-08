@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,8 +37,7 @@ public class TableNodeBuilder extends SelectSQLBuilder {
 
     @Override
     public Set<String> getAllFieldNames() {
-
-        return SQLParserContext.getInstance().get().get(getTableName());
+        return ThreadLocalUtil.stringSet.get().get(getTableName());
     }
 
 
@@ -50,7 +49,7 @@ public class TableNodeBuilder extends SelectSQLBuilder {
             return name;
         }
         String tableName = getTableName();
-        Set<String> fieldNames = SQLParserContext.getInstance().get().get(tableName);
+        Set<String> fieldNames = ThreadLocalUtil.stringSet.get().get(tableName);
         String asName = getAsName();
         int index = fieldName.indexOf(".");
         if (index == -1) {

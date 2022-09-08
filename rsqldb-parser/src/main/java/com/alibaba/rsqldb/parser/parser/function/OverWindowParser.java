@@ -21,8 +21,7 @@ import com.alibaba.rsqldb.parser.parser.builder.WindowBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
-import java.util.ArrayList;
-import java.util.List;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -30,7 +29,11 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
@@ -47,6 +50,17 @@ public class OverWindowParser extends AbstractSelectNodeParser<SqlBasicCall> {
         }
         String rowNumberName = NameCreatorContext.get().createNewName("over", "parition");
         WindowBuilder windowBuilder = new WindowBuilder();
+
+        SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
+        int watermarkOffset;
+        try {
+            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        windowBuilder.setWatermark(watermarkOffset);
+
+
         windowBuilder.setGroupByFieldNames(partionFieldNames);
         windowBuilder.setOverWindowName(rowNumberName);
         builder.setWindowBuilder(windowBuilder);

@@ -19,9 +19,11 @@ package com.alibaba.rsqldb.parser.parser.function;
 import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.topology.model.IWindow;
 import org.apache.rocketmq.streams.window.builder.WindowBuilder;
@@ -43,8 +45,17 @@ public class HopParser extends TumbleParser {
          * 如果只有group by，没有指定窗口，则通过配置获取默认窗口大小，如果未指定，默认1个小时
          */
         int interval = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_INERVAL_SIZE, 60 * 10);
-        com.alibaba.rsqldb.parser.parser.builder.WindowBuilder
-            windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
+        com.alibaba.rsqldb.parser.parser.builder.WindowBuilder windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
+
+        SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
+        int watermarkOffset;
+        try {
+            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        windowBuilder.setWatermark(watermarkOffset);
+
         windowBuilder.setType(IWindow.HOP_WINDOW);
         windowBuilder.setOwner(builder);
         windowBuilder.setSize(interval);
@@ -55,11 +66,20 @@ public class HopParser extends TumbleParser {
     }
 
     public static com.alibaba.rsqldb.parser.parser.builder.WindowBuilder createWindowBuilder(SelectSQLBuilder builder,
-        SqlIntervalLiteral size,
-        SqlIntervalLiteral slide,
-        String timeFieldName) {
-        com.alibaba.rsqldb.parser.parser.builder.WindowBuilder
-            windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
+        SqlIntervalLiteral size, SqlIntervalLiteral slide, String timeFieldName) {
+
+        com.alibaba.rsqldb.parser.parser.builder.WindowBuilder windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
+
+        SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
+        int watermarkOffset;
+        try {
+            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        windowBuilder.setWatermark(watermarkOffset);
+
+
         windowBuilder.setType(IWindow.HOP_WINDOW);
         windowBuilder.setOwner(builder);
         setWindowParameter(false, windowBuilder, slide);

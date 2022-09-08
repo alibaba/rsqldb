@@ -16,18 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.SelectParser;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.commons.logging.Log;
@@ -39,6 +31,15 @@ import org.apache.rocketmq.streams.common.utils.PrintUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.filter.operator.FilterOperator;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * 这块是整个build的核心，因为所有的优化都是基于过滤的，过滤都体现在select的where部分
@@ -374,7 +375,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             } else if (unionSQLBuilder != null) {
                 fieldNames = unionSQLBuilder.getAllFieldNames();
             } else {
-                fieldNames = SQLParserContext.getInstance().get().get(getTableName());
+                fieldNames = ThreadLocalUtil.stringSet.get().get(getTableName());
             }
 
         }
@@ -613,7 +614,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         /**
          * 检查原始表的输出
          */
-        Set<String> fieldNames = SQLParserContext.getInstance().get().get(getTableName());
+        Set<String> fieldNames = ThreadLocalUtil.stringSet.get().get(getTableName());
         if (fieldNames != null) {
             int index = fieldName.indexOf(".");
             if (index == -1) {

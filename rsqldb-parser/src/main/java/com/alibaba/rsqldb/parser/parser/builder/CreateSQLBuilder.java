@@ -24,6 +24,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlProperty;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
 import org.apache.rocketmq.streams.common.channel.source.ISource;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
@@ -78,6 +79,8 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
      * 如果是规则引擎，可以build成channel
      */
     protected AtomicBoolean hasBuilder = new AtomicBoolean(false);
+
+    private SqlWatermark watermark;
 
     @Override public void build() {
         if (!hasBuilder.compareAndSet(false, true)) {
@@ -160,19 +163,6 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         return properties;
     }
 
-    /**
-     * 创建输出的channel
-     * @param newValue
-     * @return
-     */
-    //    public IChannel createOutputChannel(Map<String,String> newValue){
-    //        Properties properties=new Properties();
-    //        properties.putAll(this.properties);
-    //        properties.putAll(newValue);
-    //        IChannel outputChannel= ChannelCreatorFactory.create(piplineCreator.getNamespace(),piplineCreator
-    //        .getName(),properties);
-    //        return outputChannel;
-    //    }
 
     /**
      * 把输入格式形成retain脚本，便于输出只保留必须的字段
@@ -262,5 +252,14 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     public List<String> getHeaderFieldNames() {
         return headerFieldNames;
+    }
+
+
+    public SqlWatermark getWatermark() {
+        return watermark;
+    }
+
+    public void setWatermark(SqlWatermark watermark) {
+        this.watermark = watermark;
     }
 }

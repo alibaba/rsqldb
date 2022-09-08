@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class WindowBuilder extends SelectSQLBuilder {
+    private int watermark;
 
     /**
      * 窗口大小
@@ -128,6 +129,7 @@ public class WindowBuilder extends SelectSQLBuilder {
         window.setTimeFieldName(timeFieldName);
 //        window.setWindowType(type);
         window.setTimeUnitAdjust(1);
+        window.setWaterMarkMs(watermark);
 
         if (window instanceof WindowOperator) {
             window.setSizeInterval(Optional.ofNullable(size).orElse(AbstractWindow.DEFAULT_WINDOW_SIZE * 60));
@@ -369,5 +371,13 @@ public class WindowBuilder extends SelectSQLBuilder {
 
     public void setTimeUnitAdjust(int timeUnitAdjust) {
         this.timeUnitAdjust = timeUnitAdjust;
+    }
+
+    public int getWatermark() {
+        return watermark;
+    }
+
+    public void setWatermark(int watermark) {
+        this.watermark = watermark;
     }
 }
