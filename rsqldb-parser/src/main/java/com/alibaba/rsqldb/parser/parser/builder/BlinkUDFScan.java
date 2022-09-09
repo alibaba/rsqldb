@@ -104,7 +104,7 @@ public class BlinkUDFScan extends AbstractScan {
             if (StringUtil.isEmpty(homeDir)) {
                 throw new IllegalArgumentException("home.dir is null");
             }
-            localJarFielPath = homeDir + "/custom";
+            localJarFielPath = homeDir + "/customFunction";
         }
         scanFromLocalFile(localJarFielPath, jarFilePath, functionName);
     }
