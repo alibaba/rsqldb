@@ -41,10 +41,16 @@
             <artifactId>rocketmq-streams-window</artifactId>
         </dependency>
 
+        <!--运行时依赖-->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>rsqldb-dim</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!--运行时依赖-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>rsqldb-udf</artifactId>
         </dependency>
     </dependencies>
 

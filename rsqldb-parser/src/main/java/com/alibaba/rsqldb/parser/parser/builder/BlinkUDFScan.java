@@ -16,10 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.dim.intelligence.AbstractIntelligenceCache;
 import com.alibaba.rsqldb.udf.FunctionUDFScript;
 import com.alibaba.rsqldb.udf.udaf.BlinkUDAFScript;
 import com.alibaba.rsqldb.udf.udf.BlinkUDFScript;
 import com.alibaba.rsqldb.udf.udtf.BlinkUDTFScript;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.TableFunction;
@@ -53,9 +56,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 支持blink udf的扫描，指定扫描路径完成udf函数扫描，会把jar包中所有udf扫描出来进行处处，目标把blink udf转化成dipper函数
  */
 public class BlinkUDFScan extends AbstractScan {
+    private static final Log logger = LogFactory.getLog(AbstractIntelligenceCache.class);
+
     private static BlinkUDFScan blinkUDFScan = new BlinkUDFScan();
 
-    protected static final String BLINK_UDF_JAR_PATH = ComponentCreator.BLINK_UDF_JAR_PATH;
+    protected static final String CUSTOM_FUNCTION_JAR_PATH = ComponentCreator.CUSTOM_FUNCTION_JAR_PATH;
 
     /**
      * udf的class name和dipper blink script的对应关系
@@ -93,9 +98,13 @@ public class BlinkUDFScan extends AbstractScan {
     @Deprecated
     public void scan(String jarFilePath, String classname, String functionName) {
         scanInnerBlinkUDF();
-        String localJarFielPath = ComponentCreator.getProperties().getProperty(BLINK_UDF_JAR_PATH);
-        if (localJarFielPath == null || "".equalsIgnoreCase(localJarFielPath)) {
-            localJarFielPath = "./udflib";
+        String localJarFielPath = ComponentCreator.getProperties().getProperty(CUSTOM_FUNCTION_JAR_PATH);
+        if (StringUtil.isEmpty(localJarFielPath)) {
+            String homeDir = System.getProperty("home.dir");
+            if (StringUtil.isEmpty(homeDir)) {
+                throw new IllegalArgumentException("home.dir is null");
+            }
+            localJarFielPath = homeDir + "/customFunction";
         }
         scanFromLocalFile(localJarFielPath, jarFilePath, functionName);
     }
@@ -158,7 +167,7 @@ public class BlinkUDFScan extends AbstractScan {
             List<File> jars = new ArrayList<>();
             File file = new File(jarDir);
             if (file.isDirectory()) {
-                System.out.println("BlinkUDFScan file is===" + file.getAbsolutePath());
+                logger.info("BlinkUDFScan file is: " + file.getAbsolutePath());
                 File[] files = file.listFiles(new JarFilter());
                 jars.addAll(Arrays.asList(files));
             } else if (file.getName().endsWith(".jar")) {

@@ -37,9 +37,7 @@ public class FunctionParser extends AbstractSqlNodeParser<SqlCreateFunction, Fun
         tableDescriptor.setSqlType("function");
         tableDescriptor.setFunctionName(sqlCreateFunction.getFunctionName().toString());
         tableDescriptor.setClassName(sqlCreateFunction.getClassName());
-        if (sqlCreateFunction.getClassName().startsWith("com.lyra.xs.udf.ext.sas_black_rule_v")) {
 
-        }
         SQLNodeParserFactory.addUDF(tableDescriptor.getFunctionName(), tableDescriptor);
         return new BuilderParseResult(tableDescriptor);
     }
