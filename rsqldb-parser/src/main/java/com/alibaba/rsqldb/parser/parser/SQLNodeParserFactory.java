@@ -22,17 +22,17 @@ import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.IBuilderCreator;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.rocketmq.streams.common.calssscaner.AbstractScan;
 import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 import org.apache.rocketmq.streams.common.utils.ReflectUtil;
+
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 可以通过扩展来增加sql解析能力，主体框架不变化
@@ -65,7 +65,6 @@ public class SQLNodeParserFactory {
         scan.scanPackage("com.alibaba.rsqldb.parser.parser.sqlnode");
         scan.scanPackage("com.alibaba.rsqldb.parser.parser.expression");
         scan.scanPackage("com.alibaba.rsqldb.parser.parser.function");
-
     }
 
     /**

@@ -56,7 +56,7 @@ create Function current_time as 'org.apache.rocketmq.streams.sql.local.runner.UD
 
 ## 发布函数
 
-打包成jar包（所有依赖都需要打进去），放到dipper的ext目录或udflib即可
+打包成jar包（所有依赖都需要打进去），放到custom目录即可
 
 ## 在SQL中使用
 
@@ -145,7 +145,7 @@ create Function current_time as 'org.apache.rocketmq.streams.sql.local.runner.UD
 
 ## 发布函数
 
-打包成jar包（所有依赖都需要打进去），放到dipper的ext目录或udflib即可
+打包成jar包（所有依赖都需要打进去），放到custom目录即可
 
 ## 在SQL中使用
 
