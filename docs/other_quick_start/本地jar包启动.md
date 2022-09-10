@@ -29,16 +29,16 @@ tar -zxvf rsqldb-distribution.tar.gz;cd rsqldb
 
 ### 配置rsqldb服务端
 - 打开conf目录下rsqldb.conf文件；
-- 修改filePathAndName，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称;
+- 修改filePathAndName项目，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称，例如~/rsqldb/dipper.cs
 
 ### 启动rsqldb服务端
 ```shell
 sh bin/startAll.sh
 ```
 
-### 配置sql文件
-sendDataFromFile.sql中创建的任务，需要从本地文件指定位置读取数据，所以需要修改sendDataFromFile.sql中filePath变量的位置，修改为数据文件data.txt的绝对路径。
-
+### 配置sql
+执行sql以sendDataFromFile.sql为例，该sql任务的数据处理流程为：从本地data.txt文件中读取数据(data.txt文件在client目录中)，过滤出field_1=1的数据，并打印在日志中；为了顺利执行，需要做以下配置：
+- client/sendDataFromFile.sql中修改filePath指向data.txt的全路径，例如为：/home/rsqldb/client/data.txt;
 
 ### 提交任务
 执行路径依然在rsqldb解压目录下

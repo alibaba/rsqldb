@@ -41,6 +41,11 @@ limitations under the License.
             <directory>conf</directory>
             <outputDirectory>/conf</outputDirectory>
         </fileSet>
+        <fileSet>
+            <fileMode>0775</fileMode>
+            <directory>customFunction</directory>
+            <outputDirectory>/customFunction</outputDirectory>
+        </fileSet>
     </fileSets>
     <files>
         <file>
