@@ -27,10 +27,6 @@ mvn clean package -DskipTest -U
 tar -zxvf rsqldb-distribution.tar.gz;cd rsqldb
 ```
 
-### 配置rsqldb服务端
-- 打开conf目录下rsqldb.conf文件；
-- 修改filePathAndName项目，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称，例如~/rsqldb/dipper.cs
-
 ### 启动rsqldb服务端
 ```shell
 sh bin/startAll.sh
@@ -77,13 +73,6 @@ sh client/clientExector.sh stopTask
 上述示例为从本地文件data.txt中读取数据，更为常用的用法是从RocketMQ中读取数据处理，下面给出具体步骤：
 
 - 本地安装并启动RocketMQ，[安装文档](https://rocketmq.apache.org/docs/quick-start/)
-
-- 配置rsqldb服务端
-```xml
-打开conf目录下rsqldb.conf文件;
-修改filePathAndName，filePathAndName为保存流处理任务的文件，可以修改为rsqldb解压路径，加上文件名称;
-如果有必要，可以修改NAMESRV_ADDR，执行自己配置的namesrv地址；
-```
 
 - 启动rsqldb服务端
 ```shell

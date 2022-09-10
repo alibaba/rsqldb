@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 binDir=$(cd `dirname $0`;pwd)
 echo "binDir=$binDir"
@@ -11,6 +12,16 @@ echo "homeDir=$homeDir"
 cd $homeDir
 if [ ! -d log ]; then
   mkdir log
+fi
+
+path=$homeDir/dipper.cs
+
+sysOS=`uname -s`
+
+if [ $sysOS == "Darwin" ];then
+  sed -i '' 's#^filePathAndName.*$#filePathAndName='$path'#g'  $homeDir/conf/rsqldb.conf;
+elif [ $sysOS == "Linux" ];then
+	sed -i 's#^filePathAndName.*$#filePathAndName='$path'#g'  $homeDir/conf/rsqldb.conf;
 fi
 
 cd $binDir
