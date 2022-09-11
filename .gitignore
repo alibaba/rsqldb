@@ -16,7 +16,7 @@ target/
 *.iml
 *.ipr
 *.gz
-*/dipper.cs
+*/rsqldb.cs
 
 ### NetBeans ###
 nbproject/private/
@@ -32,4 +32,4 @@ _book/
 
 */dependency-reduced-pom.xml
 /rsqldb-disk/log/
-/rsqldb-disk/server/dipper.cs
+/rsqldb-disk/server/rsqldb.cs

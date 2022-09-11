@@ -37,7 +37,7 @@ services:
     command: sh mqbroker -c /home/rocketmq/rocketmq-4.9.4/conf/broker.conf
 
   rsqldb:
-    image: unclerangoo/rsqldb:0.1
+    image: unclerangoo/rsqldb:0.2
     hostname: rsqldb
     container_name: rsqldb
     networks:
@@ -53,7 +53,7 @@ services:
       - NAMESRV_ADDR=namesrv:9876
 
   rsqldb-client:
-    image: unclerangoo/rsqldb-client:0.1
+    image: unclerangoo/rsqldb-client:0.2
     hostname: rsqldb-client
     container_name: rsqldb-client
     networks:

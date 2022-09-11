@@ -21,11 +21,11 @@ public class Application {
         if (!file.exists()) {
             boolean result = file.mkdirs();
             if (!result) {
-                throw new RuntimeException("create dipper.cs path error");
+                throw new RuntimeException("create rsqldb.cs path error");
             }
         }
 
-        System.setProperty("cs.dir", dipperCsParentPath + "/dipper.cs");
+        System.setProperty("cs.dir", dipperCsParentPath + "/rsqldb.cs");
 
         System.out.println(System.getProperty("cs.dir"));
 

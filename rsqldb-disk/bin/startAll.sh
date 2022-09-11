@@ -14,7 +14,7 @@ if [ ! -d log ]; then
   mkdir log
 fi
 
-path=$homeDir/dipper.cs
+path=$homeDir/rsqldb.cs
 
 sysOS=`uname -s`
 
