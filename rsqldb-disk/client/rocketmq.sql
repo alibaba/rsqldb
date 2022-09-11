@@ -22,6 +22,11 @@ CREATE TABLE `task_sink_2`
 ) WITH (
       type = 'print'
       );
+--      写入rocketmq中
+--       type = 'rocketmq',
+--       topic = 'rsqldb-sink',
+--       groupName = 'rsqldb-group',
+--       namesrvAddr = '127.0.0.1:9876'
 
 insert into task_sink_2
 select field_1

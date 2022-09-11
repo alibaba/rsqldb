@@ -53,15 +53,17 @@ public class StreamRunner {
         Properties properties = new Properties();
         properties.load(in);
 
-        Map<String, String> env = System.getenv();
-        String namesrvAddrEnv = env.get(MixAll.NAMESRV_ADDR_ENV);
-        if (namesrvAddrEnv != null) {
-            properties.put(MixAll.NAMESRV_ADDR_ENV, namesrvAddrEnv);
-        }
 
         String filePathAndName = properties.getProperty("filePathAndName");
         if (StringUtils.isEmpty(filePathAndName)) {
             throw new IllegalArgumentException("filePathAndName is required.");
+        }
+
+        //使用env中配置的namesrv地址覆盖rsqldb.conf中的；
+        Map<String, String> env = System.getenv();
+        String namesrvAddrEnv = env.get(MixAll.NAMESRV_ADDR_ENV);
+        if (namesrvAddrEnv != null) {
+            properties.put(MixAll.NAMESRV_ADDR_ENV, namesrvAddrEnv);
         }
 
         String namesrvAddrs = properties.getProperty(MixAll.NAMESRV_ADDR_ENV);

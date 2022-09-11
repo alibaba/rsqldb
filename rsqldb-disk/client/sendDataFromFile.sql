@@ -7,7 +7,7 @@ CREATE TABLE `test_source`
 ) WITH (
       type = 'file',
 -- 需要根据自身填写data.txt的绝对路径
-      filePath = '',
+      filePath = '/Users/nize/code/github/rsqldb/rsqldb-disk/client/data.txt',
       isJsonData = 'true',
       msgIsJsonArray = 'false'
       );
