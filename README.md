@@ -48,14 +48,14 @@ sh clientExector.sh startTask
 
 ### 向RocketMQ中写入数据
 ```shell
-java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.docker.Producer
 ```
 执行上述语句，向RocketMQ的rsqldb-source topic中写入RocketmqTest-1.0-SNAPSHOT.jar包中默认数据，即向RocketMQ发送的数据为：
 ```xml
-1,2,3,4
-2,2,3,4
-3,2,3,4
-4,2,3,4
+{"field_3":"3","field_4":"4","field_1":"1","field_2":"2"}
+{"field_3":"3","field_4":"4","field_1":"2","field_2":"2"}
+{"field_3":"3","field_4":"4","field_1":"3","field_2":"2"}
+{"field_3":"3","field_4":"4","field_1":"4","field_2":"2"}
 ```
 （也可以向RocketMQ发送json数据，显式指定数据数据哪个字段，见rsqldb-disk/client中其他例子）
 根据执行的任务rocketmq.sql，期望能将field_1=1的数据过滤出来；
@@ -67,7 +67,7 @@ java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer 
 
 ### 查看结果输出
 ```shell
-java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.consumer.Consumer
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.docker.Consumer
 ```
 从RocketMQ的rsqldb-sink topic中读出结果数据，每执行一次producer会有一行输出(第一次需要等待1min轮询提交的任务)：
 ```xml
