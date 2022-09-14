@@ -86,4 +86,5 @@ java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.consumer.Consumer 
 ### 本地工程启动
   [本地工程启动](docs/other_quick_start/本地工程启动.md)
 
-
+## 其他支持sql类型
+  更多其他sql使用示例请见 [rsqldb-disk/client](rsqldb-disk/client)
