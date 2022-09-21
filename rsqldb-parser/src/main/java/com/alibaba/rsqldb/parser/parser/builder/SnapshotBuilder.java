@@ -32,7 +32,6 @@ import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.util.ThreadLocalUtil;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.metadata.MetaDataField;
 import org.apache.rocketmq.streams.common.utils.ContantsUtil;
@@ -63,6 +62,9 @@ import java.util.Set;
  * dimension table join builder specially for url, ip and domain
  */
 public class SnapshotBuilder extends SelectSQLBuilder {
+    private static final String INTELLIGENCE_JDBC_URL = "intelligence.rds.jdbc.url";
+    private static final String INTELLIGENCE_JDBC_USERNAME = "intelligence.rds.jdbc.username";
+    private static final String INTELLIGENCE_JDBC_PASSWORD = "intelligence.rds.jdbc.password";
 
     protected static Map<String, AbstractIntelligenceCache> INTELLIGENCE = new HashMap<>();
     protected static Map<CreateSQLBuilder, AbstractDim> dims = new HashMap<>();
@@ -348,9 +350,9 @@ public class SnapshotBuilder extends SelectSQLBuilder {
          * 创建维表连接对象， 默认情报的数据连接是单独配置好的，不依赖sql中create语句
          */
         JDBCDriver dbChannel = new JDBCDriver();
-        dbChannel.setUrl(ConfigureFileKey.INTELLIGENCE_JDBC_URL);
-        dbChannel.setPassword(ConfigureFileKey.INTELLIGENCE_JDBC_PASSWORD);
-        dbChannel.setUserName(ConfigureFileKey.INTELLIGENCE_JDBC_USERNAME);
+        dbChannel.setUrl(INTELLIGENCE_JDBC_URL);
+        dbChannel.setPassword(INTELLIGENCE_JDBC_PASSWORD);
+        dbChannel.setUserName(INTELLIGENCE_JDBC_USERNAME);
         getPipelineBuilder().addConfigurables(dbChannel);
 
         AbstractIntelligenceCache intelligence = ReflectUtil.forInstance(intelligenceCache.getClass());

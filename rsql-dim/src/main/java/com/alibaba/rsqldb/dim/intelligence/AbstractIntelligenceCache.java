@@ -16,28 +16,18 @@
  */
 package com.alibaba.rsqldb.dim.intelligence;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.aliyuncs.CommonRequest;
-import com.aliyuncs.CommonResponse;
-import com.aliyuncs.DefaultAcsClient;
-import com.aliyuncs.IAcsClient;
-import com.aliyuncs.profile.DefaultProfile;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.cache.compress.impl.IntValueKV;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.common.configurable.BasedConfigurable;
 import org.apache.rocketmq.streams.common.configurable.IAfterConfigurableRefreshListener;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.common.configurable.annotation.ENVDependence;
-import org.apache.rocketmq.streams.common.configure.ConfigureFileKey;
 import org.apache.rocketmq.streams.common.dboperator.IDBDriver;
 import org.apache.rocketmq.streams.common.utils.NumberUtils;
 import org.apache.rocketmq.streams.common.utils.SQLUtil;
-import org.apache.rocketmq.streams.db.driver.JDBCDriver;
 
 import java.util.List;
 import java.util.Map;
@@ -171,29 +161,6 @@ public abstract class AbstractIntelligenceCache extends BasedConfigurable implem
         this.outputDataSource = configurableService.queryConfigurable(ISink.TYPE, datasourceName);
     }
 
-    public void startIntelligence() {
-        boolean success = dbInit();
-        if (success) {
-            startIntelligenceInner();
-        } else {
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    boolean success = false;
-                    while (!success) {
-                        success = dbInit();
-                        try {
-                            Thread.sleep(60 * 1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    startIntelligenceInner();
-                }
-            });
-            thread.start();
-        }
-    }
 
     public void startIntelligenceInner() {
         String sql = getSQL();
@@ -296,54 +263,6 @@ public abstract class AbstractIntelligenceCache extends BasedConfigurable implem
         }
     }
 
-    public boolean dbInit() {
-        try {
-            int successCode = 200;
-            String region = ComponentCreator.getProperties().getProperty(ConfigureFileKey.INTELLIGENCE_REGION);
-            String ak = ComponentCreator.getProperties().getProperty(
-                ConfigureFileKey.INTELLIGENCE_AK);
-            String sk = ComponentCreator.getProperties().getProperty(
-                ConfigureFileKey.INTELLIGENCE_SK);
-            String endpoint = ComponentCreator.getProperties().getProperty(
-                ConfigureFileKey.INTELLIGENCE_TIP_DB_ENDPOINT);
-            if (StringUtils.isNotBlank(region) && StringUtils.isNotBlank(ak) && StringUtils.isNotBlank(sk) && StringUtils.isNotBlank(endpoint)) {
-                DefaultProfile profile = DefaultProfile.getProfile(region, ak, sk);
-                IAcsClient client = new DefaultAcsClient(profile);
-                CommonRequest request = new CommonRequest();
-                request.setDomain(endpoint);
-                request.setVersion("2016-03-16");
-                request.setAction("DescribeTiDataSource");
-                CommonResponse response = client.getCommonResponse(request);
-                int code = response.getHttpStatus();
-                if (successCode == code) {
-                    String content = response.getData();
-                    if (StringUtils.isNotBlank(content)) {
-                        JSONObject obj = JSON.parseObject(content);
-                        JSONObject dbInfo = obj.getJSONObject("dBInfo");
-                        if (dbInfo != null) {
-                            String dbUrl = "jdbc:mysql://" + dbInfo.getString("dbConnection") + ":" + dbInfo.getInteger(
-                                "port") + "/" + dbInfo.getString("dBName");
-                            String dbUserName = dbInfo.getString("userName");
-                            String dbPassword = dbInfo.getString("passWord");
-                            JDBCDriver dataSource = (JDBCDriver) this.outputDataSource;
-                            dataSource.setUrl(dbUrl);
-                            dataSource.setPassword(dbPassword);
-                            dataSource.setUserName(dbUserName);
-                            dataSource.setHasInit(false);
-                            dataSource.init();
-                            LOG.debug("succeed in getting db information from tip service!");
-                            return true;
-                        }
-                    }
-                }
-            }
-            LOG.error("failed in getting db information from tip service!");
-            return false;
-        } catch (Exception e) {
-            LOG.error("failed in getting db information from tip service!", e);
-            return false;
-        }
-    }
 
     /**
      * 把存储0/1字符串的值，转化成bit
