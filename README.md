@@ -1,14 +1,13 @@
-# rsqldb
+# RSQLDB
 
-rsqldb 为 RocketMQ Streams 的开发提供了基于 SQL 的开发体验， 让基于消息队列的流式开发更加容易；
+RSQLDB 为 RocketMQ Streams 的开发提供了基于 SQL 的开发体验， 让基于消息队列的流式开发更加容易；
 
 ## Features
 
-* 采用标准的流式SQL规范，可以与其他的流计算框架如Flink完美兼容；
-* 兼容Flink自带的```udf```、```udaf```和```udtf```，除此之外，用户还可以通过实现相关接口来轻松扩展函数；
+* 采用标准的流式SQL规范，可以与其他的流计算框架如Flink兼容；
 
 
-如果您希望更详细的了解rsqldb的相关内容， 请点击[这里](docs/SUMMARY.md)
+如果您希望更详细的了解RSQLDB的相关内容， 请点击[这里](docs/SUMMARY.md)
 
 
 ## Quickstart
@@ -16,7 +15,7 @@ rsqldb 为 RocketMQ Streams 的开发提供了基于 SQL 的开发体验， 让�
 安装后启动docker
 使用docker -v 能查看docker版本即是启动成功。
 
-### 下载rsqldb工程
+### 下载RSQLDB工程
 ```shell
 git clone https://github.com/alibaba/rsqldb.git
 ```
@@ -62,7 +61,7 @@ java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.docker.Producer
 
 另外，也可以使用RocketmqTest-1.0-SNAPSHOT.jar向任意topic发送任意数据，使用方式是：
 ``shell
-java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer ${topic} ${groupId} ${数据文件权路径}
+java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer ${topic} ${groupId} ${数据文件全路径}
 ``
 
 ### 查看结果输出

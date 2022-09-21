@@ -55,10 +55,3 @@ SELECT ticket_id,
        perform_name,
        odeum_id
 FROM test_view;
-
-
-
-
-
-
-
