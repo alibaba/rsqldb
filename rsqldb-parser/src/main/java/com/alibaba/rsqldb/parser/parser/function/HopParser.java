@@ -48,13 +48,16 @@ public class HopParser extends TumbleParser {
         com.alibaba.rsqldb.parser.parser.builder.WindowBuilder windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
 
         SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
-        int watermarkOffset;
-        try {
-            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+
+        if (sqlWatermark !=null) {
+            int watermarkOffset;
+            try {
+                watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            windowBuilder.setWatermark(watermarkOffset);
         }
-        windowBuilder.setWatermark(watermarkOffset);
 
         windowBuilder.setType(IWindow.HOP_WINDOW);
         windowBuilder.setOwner(builder);
