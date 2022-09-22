@@ -60,9 +60,9 @@ java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.docker.Producer
 根据执行的任务rocketmq.sql，期望能将field_1=1的数据过滤出来；
 
 另外，也可以使用RocketmqTest-1.0-SNAPSHOT.jar向任意topic发送任意数据，使用方式是：
-``shell
+```shell
 java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.producer.Producer ${topic} ${groupId} ${数据文件全路径}
-``
+```
 
 ### 查看结果输出
 ```shell
@@ -74,9 +74,9 @@ Receive New Messages: body[{"field_3":"3","field_4":"4","field_1":"1","field_2":
 ```
 
 另外，也可以使用RocketmqTest-1.0-SNAPSHOT.jar接收任意topic的数据，使用方式是：
-``shell
+```shell
 java -cp RocketmqTest-1.0-SNAPSHOT.jar  com.test.rocketmqtest.consumer.Consumer ${topic} ${groupId} 
-``
+```
 
 
 ## 其他启动方式
