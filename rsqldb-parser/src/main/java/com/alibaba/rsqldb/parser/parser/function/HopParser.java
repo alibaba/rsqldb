@@ -44,17 +44,20 @@ public class HopParser extends TumbleParser {
         /**
          * 如果只有group by，没有指定窗口，则通过配置获取默认窗口大小，如果未指定，默认1个小时
          */
-        int interval = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_INERVAL_SIZE, 60 * 10);
+        int interval = WindowBuilder.getIntValue(ConfigureFileKey.DIPPER_WINDOW_DEFAULT_INERVAL_SIZE,  10);
         com.alibaba.rsqldb.parser.parser.builder.WindowBuilder windowBuilder = new com.alibaba.rsqldb.parser.parser.builder.WindowBuilder();
 
         SqlWatermark sqlWatermark = ThreadLocalUtil.watermarkHolder.get().get(builder.getSourceTable());
-        int watermarkOffset;
-        try {
-            watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+
+        if (sqlWatermark !=null) {
+            int watermarkOffset;
+            try {
+                watermarkOffset = (int)sqlWatermark.getWatermarkOffset();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            windowBuilder.setWatermark(watermarkOffset);
         }
-        windowBuilder.setWatermark(watermarkOffset);
 
         windowBuilder.setType(IWindow.HOP_WINDOW);
         windowBuilder.setOwner(builder);
