@@ -2,14 +2,12 @@
 
 * [Introduction](README.md)
 * [Blink SQL兼容](stream_sql/README.md)
-* [创建源表](stream_source/README.md)
-    * [创建metaq源表](stream_source/metaq/README.md)
+* 创建源表
     * [创建RocketMQ源表](stream_source/rocketmq/README.md)
     * [创建文件源表](stream_source/file/README.md)
     * [创建Mqtt源表](stream_source/mqtt/README.md)
     * [创建自定义源表](stream_source/custom/README.md)
-* [创建结果表](stream_sink/README.md)
-    * [创建metaq结果表](stream_sink/metaq/README.md)
+* 创建结果表
     * [创建RocketMQ结果表](stream_sink/rocketmq/README.md)
     * [创建文件结果表](stream_sink/file/README.md)
     * [创建打印结果表](stream_sink/print/README.md)
@@ -17,10 +15,9 @@
     * [创建ES结果表](stream_sink/es/README.md)
     * [创建Mqtt结果表](stream_sink/mqtt/README.md)
     * [创建自定义结果表](stream_sink/custom/README.md)
-* [创建维表](stream_dim/README.md)
+* 创建维表
     * [创建mysql维表](stream_dim/mysql/README.md)
     * [创建文件维表](stream_dim/file/README.md)
-    * [创建ODPS维表](stream_dim/odps/README.md)
     * [创建自定义维表](stream_dim/custom/README.md)
 * [创建视图](stream_view/README.md)
 * [创建函数](stream_function/README.md)
