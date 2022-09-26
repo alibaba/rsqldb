@@ -1,4 +1,4 @@
-为了 blink规则可以无缝迁移到dipper，我们做了blink sql的语法兼容，在云盾里的sql都是可以直接迁移的，当然由于时间短，可能会有很多未考虑到的场景，大家使用中如果有问题可以随时联系。<br />下表为blink与rocketmq-stream的语法比较，其中rocketmq-stream标 * 的列语法与blink完全相同，未标 * 列对于语法支持层面进行了说明，标红部分表示rocketmq-stream还未支持。
+为了 blink规则可以无缝迁移到RSQLDB，我们做了blink sql的语法兼容，在云盾里的sql都是可以直接迁移的，当然由于时间短，可能会有很多未考虑到的场景，大家使用中如果有问题可以随时联系。<br />下表为blink与rocketmq-stream的语法比较，其中rocketmq-stream标 * 的列语法与blink完全相同，未标 * 列对于语法支持层面进行了说明，标红部分表示rocketmq-stream还未支持。
 
 | 语句          | 语法 | blink | rocketmq-stream | 说明 |
 |-------------| --- | --- | --- | --- |
