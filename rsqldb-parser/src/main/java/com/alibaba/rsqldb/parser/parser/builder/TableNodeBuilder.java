@@ -16,16 +16,44 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SqlBuilderResult;
+import com.alibaba.rsqldb.parser.sql.context.FieldsOfTableForSqlTreeContext;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.topology.builder.IStageBuilder;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.stages.EmptyChainStage;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
 
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
-
-public class TableNodeBuilder extends SelectSQLBuilder {
+public class TableNodeBuilder extends SelectSqlBuilder {
 
     @Override
     protected void build() {
 
+    }
+
+    @Override public SqlBuilderResult buildSql() {
+        ChainStage first= CollectionUtil.isEmpty(this.pipelineBuilder.getFirstStages()) ?null:this.pipelineBuilder.getFirstStages().get(0);
+        if(first==null){
+            first=new EmptyChainStage();
+            first.setLabel(NameCreatorContext.get().createName("empty"));
+            final ChainStage chainStage=first;
+            this.pipelineBuilder.addChainStage(new IStageBuilder<ChainStage>() {
+                @Override public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
+                    return chainStage;
+                }
+
+                @Override public void addConfigurables(PipelineBuilder pipelineBuilder) {
+
+                }
+            });
+        }
+        SqlBuilderResult sqlBuilderResult= new SqlBuilderResult(this.pipelineBuilder,first,first);
+        sqlBuilderResult.getStageGroup().setSql("SELECT * FROM "+getTableName());
+        sqlBuilderResult.getStageGroup().setViewName("FROM "+getTableName());
+        return sqlBuilderResult;
     }
 
     @Override
@@ -38,10 +66,8 @@ public class TableNodeBuilder extends SelectSQLBuilder {
     @Override
     public Set<String> getAllFieldNames() {
 
-        return SQLParserContext.getInstance().get().get(getTableName());
+        return FieldsOfTableForSqlTreeContext.getInstance().get().get(getTableName());
     }
-
-
 
     @Override
     public String getFieldName(String fieldName) {
@@ -50,7 +76,10 @@ public class TableNodeBuilder extends SelectSQLBuilder {
             return name;
         }
         String tableName = getTableName();
-        Set<String> fieldNames = SQLParserContext.getInstance().get().get(tableName);
+        Set<String> fieldNames = FieldsOfTableForSqlTreeContext.getInstance().get().get(tableName);
+        if(fieldNames.contains(fieldName)){
+            return fieldName;
+        }
         String asName = getAsName();
         int index = fieldName.indexOf(".");
         if (index == -1) {

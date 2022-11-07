@@ -4,25 +4,38 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-streams</artifactId>
+        <version>1.0.3-dispatcher-SNAPSHOT</version>
+    </parent>
+
     <groupId>com.alibaba</groupId>
     <artifactId>rsqldb</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.3-dispatcher-SNAPSHOT</version>
     <name>ROCKETMQ STREAMS SQL</name>
     <packaging>pom</packaging>
 
     <modules>
         <module>rsqldb-parser</module>
-        <module>rsqldb-udf</module>
         <module>rsqldb-clients</module>
+        <module>rsqldb-parser-blink-sql</module>
+        <module>rsqldb-parser-flink-sql</module>
     </modules>
 
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <rocketmq.version>4.9.2</rocketmq.version>
+        <calcite.version>1.26.0</calcite.version>
+        <fastjson.version>1.2.83_noneautotype</fastjson.version>
+        <flink.version>1.15.0</flink.version>
         <blink.version>blink-3.4.0</blink.version>
-        <flink.version>1.13.1</flink.version>
-        <scala-library.version>2.12.4</scala-library.version>
+        <oss.version>3.10.2</oss.version>
     </properties>
     <build>
         <plugins>
@@ -108,31 +121,6 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-clients</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-dim</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-script</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-commons</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-window</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-clients</artifactId>
                 <version>${project.version}</version>
@@ -144,68 +132,111 @@
             </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-parser-blink-sql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-parser-flink-sql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-udf</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-channel-sls</artifactId>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-runner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-daemon-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-daemon-http</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-daemon-shell</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>rsqldb-daemon-schedule</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-namesrv</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-broker</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-tools</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-example</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-dispatcher</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-tasks</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-streams-clients</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.calcite</groupId>
+                <artifactId>calcite-core</artifactId>
+                <version>${calcite.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.alibaba.blink</groupId>
                 <artifactId>flink-table_2.11</artifactId>
                 <version>${blink.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>com.alibaba.blink</groupId>
-                <artifactId>flink-sql-parser</artifactId>
-                <version>${blink.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table</artifactId>
+                <artifactId>flink-sql-parser</artifactId>
                 <version>${flink.version}</version>
-                <type>pom</type>
-                <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-table-common</artifactId>
-                <version>${flink.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table-api-java</artifactId>
+                <scope>compile</scope>
                 <version>${flink.version}</version>
             </dependency>
-
             <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-sql-parser</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>${scala-library.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>2.12.4</version>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${oss.version}</version>
             </dependency>
         </dependencies>
-
-
     </dependencyManagement>
 </project>

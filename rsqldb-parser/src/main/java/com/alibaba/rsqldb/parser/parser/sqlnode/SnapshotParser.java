@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.SnapshotBuilder;
 import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
@@ -24,9 +24,9 @@ import org.apache.calcite.sql.SqlSnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class SnapshotParser extends AbstractSqlNodeParser<SqlSnapshot, SnapshotBuilder> {
+public class SnapshotParser extends AbstractSqlNodeNodeParser<SqlSnapshot, SnapshotBuilder> {
 
-    private static final Log LOG = LogFactory.getLog(SelectSQLBuilder.class);
+    private static final Log LOG = LogFactory.getLog(SelectSqlBuilder.class);
 
     @Override
     public IParseResult parse(SnapshotBuilder builder, SqlSnapshot sqlNode) {

@@ -19,7 +19,7 @@ package com.alibaba.rsqldb.parser.parser.builder;
 import java.util.HashSet;
 import java.util.Set;
 
-public class NotSupportSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
+public class NotSupportSqlBuilder extends AbstractSqlBuilder<AbstractSqlBuilder> {
 
     @Override
     public void build() {

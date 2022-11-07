@@ -16,65 +16,69 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
+import com.alibaba.rsqldb.parser.parser.SqlNodeParserFactory;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSqlBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.UnionSqlBuilder;
+import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.alibaba.rsqldb.parser.parser.SQLNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.UnionSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class UnionParser extends AbstractSqlNodeParser<SqlBasicCall, UnionSQLBuilder> {
+public class UnionParser extends AbstractSqlNodeNodeParser<SqlBasicCall, UnionSqlBuilder> {
     private static final Log LOG = LogFactory.getLog(UnionParser.class);
 
     @Override
-    public IParseResult parse(UnionSQLBuilder builder, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(UnionSqlBuilder builder, SqlBasicCall sqlBasicCall) {
         builder.setSqlNode(sqlBasicCall);
         List<SqlNode> sqlNodeList = sqlBasicCall.getOperandList();
         Set<String> tableNames = new HashSet<>();
-        Map<String,List<AbstractSQLBuilder>> tableName2Builders=new HashMap<>();
+        Map<String, List<AbstractSqlBuilder>> tableName2Builders = new HashMap<>();
         for (SqlNode sqlNode : sqlNodeList) {
-            AbstractSQLBuilder sqlBuilder = SQLNodeParserFactory.parseBuilder(sqlNode);
-            if (sqlBuilder instanceof UnionSQLBuilder) {
-                UnionSQLBuilder unionSQLBuilder = (UnionSQLBuilder)sqlBuilder;
-                for (AbstractSQLBuilder abstractSQLBuilder : unionSQLBuilder.getBuilders()) {
+            AbstractSqlBuilder sqlBuilder = SqlNodeParserFactory.parseBuilder(sqlNode);
+            if (sqlBuilder instanceof UnionSqlBuilder) {
+                UnionSqlBuilder unionSQLBuilder = (UnionSqlBuilder) sqlBuilder;
+                for (AbstractSqlBuilder abstractSQLBuilder : unionSQLBuilder.getBuilders()) {
                     builder.addBuilder(abstractSQLBuilder);
                     tableNames.add(abstractSQLBuilder.getTableName());
-                    add2Map(abstractSQLBuilder.getTableName(),abstractSQLBuilder,tableName2Builders);
+                    add2Map(abstractSQLBuilder.getTableName(), abstractSQLBuilder, tableName2Builders);
                 }
             } else {
                 builder.addBuilder(sqlBuilder);
-                add2Map(sqlBuilder.getTableName(),sqlBuilder,tableName2Builders);
-                tableNames.add(sqlBuilder.getTableName());
+                Set<String> dependentTables=sqlBuilder.parseDependentTables();
+                for(String dependentTable:dependentTables){
+                    add2Map(dependentTable, sqlBuilder, tableName2Builders);
+                    tableNames.add(dependentTable);
+                }
+
+
             }
 
         }
         builder.setTableNames(tableNames);
-        for(String tableName:tableNames){
+        for (String tableName : tableNames) {
             builder.addDependentTable(tableName);
         }
         if (tableNames.size() == 1) {
             builder.setTableName(tableNames.iterator().next());
-        }else {
-            String tableNameOfMaxSize=null;
-            int size=0;
-            for(String tableName:tableName2Builders.keySet()){
-                if(tableNameOfMaxSize==null){
-                    tableNameOfMaxSize=tableName;
-                    size=tableName2Builders.get(tableName).size();
-                }else {
-                    if(size<tableName2Builders.get(tableName).size()){
-                        tableNameOfMaxSize=tableName;
-                        size=tableName2Builders.get(tableName).size();
+        } else {
+            String tableNameOfMaxSize = null;
+            int size = 0;
+            for (String tableName : tableName2Builders.keySet()) {
+                if (tableNameOfMaxSize == null) {
+                    tableNameOfMaxSize = tableName;
+                    size = tableName2Builders.get(tableName).size();
+                } else {
+                    if (size < tableName2Builders.get(tableName).size()) {
+                        tableNameOfMaxSize = tableName;
+                        size = tableName2Builders.get(tableName).size();
                     }
                 }
             }
@@ -84,12 +88,10 @@ public class UnionParser extends AbstractSqlNodeParser<SqlBasicCall, UnionSQLBui
         return new BuilderParseResult(builder);
     }
 
-
-
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("union")) {
                 return true;
             }
@@ -100,17 +102,17 @@ public class UnionParser extends AbstractSqlNodeParser<SqlBasicCall, UnionSQLBui
         return false;
     }
 
-    protected void add2Map(String name, AbstractSQLBuilder builder, Map<String, List<AbstractSQLBuilder>> builders) {
-        List<AbstractSQLBuilder> list= builders.get(name);
-        if(list==null){
-            list=new ArrayList<>();
-            builders.put(name,list);
+    protected void add2Map(String name, AbstractSqlBuilder builder, Map<String, List<AbstractSqlBuilder>> builders) {
+        List<AbstractSqlBuilder> list = builders.get(name);
+        if (list == null) {
+            list = new ArrayList<>();
+            builders.put(name, list);
         }
         list.add(builder);
     }
 
     @Override
-    public UnionSQLBuilder create() {
-        return new UnionSQLBuilder();
+    public UnionSqlBuilder create() {
+        return new UnionSqlBuilder();
     }
 }

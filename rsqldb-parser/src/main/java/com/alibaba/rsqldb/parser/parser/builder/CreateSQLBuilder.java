@@ -16,6 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SqlBuilderResult;
+import com.alibaba.rsqldb.parser.creator.ChannelCreatorFactory;
+import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,127 +27,169 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
+import org.apache.rocketmq.streams.common.channel.source.AbstractSource;
 import org.apache.rocketmq.streams.common.channel.source.ISource;
 import org.apache.rocketmq.streams.common.metadata.MetaData;
 import org.apache.rocketmq.streams.common.metadata.MetaDataField;
-import org.apache.rocketmq.streams.common.utils.ContantsUtil;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.topology.builder.IStageBuilder;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.stages.ShuffleConsumerChainStage;
+import org.apache.rocketmq.streams.common.topology.stages.ShuffleProducerChainStage;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.common.utils.StringUtil;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.builder.channel.ChannelCreatorFactory;
-import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
-import com.alibaba.rsqldb.parser.util.ColumnUtil;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlProperty;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * create sql的解析内容。主要完成channel的创建
  */
-public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
+public class CreateSqlBuilder extends AbstractSqlBuilder {
 
-    private static final Log LOG = LogFactory.getLog(CreateSQLBuilder.class);
-    private static String TABLE_NAME="sql_create_table_name";
+    private static final Log LOG = LogFactory.getLog(CreateSqlBuilder.class);
+    private static String TABLE_NAME = "sql_create_table_name";
+    private List<String> headerFieldNames;
+    /**
+     * 保存存储的字段结构
+     */
+    protected MetaData metaData = new MetaData();
 
-    protected MetaData metaData = new MetaData();//保存存储的字段结构
-    protected List<SqlNode> property;//sql中with部分的内容，主要是连接参数
-    protected Properties properties;//和property等价，把property转化成Properties
-    protected ISource source;//创建的channel，主要是输入逻辑
-    public static final String PREX = "blink_ruleengine";
-    protected Map<String, String> key2PropertyItem = new HashMap<>();//key和整个属性sql的映射，主要用于修改sql时使用
-    protected Map<String, String> maskProperty = new HashMap<>();//需要覆盖的值，会覆盖sql中的值，主要用于生成sql和outchannel
+    /**
+     * sql中with部分的内容，主要是连接参数
+     */
+    // protected List<SqlNode> property;
+    /**
+     * 和property等价，把property转化成Properties
+     */
+    protected Properties properties;
+    /**
+     * 创建的channel，主要是输入逻辑
+     */
+    protected ISource<?> source;
+
+    /**
+     * key和整个属性sql的映射，主要用于修改sql时使用
+     */
+    protected Map<String, String> key2PropertyItem = new HashMap<>();
+
+    protected WaterMark waterMark;
+    /**
+     * 需要覆盖的值，会覆盖sql中的值，主要用于生成sql和outchannel
+     */
+    @Deprecated protected Map<String, String> maskProperty = new HashMap<>();
     /**
      * 如果是规则引擎，可以build成channel
      */
     protected AtomicBoolean hasBuilder = new AtomicBoolean(false);
 
-    @Override
-    public void build() {
+    @Override public void build() {
         if (!hasBuilder.compareAndSet(false, true)) {
             return;
         }
         this.source = createSource();
-        this.source.setGroupName(getPipelineBuilder().getPipelineName());
+        if (StringUtil.isEmpty(this.source.getGroupName())) {
+            this.source.setGroupName(StringUtil.getUUID());
+        }
         getPipelineBuilder().setSource(source);
         getPipelineBuilder().setChannelMetaData(metaData);
-        if(this.getScripts()!=null&&this.getScripts().size()>0){
-            ScriptParseResult scriptParseResult=new ScriptParseResult();
-            scriptParseResult.setScriptValueList(this.getScripts());
-            getPipelineBuilder().addChainStage(new ScriptOperator(scriptParseResult.getScript()));
-        }
+
         //this.outputChannel=createOutputChannel(maskProperty);
     }
 
-    @Override
-    public String getFieldName(String fieldName, boolean containsSelf) {
+    @Override public SqlBuilderResult buildSql() {
+        build();
+        PipelineBuilder builder = createPipelineBuilder();
+        boolean hasBuilder = false;
+        if (AbstractSource.class.isInstance(this.source)) {
+
+            AbstractSource abstractSource = (AbstractSource) this.source;
+            if (abstractSource.getShuffleConcurrentCount() > 0) {
+                hasBuilder = true;
+                final ChainStage<?> producerChainStage = new ShuffleProducerChainStage();
+                ((ShuffleProducerChainStage) producerChainStage).setShuffleOwnerName(MapKeyUtil.createKey(this.getPipelineBuilder().getPipelineNameSpace(), this.getPipelineBuilder().getPipelineName(), this.getPipelineBuilder().getPipeline().getChannelName()));
+                ((ShuffleProducerChainStage) producerChainStage).setSplitCount(abstractSource.getShuffleConcurrentCount());
+                builder.addChainStage(new IStageBuilder<ChainStage>() {
+                    @Override public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
+                        return producerChainStage;
+                    }
+
+                    @Override public void addConfigurables(PipelineBuilder pipelineBuilder) {
+
+                    }
+                });
+
+                final ChainStage<?> consumerChainStage = new ShuffleConsumerChainStage<>();
+                ((ShuffleConsumerChainStage) consumerChainStage).setShuffleOwnerName(MapKeyUtil.createKey(this.getPipelineBuilder().getPipelineNameSpace(), this.getPipelineBuilder().getPipelineName(), this.getPipelineBuilder().getPipeline().getChannelName()));
+                builder.addChainStage(new IStageBuilder<ChainStage>() {
+                    @Override public ChainStage createStageChain(PipelineBuilder pipelineBuilder) {
+                        return consumerChainStage;
+                    }
+
+                    @Override public void addConfigurables(PipelineBuilder pipelineBuilder) {
+
+                    }
+                });
+
+            }
+        }
+
+        if (this.getScripts() != null && this.getScripts().size() > 0) {
+            hasBuilder = true;
+            ScriptParseResult scriptParseResult = new ScriptParseResult();
+            scriptParseResult.setScriptValueList(this.getScripts());
+            builder.addChainStage(new ScriptOperator(scriptParseResult.getScript()));
+        }
+        if (hasBuilder) {
+            mergeSQLBuilderResult(new SqlBuilderResult(builder, this));
+            SqlBuilderResult sqlBuilderResult = new SqlBuilderResult(this.pipelineBuilder);
+            sqlBuilderResult.getStageGroup().setViewName("Shuffle MSG");
+            sqlBuilderResult.getStageGroup().setSql("Shuffle MSG");
+        }
+        SqlBuilderResult sqlBuilderResult = new SqlBuilderResult(pipelineBuilder, this);
+
+        return sqlBuilderResult;
+    }
+
+    @Override public String getFieldName(String fieldName, boolean containsSelf) {
         return null;
     }
 
-    public ISource createSource() {
+    public ISource<?> createSource() {
         if (this.source != null) {
             return this.source;
         }
-        if (property == null) {
+        if (this.properties.size() == 0) {
             return null;
         }
 
-        this.properties = createProperty();
-        this.properties.put(TABLE_NAME,getTableName());
-        ISource source = ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(),
-            pipelineBuilder.getPipelineName(), properties, metaData);
-
-        return source;
-
-    }
-
-    public ISink createSink() {
-
-        if (property == null) {
-            return null;
+        Properties properties = createProperty();
+        properties.put(TABLE_NAME, getTableName());
+        if (this.headerFieldNames != null) {
+            properties.put("headerFieldNames", this.headerFieldNames);
         }
 
-        this.properties = createProperty();
-        this.properties.put(TABLE_NAME,getTableName());
-        ISink sink = ChannelCreatorFactory.createSink(pipelineBuilder.getPipelineNameSpace(),
-            pipelineBuilder.getPipelineName(), properties, metaData);
+        properties.put("metaData", this.metaData);
 
-        return sink;
+        return ChannelCreatorFactory.createSource(pipelineBuilder.getPipelineNameSpace(), pipelineBuilder.getPipelineName(), properties, metaData);
 
     }
 
-    public Properties createProperty() {
-        /**
-         * 把property的值，生成key：value。和key：propertysql的值
-         */
+    private Properties createProperty() {
         Properties properties = new Properties();
-        SqlProperty sqlProperty = null;
-        String type = "sls";
-        int i = 0;
-        for (SqlNode sqlNode : this.property) {
-            if (!SqlProperty.class.isInstance(sqlNode)) {
-                i++;
-                continue;
-            }
-            SqlProperty property = (SqlProperty)sqlNode;
-            String value = property.getValueString();
-            if (ContantsUtil.isContant(value)) {
-                value = value.substring(1, value.length() - 1);
-            }
-            String key=property.getKeyString().toLowerCase();
-            properties.put(property.getKeyString(), value);
-            properties.put(key, value);
-            if ("type".equals(key)) {
-                type = property.getValueString();
-            }
-
-            key2PropertyItem.put(property.getKeyString(), property.toString());
-            key2PropertyItem.put(key, property.toString());
-            i++;
-        }
+        properties.putAll(this.properties);
         return properties;
+    }
+
+    public ISink<?> createSink() {
+        if (this.properties.size() == 0) {
+            return null;
+        }
+        Properties properties = createProperty();
+        properties.put(TABLE_NAME, getTableName());
+        return ChannelCreatorFactory.createSink(pipelineBuilder.getPipelineNameSpace(), pipelineBuilder.getPipelineName(), properties, metaData);
+
     }
 
     /**
@@ -185,9 +230,8 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         return retainScript;
     }
 
-    @Override
-    public String createSQL() {
-        String sql = super.createSQL();
+    @Override public String createSql() {
+        String sql = super.createSql();
         if (StringUtil.isEmpty(sql) || maskProperty == null || maskProperty.size() == 0) {
             return sql;
         }
@@ -212,27 +256,12 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         this.maskProperty.put(key, value);
     }
 
-    @Override
-    public Set<String> parseDependentTables() {
+    @Override public Set<String> parseDependentTables() {
         return new HashSet<>();
     }
 
-    /**
-     * 把创建表的语句转换成metadata
-     *
-     * @param sqlNodes
-     */
-    public void createColumn(SqlNodeList sqlNodes) {
-        MetaData metaData = ColumnUtil.createMetadata(this,sqlNodes);
+    public void setMetaData(MetaData metaData) {
         this.metaData = metaData;
-    }
-
-    public List<SqlNode> getProperty() {
-        return property;
-    }
-
-    public void setProperty(List<SqlNode> property) {
-        this.property = property;
     }
 
     public MetaData getMetaData() {
@@ -245,5 +274,50 @@ public class CreateSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
 
     public Properties getProperties() {
         return properties;
+    }
+
+    public List<String> getHeaderFieldNames() {
+        return headerFieldNames;
+    }
+
+    public static class WaterMark {
+        String timeFieldName;
+        int waterMarskSecond;
+
+        public String getTimeFieldName() {
+            return timeFieldName;
+        }
+
+        public void setTimeFieldName(String timeFieldName) {
+            this.timeFieldName = timeFieldName;
+        }
+
+        public int getWaterMarskSecond() {
+            return waterMarskSecond;
+        }
+
+        public void setWaterMarskSecond(int waterMarskSecond) {
+            this.waterMarskSecond = waterMarskSecond;
+        }
+    }
+
+    public WaterMark getWaterMark() {
+        return waterMark;
+    }
+
+    public Map<String, String> getKey2PropertyItem() {
+        return key2PropertyItem;
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    public void setHeaderFieldNames(List<String> headerFieldNames) {
+        this.headerFieldNames = headerFieldNames;
+    }
+
+    public void setWaterMark(WaterMark waterMark) {
+        this.waterMark = waterMark;
     }
 }

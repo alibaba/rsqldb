@@ -1,14 +1,14 @@
 package com.alibaba.rsqldb.parser.parser.function;
 
-import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIntervalLiteral;
-import org.apache.calcite.sql.SqlNode;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.WindowBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlIntervalLiteral;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.rocketmq.streams.window.operator.AbstractWindow;
 
 /**
@@ -18,7 +18,7 @@ import org.apache.rocketmq.streams.window.operator.AbstractWindow;
  */
 public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
-    @Override public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
+    @Override public IParseResult parse(SelectSqlBuilder builder, SqlBasicCall sqlBasicCall) {
         SqlNode[] operands = sqlBasicCall.getOperands();
         SqlIntervalLiteral sqlIntervalLiteral = (SqlIntervalLiteral) operands[1];
         WindowBuilder windowBuilder = new WindowBuilder();
@@ -33,7 +33,7 @@ public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
     private void setWindowParameter(WindowBuilder builder, SqlIntervalLiteral intervalLiteral) {
         SqlIntervalLiteral.IntervalValue intervalValue = (SqlIntervalLiteral.IntervalValue) intervalLiteral.getValue();
         TimeUnit unit = intervalValue.getIntervalQualifier().getUnit();
-        builder.setLocalStorageOnly(TimeUnit.SECOND == unit);
+//        builder.setLocalStorageOnly(TimeUnit.SECOND == unit);
         int interval = -1;
         try {
             interval = Integer.valueOf(intervalValue.getIntervalLiteral());
@@ -53,6 +53,9 @@ public class SessionParser extends AbstractSelectNodeParser<SqlBasicCall> {
      */
     protected static int convert2Second(int interval, TimeUnit timeUnit) {
         int timeout = interval;
+        if(TimeUnit.SECOND==timeUnit){
+            return interval;
+        }
         if (timeUnit != null) {
             if (TimeUnit.MINUTE == timeUnit) {
                 timeout = interval * 60;

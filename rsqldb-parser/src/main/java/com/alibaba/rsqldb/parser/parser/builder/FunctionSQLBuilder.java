@@ -18,46 +18,54 @@ package com.alibaba.rsqldb.parser.parser.builder;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.rocketmq.streams.common.model.NameCreator;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
 import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
 import org.apache.rocketmq.streams.script.service.udf.UDFScript;
+import org.apache.rocketmq.streams.script.annotation.Function;
 
 /**
  * UDX's SQL Builder
  */
-public class FunctionSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
-    private static final Log LOG = LogFactory.getLog(FunctionSQLBuilder.class);
+public class FunctionSqlBuilder extends AbstractSqlBuilder<AbstractSqlBuilder> {
+    private static final Log LOG = LogFactory.getLog(FunctionSqlBuilder.class);
     protected BlinkUDFScan blinkUDFScan = BlinkUDFScan.getInstance();
 
     protected String functionName;
 
     protected String className;
 
-    @Override
-    public void build() {
-        blinkUDFScan.scan(null);
-        UDFScript blinkUDFScript = blinkUDFScan.getScript(className);
+    @Override public void build() {
+        if (Function.class.getName().equalsIgnoreCase(className)) {
+            return;
+        }
+        UDFScript blinkUDFScript = blinkUDFScan.getScript(className, functionName);
         if (blinkUDFScript == null) {
-            throw new RuntimeException("can not find udf, the udf is " + className);
+            blinkUDFScan.scanClass(className, functionName);
+            blinkUDFScript = blinkUDFScan.getScript(className, functionName);
+            if (blinkUDFScript == null) {
+                blinkUDFScript = blinkUDFScan.getScript(className, null);
+            }
+            if (blinkUDFScript == null) {
+                LOG.error("can not find udf, the udf is " + className);
+                return;
+            }
         }
         blinkUDFScript.setFunctionName(functionName);
+        //        blinkUDFScan.scan(null);
+//        blinkUDFScript.setFunctionName(functionName);
         blinkUDFScript.setNameSpace(getPipelineBuilder().getPipelineNameSpace());
-        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(),
-            NameCreator.createNewName(functionName));
+        String name = MapKeyUtil.createKey(getPipelineBuilder().getPipelineName(), NameCreatorContext.get().createNewName(functionName));
         blinkUDFScript.setConfigureName(name);
         getPipelineBuilder().addConfigurables(blinkUDFScript);
     }
 
-    @Override
-    public String getFieldName(String fieldName, boolean containsSelf) {
+    @Override public String getFieldName(String fieldName, boolean containsSelf) {
         return null;
     }
 
-    @Override
-    public Set<String> parseDependentTables() {
+    @Override public Set<String> parseDependentTables() {
         return new HashSet<>();
     }
 

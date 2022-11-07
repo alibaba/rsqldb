@@ -16,9 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSqlBuilder;
 
-public interface IBuilderCreator<T extends AbstractSQLBuilder> {
+public interface IBuilderCreator<T extends AbstractSqlBuilder> {
 
     T create();
 }

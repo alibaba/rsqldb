@@ -16,22 +16,21 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
-import org.apache.rocketmq.streams.common.datatype.DataType;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.creator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.datatype.DataType;
 
 public class CastFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
 
         List<SqlNode> nodeList = sqlBasicCall.getOperandList();
         SqlNode varNode = nodeList.get(0);
@@ -40,7 +39,7 @@ public class CastFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
         String typeValue = parseSqlNode(tableDescriptor, typeNode).getReturnValue();
         DataType dataType = SqlDataTypeUtil.covert(typeValue);
-        String returnName = ParserNameCreator.createName("cast", null);
+        String returnName = ParserNameCreator.createName("cast");
         String scriptValue = returnName + "=cast(" + varName + ",'" + dataType.getDataTypeName() + "');";
         ScriptParseResult scriptParseResult = new ScriptParseResult();
         scriptParseResult.setReturnValue(returnName);
@@ -51,7 +50,7 @@ public class CastFunctionParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("cast")) {
                 return true;
             }

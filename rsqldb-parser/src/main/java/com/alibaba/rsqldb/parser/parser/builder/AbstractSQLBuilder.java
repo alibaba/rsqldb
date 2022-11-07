@@ -16,33 +16,74 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.calcite.sql.SqlNode;
-
+import com.alibaba.rsqldb.parser.parser.SqlBuilderResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.rocketmq.streams.common.configurable.IConfigurable;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.topology.metric.StageGroup;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.PrintUtil;
+import org.apache.rocketmq.streams.common.utils.SQLFormatterUtil;
 
-public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implements ISQLBuilder {
-
-    protected SqlNode sqlNode;//解析节点对应的sqlnode
-    protected String sqlType;//sql的类型，是查询还是create
-    protected List<T> children = new ArrayList<>();
-    protected List<T> parents = new ArrayList<>();
-    protected boolean supportOptimization = true;//是否支持优化，可以在不支持解析的地方设置这个参数，builder会忽略对这个节点的优化
-    protected String tableName;//表名
-    protected String createTable;//这个节点产生的新表
-    protected String namespace;//命名空间
-    //protected AbstractSQLBuilder treeSQLBulider;//在嵌套的场景，最外层的builder
+public abstract class AbstractSqlBuilder<T extends AbstractSqlBuilder> implements ISqlNodeBuilder {
+    public static SQLFormatterUtil sqlFormatterUtil = new SQLFormatterUtil();
+    /**
+     * 解析节点对应的sqlnode
+     */
+    protected SqlNode sqlNode;
+    /**
+     * sql的类型，是查询还是create
+     */
+    protected String sqlType;
+    protected List<AbstractSqlBuilder<?>> children = new ArrayList<>();
+    protected List<AbstractSqlBuilder<?>> parents = new ArrayList<>();
+    /**
+     * 是否支持优化，可以在不支持解析的地方设置这个参数，builder会忽略对这个节点的优化
+     */
+    protected boolean supportOptimization = true;
+    /**
+     * 表名
+     */
+    protected String tableName;
+    /**
+     * 这个节点产生的新表
+     */
+    protected String createTable;
+    /**
+     * 命名空间
+     */
+    protected String namespace;
     protected PipelineBuilder pipelineBuilder;
-    protected Set<String> dependentTables = new HashSet<>();//对于上层table的依赖
-    protected String asName;//表的别名，通过as修饰
-    protected List<String> scripts = new ArrayList<>();//select，where部分有函数的，则把函数转换成脚本
-    protected Map<String, CreateSQLBuilder> tableName2Builders = new HashMap<>();//保存所有create对应的builder， 在insert或维表join时使用
+    /**
+     * 对于上层table的依赖
+     */
+    protected Set<String> dependentTables = new HashSet<>();
+    /**
+     * 表的别名，通过as修饰
+     */
+    protected String asName;
+    /**
+     * select，where部分有函数的，则把函数转换成脚本
+     */
+    protected List<String> scripts = new ArrayList<>();
+    /**
+     * 保存所有create对应的builder， 在insert或维表join时使用
+     */
+    protected Map<String, CreateSqlBuilder> tableName2Builders = new HashMap<>();
     protected HashSet<String> rootTableNames = new HashSet<>();
+    protected String selectSql;
+    protected String fromSql;
+    protected String whereSql;
+    protected String groupSql;
+    protected String havingSql;
+    protected String joinConditionSql;
+    protected List<String> expressionFunctionSql = new ArrayList<>();
 
     @Override
     public String getSQLType() {
@@ -65,12 +106,31 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
 
     }
 
-    @Override
-    public String createSQL() {
-        if (sqlNode == null) {
-            return null;
+    public String createSQLFromParser() {
+        StringBuilder sb = new StringBuilder();
+        if (selectSql != null) {
+            sb.append(selectSql).append(PrintUtil.LINE);
         }
-        return sqlNode.toString();
+        if (fromSql != null) {
+            sb.append(fromSql).append(PrintUtil.LINE);
+        }
+
+        if (whereSql != null) {
+            sb.append(whereSql).append(PrintUtil.LINE);
+        }
+
+        if (groupSql != null) {
+            sb.append(groupSql).append(PrintUtil.LINE);
+        }
+        if (havingSql != null) {
+            sb.append(havingSql).append(PrintUtil.LINE);
+        }
+        return sqlFormatterUtil.format(sb.toString());
+    }
+
+    @Override
+    public String createSql() {
+        return createSQLFromParser();
     }
 
     public SqlNode getSqlNode() {
@@ -89,15 +149,15 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         this.sqlType = sqlType;
     }
 
-    public List<T> getChildren() {
+    public List<AbstractSqlBuilder<?>> getChildren() {
         return children;
     }
 
-    public void setChildren(List<T> children) {
+    public void setChildren(List<AbstractSqlBuilder<?>> children) {
         this.children = children;
     }
 
-    public void addChild(T child) {
+    public void addChild(AbstractSqlBuilder<?> child) {
         this.children.add(child);
         child.getParents().add(this);
     }
@@ -108,7 +168,7 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
     }
 
     @Override
-    public void buildSQL() {
+    public SqlBuilderResult buildSql() {
         if (getPipelineBuilder() == null) {
             PipelineBuilder pipelineBuilder = findPipelineBuilderFromParent(this);
             setPipelineBuilder(pipelineBuilder);
@@ -118,10 +178,11 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         }
 
         build();
+        return new SqlBuilderResult(pipelineBuilder, this);
     }
 
-    protected PipelineBuilder findPipelineBuilderFromParent(AbstractSQLBuilder<T> sqlBuilder) {
-        for (T parent : sqlBuilder.getParents()) {
+    protected PipelineBuilder findPipelineBuilderFromParent(AbstractSqlBuilder<?> sqlBuilder) {
+        for (AbstractSqlBuilder<?> parent : sqlBuilder.getParents()) {
             if (parent.getPipelineBuilder() != null) {
                 return parent.getPipelineBuilder();
             } else {
@@ -132,6 +193,76 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
             }
         }
         return null;
+    }
+
+    protected PipelineBuilder createPipelineBuilder() {
+        PipelineBuilder pipelineBuilder = new PipelineBuilder(this.pipelineBuilder.getPipelineNameSpace(), this.pipelineBuilder.getPipelineName());
+        pipelineBuilder.setParentTableName(this.pipelineBuilder.getParentTableName());
+        pipelineBuilder.setRootTableName(this.pipelineBuilder.getRootTableName());
+        return pipelineBuilder;
+    }
+
+    /**
+     * 合并一段sql到主sqlbuilder
+     *
+     * @param sqlBuilderResult
+     */
+    protected void mergeSQLBuilderResult(SqlBuilderResult sqlBuilderResult) {
+        mergeSQLBuilderResult(sqlBuilderResult, false);
+    }
+
+    /**
+     * 合并一段sql到主sqlbuilder
+     *
+     * @param sqlBuilderResult
+     */
+    protected void mergeSQLBuilderResult(SqlBuilderResult sqlBuilderResult, boolean isMergeGroup) {
+        if (sqlBuilderResult == null) {
+            return;
+        }
+        List<IConfigurable> configurableList = sqlBuilderResult.getConfigurables();
+        if (sqlBuilderResult.isRightJoin()) {
+            pipelineBuilder.setRightJoin(true);
+        }
+        if (CollectionUtil.isNotEmpty(configurableList)) {
+            pipelineBuilder.addConfigurables(configurableList);
+        }
+        if (CollectionUtil.isNotEmpty(sqlBuilderResult.getStages())) {
+            pipelineBuilder.getPipeline().getStages().addAll(sqlBuilderResult.getStages());
+        }
+        if (sqlBuilderResult.getFirstStage() != null) {
+            pipelineBuilder.setHorizontalStages(sqlBuilderResult.getFirstStage());
+        }
+        if (sqlBuilderResult.getLastStage() != null) {
+            pipelineBuilder.setCurrentChainStage(sqlBuilderResult.getLastStage());
+        }
+        if (pipelineBuilder.getCurrentStageGroup() == null && pipelineBuilder.getParentStageGroup() == null) {
+            pipelineBuilder.setCurrentStageGroup(sqlBuilderResult.getStageGroup());
+
+        } else {
+            if (pipelineBuilder.getParentStageGroup() != null) {
+                StageGroup parent = pipelineBuilder.getParentStageGroup();
+                sqlBuilderResult.getStageGroup().setParent(parent);
+                pipelineBuilder.setCurrentStageGroup(parent);
+            } else {
+                StageGroup children = pipelineBuilder.getCurrentStageGroup();
+                StageGroup parent = sqlBuilderResult.getStageGroup();
+
+                if (isMergeGroup && parent != null) {
+                    children.setEndStage(parent.getEndStage());
+                    children.setAllStageLables(parent.getAllStageLables());
+                } else {
+                    if (parent != null) {
+                        children.setParent(parent);
+                        pipelineBuilder.setCurrentStageGroup(parent);
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
     protected abstract void build();
@@ -206,11 +337,11 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         this.pipelineBuilder = pipelineBuilder;
     }
 
-    public List<T> getParents() {
+    public List<AbstractSqlBuilder<?>> getParents() {
         return parents;
     }
 
-    public void setParents(List<T> parents) {
+    public void setParents(List<AbstractSqlBuilder<?>> parents) {
         this.parents = parents;
     }
 
@@ -246,12 +377,11 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         return dependentTables;
     }
 
-    public Map<String, CreateSQLBuilder> getTableName2Builders() {
+    public Map<String, CreateSqlBuilder> getTableName2Builders() {
         return tableName2Builders;
     }
 
-    public void setTableName2Builders(
-        Map<String, CreateSQLBuilder> tableName2Builders) {
+    public void setTableName2Builders(Map<String, CreateSqlBuilder> tableName2Builders) {
         this.tableName2Builders = tableName2Builders;
     }
 
@@ -288,5 +418,61 @@ public abstract class AbstractSQLBuilder<T extends AbstractSQLBuilder> implement
         if (rootTableNames != null && rootTableNames.size() > 0) {
             this.rootTableNames.addAll(rootTableNames);
         }
+    }
+
+    public String getSelectSql() {
+        return selectSql;
+    }
+
+    public void setSelectSql(String selectSql) {
+        this.selectSql = selectSql;
+    }
+
+    public String getFromSql() {
+        return fromSql;
+    }
+
+    public void setFromSql(String fromSql) {
+        this.fromSql = fromSql;
+    }
+
+    public String getWhereSql() {
+        return whereSql;
+    }
+
+    public void setWhereSql(String whereSql) {
+        this.whereSql = whereSql;
+    }
+
+    public String getGroupSql() {
+        return groupSql;
+    }
+
+    public void setGroupSql(String groupSql) {
+        this.groupSql = groupSql;
+    }
+
+    public String getHavingSql() {
+        return havingSql;
+    }
+
+    public void setHavingSql(String havingSql) {
+        this.havingSql = havingSql;
+    }
+
+    public String getJoinConditionSql() {
+        return joinConditionSql;
+    }
+
+    public void setJoinConditionSql(String joinConditionSql) {
+        this.joinConditionSql = joinConditionSql;
+    }
+
+    public List<String> getExpressionFunctionSql() {
+        return expressionFunctionSql;
+    }
+
+    public void setExpressionFunctionSql(List<String> expressionFunctionSql) {
+        this.expressionFunctionSql = expressionFunctionSql;
     }
 }

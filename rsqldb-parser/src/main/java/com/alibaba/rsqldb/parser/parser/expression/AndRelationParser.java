@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.expression;
 
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
@@ -25,7 +25,7 @@ import org.apache.calcite.sql.SqlBasicCall;
 public class AndRelationParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
         String relation = sqlBasicCall.getOperator().getName().toLowerCase().equals("and") ? "&" : "|";
         String expressionLeft = parseSqlNode(tableDescriptor, sqlBasicCall.getOperandList().get(0))
             .getValueForSubExpression();
@@ -49,7 +49,7 @@ public class AndRelationParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (SqlBasicCall.class.isInstance(sqlNode)) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("and")) {
                 return true;
             }
