@@ -16,18 +16,18 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
 
-public abstract class AbstractSelectNodeParser<T> extends AbstractSqlNodeParser<T, SelectSQLBuilder> {
+public abstract class AbstractSelectNodeParser<T> extends AbstractSqlNodeNodeParser<T, SelectSqlBuilder> {
 
     protected IParseResult createExpression(String varName, String functionName, IParseResult value) {
         String dataTypeValue = "";
         if (value instanceof ConstantParseResult) {
-            ConstantParseResult constantParseResult = (ConstantParseResult)value;
+            ConstantParseResult constantParseResult = (ConstantParseResult) value;
             String dataTypeName = constantParseResult.getDataType().getDataTypeName();
             if (!StringDataType.getTypeName().equals(dataTypeName)) {
                 dataTypeValue = "," + dataTypeName;
@@ -42,7 +42,7 @@ public abstract class AbstractSelectNodeParser<T> extends AbstractSqlNodeParser<
     }
 
     @Override
-    public SelectSQLBuilder create() {
-        return new SelectSQLBuilder();
+    public SelectSqlBuilder create() {
+        return new SelectSqlBuilder();
     }
 }

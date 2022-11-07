@@ -16,16 +16,16 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
+import com.alibaba.rsqldb.parser.parser.SqlBuilderResult;
+import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import org.apache.calcite.sql.SqlNode;
 import org.apache.rocketmq.streams.script.function.model.FunctionType;
 import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.result.VarParseResult;
-import org.apache.calcite.sql.SqlNode;
 
-public class LateralTableBuilder extends SelectSQLBuilder {
+public class LateralTableBuilder extends SelectSqlBuilder {
 
     /**
      * as 对应的表名
@@ -35,24 +35,27 @@ public class LateralTableBuilder extends SelectSQLBuilder {
     protected Set<String> fieldNames = new HashSet<>();
 
     @Override
-    public void buildSQL() {
+    public SqlBuilderResult buildSql() {
         if (scripts.size() == 0) {
-            return;
+            return null;
         }
         StringBuilder scriptValue = new StringBuilder();
         for (String script : scripts) {
             scriptValue.append(script);
         }
         getPipelineBuilder().addChainStage(new ScriptOperator(scriptValue.toString()));
+        return new SqlBuilderResult(getPipelineBuilder(),this);
     }
+
     @Override
     public String getFieldName(String fieldName, boolean containsSelf) {
-        String name=super.getFieldName(fieldName,containsSelf);
-        if(name==null&&fieldName.toLowerCase().startsWith(FunctionType.UDTF.getName())){
+        String name = super.getFieldName(fieldName, containsSelf);
+        if (name == null && fieldName.toLowerCase().startsWith(FunctionType.UDTF.getName())) {
             return fieldName;
         }
         return name;
     }
+
     /**
      * 如果有别名，必须加别名
      *
@@ -114,7 +117,27 @@ public class LateralTableBuilder extends SelectSQLBuilder {
         for (int i = 2; i < nodeList.size(); i++) {
             String name = nodeList.get(i).toString();
             fieldNames.add(name);
-            String script = varName + name + "=" + FunctionType.UDTF.getName()  + (i - 2) + ";";
+
+            /**
+             * 为了支持内置的udtf函数，做了特殊处理。addAliasForNewField负责处理blink udtf和内置udtf的差异
+             */
+            String script="addAliasForNewField('"+name+"','"+varName+"',"+(i-2)+");";
+            //String script = varName + name + "=" + FunctionType.UDTF.getName() + (i - 2) + ";";
+            this.scripts.add(script);
+            putSelectField(name, new VarParseResult(name));
+        }
+    }
+
+    /**
+     * 这种写法不推荐，无法使用内置udtf函数，只能使用blink udtf函数
+     */
+    @Deprecated
+    public void addDefaultFields() {
+        String varName = asName == null ? "" : asName + ".";
+        for(int i=0;i<50;i++){
+            String name = FunctionType.UDTF.getName() + i ;
+            fieldNames.add(name);
+            String script = varName + name + "=" + name + ";";
             this.scripts.add(script);
             putSelectField(name, new VarParseResult(name));
         }

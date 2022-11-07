@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 
 public interface ISelectParser {
 
@@ -26,6 +26,6 @@ public interface ISelectParser {
      * @param t
      * @return
      */
-    SelectSQLBuilder create(String t);
+    SelectSqlBuilder create(String t);
 
 }

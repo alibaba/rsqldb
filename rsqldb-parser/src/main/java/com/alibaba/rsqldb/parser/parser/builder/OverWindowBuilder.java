@@ -16,5 +16,5 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-public class OverWindowBuilder extends SelectSQLBuilder {
+public class OverWindowBuilder extends SelectSqlBuilder {
 }

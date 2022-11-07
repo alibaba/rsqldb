@@ -16,19 +16,18 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 
 public class JsonConcatParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
         List<SqlNode> sqlNodeList = sqlBasicCall.getOperandList();
         StringBuilder stringBuilder = new StringBuilder("json_concat(");
         boolean isFirst = true;

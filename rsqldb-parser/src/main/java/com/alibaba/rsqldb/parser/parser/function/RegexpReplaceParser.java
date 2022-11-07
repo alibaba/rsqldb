@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
 import org.apache.calcite.sql.SqlBasicCall;
@@ -24,7 +24,7 @@ import org.apache.calcite.sql.SqlBasicCall;
 public class RegexpReplaceParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
         return null;
     }
 

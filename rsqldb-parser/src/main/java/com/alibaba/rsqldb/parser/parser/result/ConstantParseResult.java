@@ -90,7 +90,7 @@ public class ConstantParseResult implements IParseResult {
 
     protected <T> T getDataValue() {
         if (this.dataType != null) {
-            return (T)dataType.getData(value);
+            return (T) dataType.getData(value);
         }
         return null;
     }

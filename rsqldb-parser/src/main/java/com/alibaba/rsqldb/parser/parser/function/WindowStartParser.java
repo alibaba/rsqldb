@@ -16,8 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.creator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
@@ -32,8 +32,10 @@ public class WindowStartParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     String hopFunction = "hop_start";
 
+    String sessionFunction = "session_start";
+
     @Override
-    public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder builder, SqlBasicCall sqlBasicCall) {
         ScriptParseResult scriptParseResult = new ScriptParseResult();
         String returnName = ParserNameCreator.createName("window_start");
         scriptParseResult.addScript(builder, returnName + "=window_start();");
@@ -44,9 +46,9 @@ public class WindowStartParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (SqlBasicCall.class.isInstance(sqlNode)) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             String name = sqlBasicCall.getOperator().getName().toLowerCase();
-            if (tumbleFunction.equals(name) || hopFunction.equals(name)) {
+            if (tumbleFunction.equals(name) || hopFunction.equals(name)||sessionFunction.equals(name)) {
                 return true;
             }
         }

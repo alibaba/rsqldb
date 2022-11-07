@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.result;
 
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSqlBuilder;
 
 /**
  * 每个解析的返回结果。需要考虑变量，常量和脚本的情况
@@ -26,14 +26,14 @@ public class BuilderParseResult implements IParseResult<String> {
     /**
      * 保存3种值，常量，变量的值以及脚本如果有需要返回的变量，也保存在这个字段
      */
-    protected AbstractSQLBuilder builder;
+    protected AbstractSqlBuilder builder;
 
     /**
      * 注意这里的脚本
      *
      * @param value
      */
-    public BuilderParseResult(AbstractSQLBuilder value) {
+    public BuilderParseResult(AbstractSqlBuilder value) {
         this.builder = value;
     }
 
@@ -54,6 +54,9 @@ public class BuilderParseResult implements IParseResult<String> {
 
     @Override
     public String getResultValue() {
+        if(builder.getSqlNode()==null){
+            return builder.getTableName();
+        }
         return builder.getSqlNode().toString();
     }
 
@@ -62,7 +65,7 @@ public class BuilderParseResult implements IParseResult<String> {
         return false;
     }
 
-    public AbstractSQLBuilder getBuilder() {
+    public AbstractSqlBuilder getBuilder() {
         return builder;
     }
 

@@ -16,38 +16,32 @@
  */
 package com.alibaba.rsqldb.parser.parser.sqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.AbstractSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.builder.LateralTableBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class LateralTableParser extends AbstractSqlNodeParser<SqlBasicCall, AbstractSQLBuilder> {
+public class LateralTableParser extends AbstractSqlNodeNodeParser<SqlBasicCall, AbstractSqlBuilder<?>> {
 
-    private static final Log LOG = LogFactory.getLog(SelectSQLBuilder.class);
+    private static final Log LOG = LogFactory.getLog(SelectSqlBuilder.class);
 
-    @Override
-    public IParseResult parse(AbstractSQLBuilder builder, SqlBasicCall sqlNode) {
-        SqlBasicCall tableNode = (SqlBasicCall)sqlNode.getOperands()[0];
-        IParseResult valueResult = parseSqlNode(builder, tableNode.operand(0));
-        return valueResult;
+    @Override public IParseResult<?> parse(AbstractSqlBuilder<?> builder, SqlBasicCall sqlNode) {
+        SqlBasicCall tableNode = (SqlBasicCall) sqlNode.getOperands()[0];
+        return parseSqlNode(builder, tableNode.operand(0));
     }
 
-    @Override
-    public boolean support(Object sqlNode) {
+    @Override public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
-            if (sqlBasicCall.getOperator().getName().toLowerCase().equals("lateral")) {
-                return true;
-            }
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
+            return "lateral".equalsIgnoreCase(sqlBasicCall.getOperator().getName());
         }
         return false;
     }
 
-    @Override
-    public AbstractSQLBuilder create() {
+    @Override public AbstractSqlBuilder<?> create() {
         return new LateralTableBuilder();
     }
 }

@@ -16,18 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.parser.function;
 
-import java.util.List;
-
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 
 public class TransJsonArrayParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder builder, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder builder, SqlBasicCall sqlBasicCall) {
         List<SqlNode> nodeList = sqlBasicCall.getOperandList();
         return null;
     }
@@ -35,7 +34,7 @@ public class TransJsonArrayParser extends AbstractSelectNodeParser<SqlBasicCall>
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toLowerCase().equals("trans_json_array")) {
                 return true;
             }

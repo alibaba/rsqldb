@@ -16,24 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.parser.builder;
 
-import org.apache.rocketmq.streams.filter.operator.FilterOperator;
-import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
-import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
-import org.apache.rocketmq.streams.common.utils.PrintUtil;
-import org.apache.rocketmq.streams.common.utils.StringUtil;
-import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
-import com.alibaba.rsqldb.parser.parser.SQLParserContext;
+import com.alibaba.rsqldb.parser.parser.SqlBuilderResult;
+import com.alibaba.rsqldb.parser.sql.context.FieldsOfTableForSqlTreeContext;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
-import com.alibaba.rsqldb.parser.parser.sqlnode.SelectParser;
-
-import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectParser;
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,47 +30,97 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.rocketmq.streams.common.model.NameCreatorContext;
+import org.apache.rocketmq.streams.common.topology.ChainStage;
+import org.apache.rocketmq.streams.common.topology.builder.PipelineBuilder;
+import org.apache.rocketmq.streams.common.utils.CollectionUtil;
+import org.apache.rocketmq.streams.common.utils.MapKeyUtil;
+import org.apache.rocketmq.streams.common.utils.PrintUtil;
+import org.apache.rocketmq.streams.common.utils.StringUtil;
+import org.apache.rocketmq.streams.filter.operator.FilterOperator;
+import org.apache.rocketmq.streams.script.operator.impl.ScriptOperator;
+import org.apache.rocketmq.streams.script.utils.FunctionUtils;
 
 /**
  * 这块是整个build的核心，因为所有的优化都是基于过滤的，过滤都体现在select的where部分
  */
-public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
-    private static final Log LOG = LogFactory.getLog(SelectParser.class);
-
-    protected String expression;//where部分逻辑判断的转换成表达式字符串(varName,functionName,value)&((varName,functionName,value)|(varName,functionName,int,value))
-
-    protected Set<String> allFieldNames = null;//如果做过字段解析，把所有的字段放到这里面，在做sub select  取值时，直接取
-
+public class SelectSqlBuilder extends AbstractSqlBuilder<AbstractSqlBuilder> {
+    private static final Log LOG = LogFactory.getLog(AbstractSelectParser.class);
+    public static final String WINDOW_HITS_NAME = "WIN";
+    public static final String HITS_WINDOW_SIZE = "window.size";//通过hits设置orderby的窗口大小，默认是1个小时
+    public static final String HITS_WINDOW_BEFORE_EMIT = "window.before.emit";//通过hits设置orderby的窗口大小，默认是1个小时
+    public static final String HITS_WINDOW_AFTER_EMIT = "window.after.emit";//通过hits设置orderby的窗口大小，默认是1个小时
+    public static final String HITS_WINDOW_WATERMARK = "window.watermark";//通过hits设置orderby的窗口大小，默认是1个小时
+    public static final String HITS_WINDOW_TIMEFIELD = "window.time.field";//通过hits设置orderby的窗口大小，默认是1个小时
     /**
-     * 在sql select部分出现的字段
+     * where部分逻辑判断的转换成表达式字符串(varName,functionName,value)&((varName,functionName,value)|(varName,functionName,int,value))
      */
-    protected Map<String, IParseResult> fieldName2ParseResult = new HashMap<>();//每个字段和对应解析器，在必要的时候完成解析
-
-    protected int parseStage = 0;//0:select,1:from,2:where
+    protected String expression;
+    /**
+     * 如果做过字段解析，把所有的字段放到这里面，在做sub select  取值时，直接取
+     */
+    protected Set<String> allFieldNames = null;
+    /**
+     * 在sql select部分出现的字段,每个字段和对应解析器，在必要的时候完成解析
+     */
+    protected Map<String, IParseResult> fieldName2ParseResult = new HashMap<>();
+    /**
+     * field name order by sql select,use in insert table(field,field) select
+     */
+    protected List<String> fieldNamesOrderByDeclare = new ArrayList<>();
+    /**
+     * 0:select,1:from,2:where
+     */
+    protected int parseStage = 0;
 
     protected List<String> selectScripts = new ArrayList<>();
+    /**
+     * select场景中有join的场景
+     */
+    protected JoinSqlBuilder joinSQLBuilder;
 
-    protected JoinSQLBuilder joinSQLBuilder;// select场景中有join的场景
-    protected SelectSQLBuilder parentSelect;//如果有嵌套查询，则表示外侧查询
-    protected SelectSQLBuilder subSelect;//如果有嵌套查询，则表示子查询
-
+    protected Map<String, Map<String, String>> hits = new HashMap<>();
+    /**
+     * 如果有嵌套查询，则表示外侧查询
+     */
+    protected SelectSqlBuilder parentSelect;
+    /**
+     * 如果有嵌套查询，则表示子查询
+     */
+    protected SelectSqlBuilder subSelect;
+    protected boolean isDistinct = false;
     /**
      * group by 相关参数
      */
     protected WindowBuilder windowBuilder;
+
+    protected WindowBuilder overWindowBuilder;
     protected String overName;
-
-    //有union的场景
-    protected UnionSQLBuilder unionSQLBuilder;
-
-    //主要是lower或trim等函数，如果同一字段添加多次函数，最终只返回一个名字。使用时需要谨慎
-    //string：包含函数名;变量名
+    /**
+     * 有union的场景
+     */
+    protected UnionSqlBuilder unionSQLBuilder;
+    /**
+     * 主要是lower或trim等函数，如果同一字段添加多次函数，最终只返回一个名字。使用时需要谨慎 string：包含函数名;变量名
+     */
     protected Map<String, String> innerVarNames = new HashMap();
 
+    /**
+     * use in create table, not check field exist
+     */
+    protected boolean closeFieldCheck = false;
 
-    protected boolean closeFieldCheck=false;//use in create table
+    /**
+     * 生产msg的md5，主要应用在intersect中
+     */
+    protected String msgMd5FieldName;
+
     @Override
-    public void buildSQL() {
+    public SqlBuilderResult buildSql() {
         if (pipelineBuilder == null) {
             pipelineBuilder = new PipelineBuilder(getSourceTable(), getSourceTable());
         }
@@ -90,60 +129,91 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
          * 无论这个select是否能优化，join查询也需要判断是否可以优化
          */
         if (joinSQLBuilder != null) {
-            joinSQLBuilder.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder joinPipelineBuilder = createPipelineBuilder();
+            joinSQLBuilder.setPipelineBuilder(joinPipelineBuilder);
             // joinSQLBuilder.setTreeSQLBulider(getTreeSQLBulider());
             joinSQLBuilder.setTableName2Builders(getTableName2Builders());
             joinSQLBuilder.setParentSelect(this);
             joinSQLBuilder.addRootTableName(this.getRootTableNames());
-            joinSQLBuilder.build();
+            SqlBuilderResult sqlBuilderResult = joinSQLBuilder.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
             // buildSelect();
         }
 
         if (unionSQLBuilder != null) {
-            if(!unionSQLBuilder.getTableName().equals(pipelineBuilder.getParentTableName())){
-                if(unionSQLBuilder.containsTableName(pipelineBuilder.getParentTableName())){
+            if (!unionSQLBuilder.getTableName().equals(pipelineBuilder.getParentTableName())) {
+                if (unionSQLBuilder.containsTableName(pipelineBuilder.getParentTableName())) {
                     unionSQLBuilder.setTableName(pipelineBuilder.getParentTableName());
                     this.setTableName(unionSQLBuilder.getTableName());
-                    SelectSQLBuilder parent=this.parentSelect;
-                    while (parent!=null){
+                    SelectSqlBuilder parent = this.parentSelect;
+                    while (parent != null) {
                         parent.setTableName(this.getTableName());
-                        parent=parent.parentSelect;
+                        parent = parent.parentSelect;
                     }
                 }
                 unionSQLBuilder.setTableName(pipelineBuilder.getParentTableName());
             }
-            unionSQLBuilder.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder unionPipelineBuilder = createPipelineBuilder();
+            unionSQLBuilder.setPipelineBuilder(unionPipelineBuilder);
             // unionSQLBuilder.setTreeSQLBulider(getTreeSQLBulider());
             unionSQLBuilder.setTableName2Builders(getTableName2Builders());
             unionSQLBuilder.setParentSelect(this);
             unionSQLBuilder.addRootTableName(this.getRootTableNames());
-            unionSQLBuilder.buildSQL();
+            SqlBuilderResult sqlBuilderResult = unionSQLBuilder.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
         }
         /**
          * 先build嵌套的子查询
          */
         if (subSelect != null) {
-            subSelect.setPipelineBuilder(pipelineBuilder);
+            PipelineBuilder subPipelineBuilder = createPipelineBuilder();
+            subSelect.setPipelineBuilder(subPipelineBuilder);
             // subSelect.setTreeSQLBulider(getTreeSQLBulider());
             subSelect.setTableName2Builders(getTableName2Builders());
             subSelect.addRootTableName(this.getRootTableNames());
-            subSelect.buildSQL();
+            SqlBuilderResult sqlBuilderResult = subSelect.buildSql();
+            mergeSQLBuilderResult(sqlBuilderResult);
         }
-
-        buildScript(getScripts());
-        bulidExpression();
-        buildGroup();
-        buildScript(getSelectScripts());
-        buildSelect();
+        PipelineBuilder subPipelineBuilder = createPipelineBuilder();
+        buildScript(subPipelineBuilder, getScripts(), false);
+        bulidExpression(subPipelineBuilder);
+        SqlBuilderResult sqlBuilderResult = new SqlBuilderResult(subPipelineBuilder, this);
+        mergeSQLBuilderResult(sqlBuilderResult, true);
+        sqlBuilderResult = buildWindow(windowBuilder);
+        mergeSQLBuilderResult(sqlBuilderResult, true);
+        sqlBuilderResult = buildWindow(overWindowBuilder);
+        mergeSQLBuilderResult(sqlBuilderResult, true);
+        subPipelineBuilder = createPipelineBuilder();
+        buildScript(subPipelineBuilder, getSelectScripts(), true);
+        buildSelect(subPipelineBuilder);
+        sqlBuilderResult = new SqlBuilderResult(subPipelineBuilder, this);
+        mergeSQLBuilderResult(sqlBuilderResult, true);
+        ChainStage<?> first = CollectionUtil.isNotEmpty(pipelineBuilder.getFirstStages()) ? pipelineBuilder.getFirstStages().get(0) : null;
+        SqlBuilderResult result = new SqlBuilderResult(pipelineBuilder, first, pipelineBuilder.getCurrentChainStage());
+        result.getStageGroup().setSql(this.createSQLFromParser());
+        result.getStageGroup().setViewName(getFromSql());
+        return result;
     }
 
     /**
      * 把解析字段过程中生成的脚本，生成pipline的stage
      */
-    protected void buildScript(List<String> scripts) {
+    protected void buildScript(PipelineBuilder pipelineBuilder, List<String> scripts, boolean isSelect) {
         String script = createScript(scripts);
         if (script != null) {
-            pipelineBuilder.addChainStage(new ScriptOperator(script));
+            ChainStage chainStage = pipelineBuilder.addChainStage(new ScriptOperator(script));
+            if (isSelect) {
+                chainStage.setSql(selectSql);
+                chainStage.setDiscription("SELECT Function Parser");
+            } else {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (String sql : this.getExpressionFunctionSql()) {
+                    stringBuilder.append(sql + ";" + PrintUtil.LINE);
+                }
+                chainStage.setSql(stringBuilder.toString());
+                chainStage.setDiscription("Where Function Parser");
+            }
+
         }
     }
 
@@ -170,11 +240,14 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     /**
      * 解析where部分生成的表达式
      */
-    protected void bulidExpression() {
+    protected void bulidExpression(PipelineBuilder pipelineBuilder) {
         if (StringUtil.isNotEmpty(expression)) {
-            SqlSelect sqlSelect = (SqlSelect)sqlNode;
+            SqlSelect sqlSelect = (SqlSelect) sqlNode;
             sqlSelect.setWhere(null);
-            pipelineBuilder.addChainStage(new FilterOperator(expression));
+            String ruleName = NameCreatorContext.get().createOrGet(this.getPipelineBuilder().getPipelineName()).createName(this.getPipelineBuilder().getPipelineName(), "rule");
+            ChainStage chainStage = pipelineBuilder.addChainStage(new FilterOperator(getNamespace(), ruleName, expression));
+            chainStage.setSql(whereSql);
+            chainStage.setDiscription("Where Expression");
         }
 
     }
@@ -182,19 +255,74 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     /**
      * build group，创建window对象
      */
-    protected void buildGroup() {
+    protected SqlBuilderResult buildWindow(WindowBuilder windowBuilder) {
         if (windowBuilder != null) {
-            windowBuilder.setPipelineBuilder(pipelineBuilder);
-            //  windowBuilder.setTreeSQLBulider(getTreeSQLBulider());
+            PipelineBuilder subPipelineBuilder = createPipelineBuilder();
+            windowBuilder.setPipelineBuilder(subPipelineBuilder);
             windowBuilder.setOwner(this);
-            windowBuilder.build();
+            if (CollectionUtil.isNotEmpty(hits)) {
+                Map<String, String> hitsValue = hits.get(WINDOW_HITS_NAME);
+                if (hitsValue != null) {
+                    setWindowInfoByHits(windowBuilder, hitsValue);
+                }
+            }
+
+            SqlBuilderResult sqlBuilderResult = windowBuilder.buildSql();
+            return sqlBuilderResult;
+        }
+        return null;
+    }
+
+    protected void setWindowInfoByHits(WindowBuilder windowBuilder, Map<String, String> hitsValue) {
+
+        if (hitsValue.containsKey(HITS_WINDOW_SIZE)) {
+            String value = hitsValue.get(HITS_WINDOW_SIZE);
+            if (FunctionUtils.isLong(value)) {
+                Integer windowSize = Integer.valueOf(value);
+                windowBuilder.setSlide(windowSize);
+                windowBuilder.setSize(windowSize);
+            }
+
+        }
+
+        if (hitsValue.containsKey(HITS_WINDOW_BEFORE_EMIT)) {
+            String value = hitsValue.get(HITS_WINDOW_BEFORE_EMIT);
+            if (FunctionUtils.isLong(value)) {
+                Long emitBefore = Long.valueOf(value);
+                windowBuilder.setEmitBefore(emitBefore);
+            }
+
+        }
+
+        if (hitsValue.containsKey(HITS_WINDOW_AFTER_EMIT)) {
+            String value = hitsValue.get(HITS_WINDOW_AFTER_EMIT);
+            if (FunctionUtils.isLong(value)) {
+                Long emitAfter = Long.valueOf(value);
+                windowBuilder.setEmitAfter(emitAfter);
+            }
+
+        }
+
+        if (hitsValue.containsKey(HITS_WINDOW_WATERMARK)) {
+            String value = hitsValue.get(HITS_WINDOW_WATERMARK);
+            if (FunctionUtils.isLong(value)) {
+                Integer watermark = Integer.valueOf(value);
+                windowBuilder.setWaterMark(watermark);
+            }
+
+        }
+
+        if (hitsValue.containsKey(HITS_WINDOW_TIMEFIELD)) {
+            String value = hitsValue.get(HITS_WINDOW_TIMEFIELD);
+            windowBuilder.setTimeFieldName(value);
+
         }
     }
 
     /**
      * 把select部分的字段做处理，如果解析时生成了脚本，且未在scripts中，生成脚本 同时根据select 字段列表，去除掉无用的字段
      */
-    protected void buildSelect() {
+    protected void buildSelect(PipelineBuilder pipelineBuilder) {
 
         StringBuilder stringBuilder = new StringBuilder();
         Set<String> allFieldNames = new HashSet<>();
@@ -203,6 +331,8 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
          */
         String retainScript = "retainField(";
         boolean isFirst = true;
+        String[] fieldNames = new String[fieldName2ParseResult.size()];
+        int i = 0;
         if (fieldName2ParseResult != null) {
             Iterator<Entry<String, IParseResult>> it = fieldName2ParseResult.entrySet().iterator();
 
@@ -215,7 +345,9 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                     retainScript += ",";
                 }
                 if (entry.getKey().indexOf("*") != -1) {
-                    retainScript += doAsteriskTrimAliasName(entry.getKey(), stringBuilder, allFieldNames);
+                    String fieldName = doAsteriskTrimAliasName(entry.getKey(), stringBuilder, allFieldNames);
+                    retainScript += fieldName;
+                    fieldNames[i] = fieldName;
                 } else {
                     String name = entry.getKey();
                     if (name.indexOf(".") != -1) {
@@ -227,26 +359,26 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
                     }
                     allFieldNames.add(name);
                     retainScript += name;
+                    fieldNames[i] = name;
                 }
                 IParseResult parseResult = entry.getValue();
 
                 if (ScriptParseResult.class.isInstance(parseResult)) {
-                    ScriptParseResult scriptParseResult = (ScriptParseResult)parseResult;
+                    ScriptParseResult scriptParseResult = (ScriptParseResult) parseResult;
                     List<String> scripts = scriptParseResult.getScriptValueList();
                     if (scripts != null) {
                         for (String script : scripts) {
                             /**
                              * 去重，在scripts中的 已经做过处理了
                              */
-                            if (!scripts.contains(script)) {
-                                stringBuilder.append(script + PrintUtil.LINE);
-                                if (!script.endsWith(";")) {
-                                    stringBuilder.append(";");
-                                }
+                            stringBuilder.append(script + PrintUtil.LINE);
+                            if (!script.endsWith(";")) {
+                                stringBuilder.append(";");
                             }
                         }
                     }
                 }
+                i++;
 
             }
             retainScript += ");";
@@ -254,12 +386,26 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         }
 
         stringBuilder.append(retainScript);
+        if (StringUtil.isNotEmpty(msgMd5FieldName)) {
+            Arrays.sort(fieldNames);
+            stringBuilder.append(msgMd5FieldName + "=md5(concat(" + MapKeyUtil.createKeyBySign(",", fieldNames) + "));");
+        }
+        String scriptValue = stringBuilder.toString();
         this.allFieldNames = allFieldNames;
         if (isFirst == false) {
-            String scriptValue = stringBuilder.toString();
-            pipelineBuilder.addChainStage(new ScriptOperator(scriptValue));
+            if (isDistinct) {
+                String distinctScript = scriptValue.replace("retainField", "distinct");
+                scriptValue += distinctScript;
+            }
+            ChainStage chainStage = pipelineBuilder.addChainStage(new ScriptOperator(scriptValue));
+            chainStage.setSql(selectSql);
+            chainStage.setDiscription("SELECT Fields");
             //optimizer.put(scriptValue,true);
         }
+
+    }
+
+    protected void buildHits() {
     }
 
     /**
@@ -342,7 +488,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             } else if (unionSQLBuilder != null) {
                 fieldNames = unionSQLBuilder.getAllFieldNames();
             } else {
-                fieldNames = SQLParserContext.getInstance().get().get(getTableName());
+                fieldNames = FieldsOfTableForSqlTreeContext.getInstance().get().get(getTableName());
             }
 
         }
@@ -386,10 +532,10 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             int index = fieldName.indexOf(".");
             if (index != -1) {
                 String name = fieldName.substring(index + 1);
-                if (fieldNames.contains(name)) {
-                    stringBuilder.append(name + "=" + fieldName + ";" + PrintUtil.LINE);
-                    list.add(name);
-                }
+                // if (fieldNames.contains(name)) {
+                stringBuilder.append(name).append("=").append(fieldName).append(";").append(PrintUtil.LINE);
+                list.add(name);
+                //}
             } else {
                 list.add(fieldName);
             }
@@ -410,19 +556,15 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             Entry<String, IParseResult> entry = it.next();
             String key = entry.getKey();
             String value = null;
-            if (ScriptParseResult.class.isInstance(entry.getValue())) {
-                ScriptParseResult scriptParseResult = (ScriptParseResult)entry.getValue();
+            if (entry.getValue() instanceof ScriptParseResult) {
+                ScriptParseResult scriptParseResult = (ScriptParseResult) entry.getValue();
                 value = scriptParseResult.getScript();
                 if (value.endsWith("=" + fieldName + ";")) {
                     return true;
                 }
             } else {
                 value = entry.getValue().getReturnValue();
-                if (key.equals(value)) {
-                    continue;
-                }
             }
-
         }
         return false;
     }
@@ -439,24 +581,24 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             dependentTables.addAll(this.getDependentTables());
         }
 
-        SelectSQLBuilder current = this.subSelect;
+        SelectSqlBuilder current = this.subSelect;
         while (current != null) {
             dependentTables.addAll(current.parseDependentTables());
             current = current.subSelect;
         }
-        SelectSQLBuilder join = this.joinSQLBuilder;
+        SelectSqlBuilder join = this.joinSQLBuilder;
         if (join != null) {
             dependentTables.addAll(join.parseDependentTables());
         }
-        UnionSQLBuilder union=this.unionSQLBuilder;
-        if(union!=null){
+        UnionSqlBuilder union = this.unionSQLBuilder;
+        if (union != null) {
             dependentTables.addAll(union.parseDependentTables());
         }
         return dependentTables;
     }
 
     @Override
-    public String createSQL() {
+    public String createSql() {
         return sqlNode.toSqlString(SqlDialect.DatabaseProduct.HSQLDB.getDialect()).toString();
     }
 
@@ -478,6 +620,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     }
 
     public void putSelectField(String fieldName, IParseResult parseResult) {
+        this.fieldNamesOrderByDeclare.add(fieldName);
         fieldName2ParseResult.put(fieldName, parseResult);
     }
 
@@ -493,11 +636,11 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         return (2 == parseStage);
     }
 
-    public JoinSQLBuilder getJoinSQLDescriptor() {
+    public JoinSqlBuilder getJoinSQLDescriptor() {
         return joinSQLBuilder;
     }
 
-    public void setJoinSQLDescriptor(JoinSQLBuilder joinSQLDescriptor) {
+    public void setJoinSQLDescriptor(JoinSqlBuilder joinSQLDescriptor) {
         this.joinSQLBuilder = joinSQLDescriptor;
     }
 
@@ -523,6 +666,17 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
      */
     @Override
     public String getFieldName(String fieldName, boolean containsSelf) {
+
+        /**
+         * 特殊处理window_start,window_end
+         */
+
+        if (this.getWindowBuilder() != null) {
+            if (WindowBuilder.WINDOW_END.equals(fieldName) || WindowBuilder.WINDOW_START.equals(fieldName) || WindowBuilder.WINDOW_TIME.equals(fieldName)) {
+                return fieldName;
+            }
+        }
+
         /**
          * 如果字段包含*号，直接返回原有字段
          */
@@ -584,8 +738,11 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         /**
          * 检查原始表的输出
          */
-        Set<String> fieldNames = SQLParserContext.getInstance().get().get(getTableName());
+        Set<String> fieldNames = FieldsOfTableForSqlTreeContext.getInstance().get().get(getTableName());
         if (fieldNames != null) {
+            if(fieldNames.contains(fieldName)){
+                return fieldName;
+            }
             int index = fieldName.indexOf(".");
             if (index == -1) {
                 if (fieldNames.contains(fieldName)) {
@@ -594,7 +751,11 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
             } else {
                 String ailasName = fieldName.substring(0, index);
                 fieldName = fieldName.substring(index + 1);
-                if (ailasName.equals(getAsName())) {
+                String tableAilasName = getAsName();
+                if (ailasName != null && tableAilasName == null) {
+                    tableAilasName = getTableName();
+                }
+                if (ailasName.equals(tableAilasName)) {
                     if (fieldNames.contains(fieldName)) {
                         return fieldName;
                     }
@@ -613,7 +774,7 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     @Override
     @Deprecated
     public String getFieldName(String fieldName) {
-        if(isCloseFieldCheck()){
+        if (isCloseFieldCheck()) {
             return fieldName;
         }
         return getFieldName(fieldName, false);
@@ -626,10 +787,17 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
      * @param fieldName
      * @return
      */
-    public String findFieldBySelect(SelectSQLBuilder subSelect, String fieldName) {
+    public String findFieldBySelect(SelectSqlBuilder subSelect, String fieldName) {
         String asteriskName = subSelect.doAllFieldName(fieldName);
         if (asteriskName != null) {
             return asteriskName;
+        }
+        Set<String> keySet =null;
+        if(subSelect!=null){
+             keySet=subSelect.getAllFieldNames();
+             if(keySet.contains(fieldName)){
+                 return fieldName;
+             }
         }
         int index = fieldName.indexOf(".");
         if (index != -1) {
@@ -637,7 +805,6 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         }
 
         if (subSelect != null) {
-            Set<String> keySet = subSelect.getAllFieldNames();
             for (String key : keySet) {
                 String name = key;
                 if (key.indexOf(".") != -1) {
@@ -661,19 +828,19 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
     //    SelectSQLBuilder subSelect = getSubSelect();
     //    return findFieldBySelect(subSelect,fieldName);
     //}
-    public SelectSQLBuilder getParentSelect() {
+    public SelectSqlBuilder getParentSelect() {
         return parentSelect;
     }
 
-    public void setParentSelect(SelectSQLBuilder parentSelect) {
+    public void setParentSelect(SelectSqlBuilder parentSelect) {
         this.parentSelect = parentSelect;
     }
 
-    public SelectSQLBuilder getSubSelect() {
+    public SelectSqlBuilder getSubSelect() {
         return subSelect;
     }
 
-    public void setSubSelect(SelectSQLBuilder subSelect) {
+    public void setSubSelect(SelectSqlBuilder subSelect) {
         this.subSelect = subSelect;
     }
 
@@ -693,11 +860,11 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         this.selectScripts = selectScripts;
     }
 
-    public UnionSQLBuilder getUnionSQLBuilder() {
+    public UnionSqlBuilder getUnionSQLBuilder() {
         return unionSQLBuilder;
     }
 
-    public void setUnionSQLBuilder(UnionSQLBuilder unionSQLBuilder) {
+    public void setUnionSQLBuilder(UnionSqlBuilder unionSQLBuilder) {
         this.unionSQLBuilder = unionSQLBuilder;
     }
 
@@ -725,6 +892,14 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         innerVarNames.put(key, innerVarName);
     }
 
+    public boolean isDistinct() {
+        return isDistinct;
+    }
+
+    public void setDistinct(boolean distinct) {
+        isDistinct = distinct;
+    }
+
     public String getOverName() {
         return overName;
     }
@@ -749,7 +924,31 @@ public class SelectSQLBuilder extends AbstractSQLBuilder<AbstractSQLBuilder> {
         return closeFieldCheck;
     }
 
+    public List<String> getFieldNamesOrderByDeclare() {
+        return fieldNamesOrderByDeclare;
+    }
+
     public void setCloseFieldCheck(boolean closeFieldCheck) {
         this.closeFieldCheck = closeFieldCheck;
+    }
+
+    public Map<String, Map<String, String>> getHits() {
+        return hits;
+    }
+
+    public String getMsgMd5FieldName() {
+        return msgMd5FieldName;
+    }
+
+    public void setMsgMd5FieldName(String msgMd5FieldName) {
+        this.msgMd5FieldName = msgMd5FieldName;
+    }
+
+    public WindowBuilder getOverWindowBuilder() {
+        return overWindowBuilder;
+    }
+
+    public void setOverWindowBuilder(WindowBuilder overWindowBuilder) {
+        this.overWindowBuilder = overWindowBuilder;
     }
 }

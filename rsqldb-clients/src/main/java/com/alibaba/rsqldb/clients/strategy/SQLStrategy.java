@@ -16,15 +16,15 @@
  */
 package com.alibaba.rsqldb.clients.strategy;
 
+import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
 import java.util.Properties;
 import org.apache.rocketmq.streams.client.strategy.Strategy;
 import org.apache.rocketmq.streams.common.classloader.IsolationClassLoader;
 import org.apache.rocketmq.streams.common.component.AbstractComponent;
 import org.apache.rocketmq.streams.common.configurable.IConfigurableService;
 import org.apache.rocketmq.streams.script.ScriptComponent;
-import com.alibaba.rsqldb.parser.parser.builder.BlinkUDFScan;
 
-public class  SQLStrategy implements Strategy {
+public class SQLStrategy implements Strategy {
 
     private final Properties properties;
 
@@ -65,18 +65,18 @@ public class  SQLStrategy implements Strategy {
         return new SQLStrategy(filePath, pollingTime);
     }
 
-    public SQLStrategy configBlinkUDF(String dir,String packageName){
-        BlinkUDFScan.getInstance().registBlinkUDF(dir,packageName);
+    public SQLStrategy configBlinkUDF(String dir, String packageName) {
+        BlinkUDFScan.getInstance().registerBlinkUDF(dir, packageName);
         return this;
     }
 
-    public SQLStrategy configJar(String dir,String className,String methodName){
-        BlinkUDFScan.getInstance().registJarUDF(dir,className,methodName);
+    public SQLStrategy configJar(String dir, String className, String methodName) {
+        BlinkUDFScan.getInstance().registerJarUDF(dir, className, methodName);
         return this;
     }
 
-    public SQLStrategy configFunction(String dir,String packageName){
-        ScriptComponent.getInstance().getFunctionService().scanClassDir(dir,packageName,new IsolationClassLoader(dir));
+    public SQLStrategy configFunction(String dir, String packageName) {
+        ScriptComponent.getInstance().getFunctionService().scanClassDir(dir, packageName, new IsolationClassLoader(dir));
         return this;
     }
 

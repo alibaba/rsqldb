@@ -16,30 +16,29 @@
  */
 package com.alibaba.rsqldb.parser.parser.expression;
 
-import java.util.List;
-
-import org.apache.rocketmq.streams.common.datatype.StringDataType;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSQLBuilder;
-import com.alibaba.rsqldb.parser.parser.namecreator.ParserNameCreator;
+import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.creator.ParserNameCreator;
 import com.alibaba.rsqldb.parser.parser.result.ConstantParseResult;
 import com.alibaba.rsqldb.parser.parser.result.IParseResult;
 import com.alibaba.rsqldb.parser.parser.result.ScriptParseResult;
 import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectNodeParser;
+import java.util.List;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.rocketmq.streams.common.datatype.StringDataType;
 
 public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
 
     @Override
-    public IParseResult parse(SelectSQLBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
+    public IParseResult parse(SelectSqlBuilder tableDescriptor, SqlBasicCall sqlBasicCall) {
         List<SqlNode> sqlNodeList = sqlBasicCall.getOperandList();
         String functionName = "in";
         if (sqlBasicCall.getOperator().getName().toUpperCase().equals("NOT IN")) {
             functionName = "!in";
         }
         String varName = parseSqlNode(tableDescriptor, sqlNodeList.get(0)).getReturnValue();
-        SqlNodeList nodes = (SqlNodeList)sqlNodeList.get(1);
+        SqlNodeList nodes = (SqlNodeList) sqlNodeList.get(1);
         StringBuilder stringBuilder = new StringBuilder();
         boolean isFirst = true;
         for (SqlNode sqlNode : nodes.getList()) {
@@ -59,8 +58,7 @@ public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
             }
             String script = stringBuilder.toString();
             script = script.replace("\\'", "'");
-            //String returnName = NameCreator.createNewName("__", "in");
-            String returnName = ParserNameCreator.createName(functionName, null);
+            String returnName = ParserNameCreator.createName(functionName);
             script = returnName + "=" + functionName + "(" + varName + "," + script + ");";
             ScriptParseResult scriptParseResult = new ScriptParseResult();
             scriptParseResult.setReturnValue(returnName);
@@ -74,7 +72,7 @@ public class InParser extends AbstractSelectNodeParser<SqlBasicCall> {
     @Override
     public boolean support(Object sqlNode) {
         if (sqlNode instanceof SqlBasicCall) {
-            SqlBasicCall sqlBasicCall = (SqlBasicCall)sqlNode;
+            SqlBasicCall sqlBasicCall = (SqlBasicCall) sqlNode;
             if (sqlBasicCall.getOperator().getName().toUpperCase().equals("IN")) {
                 return true;
             }
