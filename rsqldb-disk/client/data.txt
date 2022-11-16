@@ -1,4 +1,0 @@
-{"field_3":"3","field_4":"4","field_1":"1","field_2":"2"}
-{"field_3":"3","field_4":"4","field_1":"2","field_2":"2"}
-{"field_3":"3","field_4":"4","field_1":"3","field_2":"2"}
-{"field_3":"3","field_4":"4","field_1":"4","field_2":"2"}
