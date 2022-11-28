@@ -14,33 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.pojo;
+package com.alibaba.rsqldb.parser.pojo.expression;
 
-public class Column {
-    private String name;
-    private FieldType type;
+import com.alibaba.rsqldb.parser.pojo.Field;
+import com.alibaba.rsqldb.parser.pojo.Operator;
 
-    public String getName() {
-        return name;
+public class SingleValueExpression extends SingleExpression {
+    private Operator operator;
+    private String value;
+
+    public SingleValueExpression(Field field, Operator operator, String value) {
+        super(field);
+        this.operator = operator;
+        this.value = value;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setOperator(Operator operator) {
+        this.operator = operator;
     }
 
-    public FieldType getType() {
-        return type;
+    public String getValue() {
+        return value;
     }
 
-    public void setType(FieldType type) {
-        this.type = type;
+    public void setValue(String value) {
+        this.value = value;
     }
 
     @Override
-    public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
+    public Operator getOperator() {
+        return this.operator;
     }
 }

@@ -16,9 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
+import java.util.ArrayList;
+import java.util.List;
+
+public class Insert {
     private String name;
-    private FieldType type;
+    private List<ColumnValue> columns = new ArrayList<>();
+
 
     public String getName() {
         return name;
@@ -28,19 +32,19 @@ public class Column {
         this.name = name;
     }
 
-    public FieldType getType() {
-        return type;
+    public List<ColumnValue> getColumns() {
+        return columns;
     }
 
-    public void setType(FieldType type) {
-        this.type = type;
+    public void setColumns(List<ColumnValue> columns) {
+        this.columns = columns;
     }
 
     @Override
     public String toString() {
-        return "(" +
+        return "Insert{" +
                 "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
+                ", columns=" + columns +
+                '}';
     }
 }

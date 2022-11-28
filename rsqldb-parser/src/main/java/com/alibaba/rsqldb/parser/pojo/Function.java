@@ -16,31 +16,42 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
-    private String name;
-    private FieldType type;
+public class Function {
+    private Calculator calculator;
+    private Field field;
+    private boolean star;
 
-    public String getName() {
-        return name;
+    public Function(Calculator calculator, Field field) {
+        this.calculator = calculator;
+        this.field = field;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public Function(Calculator calculator, boolean star) {
+        this.calculator = calculator;
+        this.star = star;
     }
 
-    public FieldType getType() {
-        return type;
+    public Calculator getCalculator() {
+        return calculator;
     }
 
-    public void setType(FieldType type) {
-        this.type = type;
+    public void setCalculator(Calculator calculator) {
+        this.calculator = calculator;
     }
 
-    @Override
-    public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
+    public Field getField() {
+        return field;
+    }
+
+    public void setField(Field field) {
+        this.field = field;
+    }
+
+    public boolean isStar() {
+        return star;
+    }
+
+    public void setStar(boolean star) {
+        this.star = star;
     }
 }

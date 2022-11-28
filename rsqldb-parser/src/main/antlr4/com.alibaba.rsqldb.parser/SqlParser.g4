@@ -7,10 +7,14 @@ tokens {
 }
 
 sqlStatements
-    : (sqlStatement)? SEMICOLON? EOF
+    : (sqlStatement)* EOF
     ;
 
 sqlStatement
+    : sqlBody SEMICOLON?
+    ;
+
+sqlBody
     : query                                                                                         #queryStatement
     | CREATE TABLE ifNotExists? tableName (tableDescriptor)? (WITH tableProperties)?                #createTable
     | CREATE VIEW  ifNotExists? viewName AS query                                                   #createView
@@ -40,7 +44,7 @@ tableProperty
 query
     : SELECT selectField FROM tableName (AS identifier)?
      (WHERE booleanExpression)?
-     (GROUP BY (window_function COMMA)? fieldName (COMMA fieldName)*)?
+     (GROUP BY (windowFunction COMMA)? fieldName (COMMA fieldName)*)?
      (HAVING booleanExpression)?
      ((LEFT)? JOIN tableName (AS identifier)? ON joinCondition)?
     ;
@@ -51,10 +55,9 @@ selectField
     ;
 
 asField
-    : identifier (AS identifier)?
-    | fieldName (AS identifier)?
-    | function (AS identifier)?
-    | window_function (AS identifier)?
+    : fieldName (AS identifier)?                                        #asFieldName
+    | function (AS identifier)?                                         #asFunctionField
+    | windowFunction (AS identifier)?                                   #asWindowFunctionField
     ;
 
 joinCondition
@@ -62,11 +65,11 @@ joinCondition
     ;
 
 booleanExpression
-    : booleanExpression (AND | OR) booleanExpression
-    | fieldName operator literal
-    | fieldName IS NULL
-    | fieldName BETWEEN NUMBER AND NUMBER
-    | fieldName IN values
+    : booleanExpression (AND | OR) booleanExpression                    #jointExpression
+    | fieldName operator literal                                        #operatorExpression
+    | fieldName IS NULL                                                 #isNullExpression
+    | fieldName BETWEEN NUMBER AND NUMBER                               #betweenExpression
+    | fieldName IN values                                               #inExpression
     ;
 
 literal
@@ -91,10 +94,10 @@ calculator
     | SUM                                   #sumCalculator
     ;
 
-window_function
-    : tumble_window
-    | hop_window
-    | session_window
+windowFunction
+    : tumble_window                         #tumbleWindow
+    | hop_window                            #hopWindow
+    | session_window                        #sessionWindow
     ;
 
 //TUMBLE_START(ts, INTERVAL '1' MINUTE)

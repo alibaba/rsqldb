@@ -16,31 +16,22 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
-    private String name;
-    private FieldType type;
+import java.util.List;
+import java.util.Map;
 
-    public String getName() {
-        return name;
-    }
+public abstract class QueryStatement {
+    private String sourceTableName;
+    private String asSourceTableName;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    private List<Field> outputField;
 
-    public FieldType getType() {
-        return type;
-    }
+    private Map<Field, Function> operator;
 
-    public void setType(FieldType type) {
-        this.type = type;
-    }
+    private WindowInfo groupByWindow;
+    private Field groupByField;
 
-    @Override
-    public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
-    }
+    private Expression filter;
+
+
+
 }

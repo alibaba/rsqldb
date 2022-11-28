@@ -16,14 +16,18 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
+import com.alibaba.rsqldb.parser.pojo.Operator;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.concurrent.TimeUnit;
 
 public class ParserUtil {
     public static String getText(ParserRuleContext context) {
         if (context == null) {
-            return "";
+            return null;
         }
 
         CharStream inputStream = context.start.getInputStream();
@@ -33,4 +37,33 @@ public class ParserUtil {
         return inputStream.getText(interval);
     }
 
+    public static Operator getOperator(String operator) {
+        if (StringUtils.isEmpty(operator)) {
+            throw new IllegalArgumentException("operator is null");
+        }
+
+        for (Operator value : Operator.values()) {
+            if (value.name().equalsIgnoreCase(operator)) {
+                return value;
+            }
+        }
+
+        throw new IllegalArgumentException("unrecognized operator: " + operator);
+    }
+
+    public static TimeUnit getTimeUnit(String unit) {
+        if (StringUtils.isEmpty(unit)) {
+            return null;
+        }
+
+        if (!unit.endsWith("s")) {
+            unit = unit + "s";
+        }
+        return TimeUnit.valueOf(unit.toUpperCase());
+    }
+
+    public static void main(String[] args) {
+        TimeUnit days = getTimeUnit("MILLISECOND");
+        System.out.println(days);
+    }
 }

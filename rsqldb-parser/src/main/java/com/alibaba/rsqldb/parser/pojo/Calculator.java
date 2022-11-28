@@ -16,31 +16,16 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
-    private String name;
-    private FieldType type;
+import org.apache.commons.lang3.StringUtils;
 
-    public String getName() {
-        return name;
-    }
+public enum Calculator {
+    AVG, COUNT, MAX, MIN, SUM;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Calculator getCalculator(String cal) {
+        if (StringUtils.isEmpty(cal)) {
+            return null;
+        }
 
-    public FieldType getType() {
-        return type;
-    }
-
-    public void setType(FieldType type) {
-        this.type = type;
-    }
-
-    @Override
-    public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
+        return Calculator.valueOf(cal);
     }
 }

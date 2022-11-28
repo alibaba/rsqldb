@@ -23,9 +23,6 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <blink.version>blink-3.4.0</blink.version>
-        <flink.version>1.13.1</flink.version>
-        <scala-library.version>2.12.4</scala-library.version>
         <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
         <antlr.version>4.9.2</antlr.version>
     </properties>
@@ -64,84 +61,7 @@
     </dependencyManagement>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <version>0.12</version>
-                <configuration>
-                    <excludes>
-                        <exclude>.gitignore</exclude>
-                        <exclude>.travis.yml</exclude>
-                        <exclude>.asf.yaml</exclude>
-                        <exclude>README.md</exclude>
-                        <exclude>README-Chinese.md</exclude>
-                        <exclude>QUICKSTART.md</exclude>
-                        <exclude>.github/**</exclude>
-                        <exclude>*/target/**</exclude>
-                        <exclude>*/*.iml</exclude>
-                        <exclude>**/*.txt</exclude>
-                        <exclude>**/*.cs</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
+
     </build>
 
 

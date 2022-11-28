@@ -16,31 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
-    private String name;
-    private FieldType type;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public FieldType getType() {
-        return type;
-    }
-
-    public void setType(FieldType type) {
-        this.type = type;
-    }
-
-    @Override
-    public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
-    }
+public enum Operator {
+    EQUAL, GREATER, LESS, NOT_EQUAL, GREATER_EQUAL, LESS_EQUAL, BETWEEN_AND, IN, AND, OR
 }

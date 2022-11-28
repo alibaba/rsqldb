@@ -16,31 +16,31 @@
  */
 package com.alibaba.rsqldb.parser.pojo;
 
-public class Column {
-    private String name;
-    private FieldType type;
+public class ColumnValue {
+    private Column column;
+    private String value;
 
-    public String getName() {
-        return name;
+    public Column getColumn() {
+        return column;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setColumn(Column column) {
+        this.column = column;
     }
 
-    public FieldType getType() {
-        return type;
+    public String getValue() {
+        return value;
     }
 
-    public void setType(FieldType type) {
-        this.type = type;
+    public void setValue(String value) {
+        this.value = value;
     }
 
     @Override
     public String toString() {
-        return "(" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                ')';
+        return "ColumnValue{" +
+                "column: " + column +
+                ", value: '" + value + '\'' +
+                '}';
     }
 }
