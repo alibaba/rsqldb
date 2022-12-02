@@ -135,8 +135,8 @@ QUOTED_NUMBER
     ;
 
 DECIMAL
-    : NUM+ '.' NUM*
-    | '.' NUM+
+    : NUM+ DOT NUM*
+    | DOT NUM+
     ;
 
 //字母或者_开头的字符串

@@ -18,7 +18,7 @@ sqlBody
     : query                                                                                         #queryStatement
     | CREATE TABLE ifNotExists? tableName (tableDescriptor)? (WITH tableProperties)?                #createTable
     | CREATE VIEW  ifNotExists? viewName AS query                                                   #createView
-    | INSERT INTO tableName query                                                                   #insertSelect
+    | INSERT INTO tableName (tableDescriptor)? query                                                #insertSelect
     | INSERT INTO tableName (tableDescriptor)? VALUES values                                        #insertValue
     ;
 
@@ -38,15 +38,28 @@ tableProperties
     ;
 
 tableProperty
-    : (identifier | STRING) EQUAL_SYMBOL literal
+    : identifier EQUAL_SYMBOL literal
     ;
 
 query
     : SELECT selectField FROM tableName (AS identifier)?
-     (WHERE booleanExpression)?
-     (GROUP BY (windowFunction COMMA)? fieldName (COMMA fieldName)*)?
-     (HAVING booleanExpression)?
-     ((LEFT)? JOIN tableName (AS identifier)? ON joinCondition)?
+     (wherePhrase)?
+     (groupByPhrase)?
+     (havingPhrase)?
+     (joinPhrase (wherePhrase)? (groupByPhrase)? (havingPhrase)?)?
+    ;
+
+wherePhrase
+    : WHERE booleanExpression
+    ;
+groupByPhrase
+    : GROUP BY (windowFunction COMMA)? fieldName (COMMA fieldName)*
+    ;
+havingPhrase
+    : HAVING booleanExpression
+    ;
+joinPhrase
+    : (LEFT)? JOIN tableName (AS identifier)? ON joinCondition
     ;
 
 selectField
@@ -61,6 +74,10 @@ asField
     ;
 
 joinCondition
+    : oneJoinCondition (AND oneJoinCondition)*
+    ;
+
+oneJoinCondition
     : fieldName EQUAL_SYMBOL fieldName
     ;
 
@@ -70,6 +87,7 @@ booleanExpression
     | fieldName IS NULL                                                 #isNullExpression
     | fieldName BETWEEN NUMBER AND NUMBER                               #betweenExpression
     | fieldName IN values                                               #inExpression
+    | function operator literal                                         #functionExpression
     ;
 
 literal

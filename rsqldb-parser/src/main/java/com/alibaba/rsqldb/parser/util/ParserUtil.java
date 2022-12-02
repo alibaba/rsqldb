@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
-import com.alibaba.rsqldb.parser.pojo.Operator;
+import com.alibaba.rsqldb.parser.model.Operator;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
