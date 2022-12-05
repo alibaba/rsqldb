@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model.statement;
 
 import com.alibaba.rsqldb.parser.model.ColumnValue;
 import com.alibaba.rsqldb.parser.model.Node;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,11 @@ public class InsertValueStatement extends Node {
     private String name;
     private List<ColumnValue> columns = new ArrayList<>();
 
+    public InsertValueStatement(ParserRuleContext context, String name, List<ColumnValue> columns) {
+        super(context);
+        this.name = name;
+        this.columns = columns;
+    }
 
     public String getName() {
         return name;

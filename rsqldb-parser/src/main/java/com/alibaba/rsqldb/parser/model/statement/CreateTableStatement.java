@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model.statement;
 
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.util.Pair;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import java.util.List;
 public class CreateTableStatement extends Node {
     private String tableName;
     private Columns columns;
-    private List<Pair<String, String>> properties = new ArrayList<>();
+    private List<Pair<String, Literal<?>>> properties = new ArrayList<>();
 
     public String getTableName() {
         return tableName;
@@ -44,11 +45,11 @@ public class CreateTableStatement extends Node {
         this.columns = columns;
     }
 
-    public List<Pair<String, String>> getProperties() {
+    public List<Pair<String, Literal<?>>> getProperties() {
         return properties;
     }
 
-    public void setProperties(List<Pair<String, String>> properties) {
+    public void setProperties(List<Pair<String, Literal<?>>> properties) {
         this.properties = properties;
     }
 

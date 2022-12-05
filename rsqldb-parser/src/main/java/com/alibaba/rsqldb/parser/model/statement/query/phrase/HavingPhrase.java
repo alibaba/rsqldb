@@ -19,11 +19,13 @@ package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class HavingPhrase extends Node {
     private Expression havingExpression;
 
-    public HavingPhrase(Expression havingExpression) {
+    public HavingPhrase(ParserRuleContext context, Expression havingExpression) {
+        super(context);
         if (havingExpression == null) {
             throw new SyntaxErrorException("having is null.");
         }

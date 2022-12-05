@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.model.statement;
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +29,14 @@ public class InsertQueryStatement extends Node {
     private QueryStatement queryStatement;
     private Columns columns;
 
-    public InsertQueryStatement(String sinkTableName, QueryStatement queryStatement) {
+    public InsertQueryStatement(ParserRuleContext context, String sinkTableName, QueryStatement queryStatement) {
+        super(context);
         this.sinkTableName = sinkTableName;
         this.queryStatement = queryStatement;
     }
 
-    public InsertQueryStatement(String sinkTableName, QueryStatement queryStatement, Columns columns) {
+    public InsertQueryStatement(ParserRuleContext context, String sinkTableName, QueryStatement queryStatement, Columns columns) {
+        super(context);
         this.sinkTableName = sinkTableName;
         this.queryStatement = queryStatement;
         this.columns = columns;

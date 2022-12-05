@@ -17,12 +17,14 @@
 package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Operator;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class OrExpression extends Expression {
     private Expression leftExpression;
     private Expression rightExpression;
 
-    public OrExpression(Expression leftExpression, Expression rightExpression) {
+    public OrExpression(ParserRuleContext context, Expression leftExpression, Expression rightExpression) {
+        super(context);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
     }

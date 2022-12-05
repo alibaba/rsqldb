@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.Set;
 
@@ -31,9 +32,9 @@ public class JointStatement extends QueryStatement {
 
     private JoinCondition joinCondition;
 
-    public JointStatement(String sourceTableName, Set<Field> outputField, JoinType joinType, String asSourceTableName,
+    public JointStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType, String asSourceTableName,
                           String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
-        super(sourceTableName, outputField);
+        super(context, sourceTableName, outputField);
         this.joinType = joinType;
         this.asSourceTableName = asSourceTableName;
         this.joinTableName = joinTableName;

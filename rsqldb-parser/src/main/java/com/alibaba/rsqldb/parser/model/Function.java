@@ -16,11 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public class Function extends Node {
     private Calculator calculator;
     private Field field;
 
-    public Function(Calculator calculator, Field field) {
+    public Function(ParserRuleContext context, Calculator calculator, Field field) {
+        super(context);
         this.calculator = calculator;
         this.field = field;
     }

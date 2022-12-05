@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.util.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,8 @@ import java.util.List;
 public class JoinCondition extends Node {
     private List<Pair<Field, Field>> holder = new ArrayList<>();
 
-    public JoinCondition() {
+    public JoinCondition(ParserRuleContext context) {
+        super(context);
     }
 
     public void addField(Field leftField, Field rightField) {

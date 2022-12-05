@@ -17,10 +17,13 @@
 package com.alibaba.rsqldb.parser.model.baseType;
 
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public class StringType extends Literal<String> {
     private String literal;
 
-    public StringType(String literal) {
+    public StringType(ParserRuleContext context, String literal) {
+        super(context);
         this.literal = literal;
     }
 

@@ -16,22 +16,27 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public class Field extends Node {
     //可能为null
     private String tableName;
     private String fieldName;
     private String asFieldName;
 
-    public Field(String fieldName) {
+    public Field(ParserRuleContext context, String fieldName) {
+        super(context);
         this.fieldName = fieldName;
     }
 
-    public Field(String tableName, String fieldName) {
+    public Field(ParserRuleContext context, String tableName, String fieldName) {
+        super(context);
         this.tableName = tableName;
         this.fieldName = fieldName;
     }
 
-    public Field(String tableName, String fieldName, String asFieldName) {
+    public Field(ParserRuleContext context, String tableName, String fieldName, String asFieldName) {
+        super(context);
         this.tableName = tableName;
         this.fieldName = fieldName;
         this.asFieldName = asFieldName;

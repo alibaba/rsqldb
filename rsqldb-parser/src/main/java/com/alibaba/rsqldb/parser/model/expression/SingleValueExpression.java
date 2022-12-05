@@ -19,12 +19,13 @@ package com.alibaba.rsqldb.parser.model.expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class SingleValueExpression extends SingleExpression {
     private Literal<?> value;
 
-    public SingleValueExpression(Field field, Operator operator, Literal<?> value) {
-        super(field, operator);
+    public SingleValueExpression(ParserRuleContext context, Field field, Operator operator, Literal<?> value) {
+        super(context, field, operator);
         this.value = value;
     }
 

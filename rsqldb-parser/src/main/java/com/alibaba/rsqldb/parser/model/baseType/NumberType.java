@@ -16,10 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public class NumberType extends Literal<Number> {
     private Number number;
 
-    public NumberType(Number number) {
+    public NumberType(ParserRuleContext context, Number number) {
+        super(context);
         this.number = number;
     }
 

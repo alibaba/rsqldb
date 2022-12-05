@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 import java.util.Map;
@@ -35,16 +36,16 @@ public class GroupByQueryStatement extends QueryStatement {
 
     private List<Field> groupByField;
 
-    public GroupByQueryStatement(String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(sourceTableName, outputField);
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator, List<Field> groupByField) {
+        super(context, sourceTableName, outputField);
         this.operator = operator;
         this.groupByField = groupByField;
     }
 
-    public GroupByQueryStatement(String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
                                  List<Field> groupByField, Expression expression) {
 
-        super(sourceTableName, outputField);
+        super(context, sourceTableName, outputField);
         if (expression instanceof SingleValueCalcuExpression) {
             this.havingExpression = expression;
         } else {
@@ -54,10 +55,10 @@ public class GroupByQueryStatement extends QueryStatement {
         this.groupByField = groupByField;
     }
 
-    public GroupByQueryStatement(String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
                                  List<Field> groupByField, Expression whereExpression, Expression havingExpression) {
 
-        super(sourceTableName, outputField);
+        super(context, sourceTableName, outputField);
         assert !(whereExpression instanceof SingleValueCalcuExpression);
         assert havingExpression instanceof SingleValueCalcuExpression;
         this.whereExpression = whereExpression;

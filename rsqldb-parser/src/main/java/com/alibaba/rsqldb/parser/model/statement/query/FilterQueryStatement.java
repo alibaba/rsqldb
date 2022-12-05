@@ -18,14 +18,15 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.Set;
 
 public class FilterQueryStatement extends QueryStatement {
     private Expression filter;
 
-    public FilterQueryStatement(String sourceTableName, Set<Field> outputField, Expression filter) {
-        super(sourceTableName, outputField);
+    public FilterQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Expression filter) {
+        super(context, sourceTableName, outputField);
         this.filter = filter;
     }
 

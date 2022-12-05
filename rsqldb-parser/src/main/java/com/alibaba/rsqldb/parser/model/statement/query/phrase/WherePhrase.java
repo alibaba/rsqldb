@@ -19,11 +19,13 @@ package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class WherePhrase extends Node {
     private Expression whereExpression;
 
-    public WherePhrase(Expression whereExpression) {
+    public WherePhrase(ParserRuleContext context, Expression whereExpression) {
+        super(context);
         if (whereExpression == null) {
             throw new SyntaxErrorException("where is null.");
         }

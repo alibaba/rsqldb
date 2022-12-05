@@ -16,10 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public class BooleanType extends Literal<Boolean> {
     private boolean result;
 
-    public BooleanType(boolean result) {
+    public BooleanType(ParserRuleContext context, boolean result) {
+        super(context);
         this.result = result;
     }
 

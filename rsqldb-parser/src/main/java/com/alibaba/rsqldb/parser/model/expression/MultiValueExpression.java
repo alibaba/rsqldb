@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.model.expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 
@@ -26,8 +27,8 @@ public class MultiValueExpression extends SingleExpression {
     private MultiLiteral values;
 
 
-    public MultiValueExpression(Field field, Operator operator, MultiLiteral values) {
-        super(field, operator);
+    public MultiValueExpression(ParserRuleContext context, Field field, Operator operator, MultiLiteral values) {
+        super(context, field, operator);
         this.values = values;
     }
 

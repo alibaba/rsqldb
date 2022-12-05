@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser;
 
 import com.alibaba.rsqldb.parser.impl.DefaultErrorListener;
 import com.alibaba.rsqldb.parser.impl.DefaultVisitor;
+import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.util.ParserUtil;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -51,10 +52,10 @@ public class DefaultParser implements RsqlParser {
 
         SqlParser.SqlStatementsContext statements = parser.sqlStatements();
 
-//        DefaultVisitor visitor = new DefaultVisitor();
-//        Object result = visitor.visit(statements);
+        DefaultVisitor visitor = new DefaultVisitor();
+        Node result = visitor.visit(statements);
 
-        String result = ParserUtil.getText(statements);
+//        String result = ParserUtil.getText(statements);
 
         System.out.println(result);
     }

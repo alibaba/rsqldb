@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.model;
 
 import com.alibaba.rsqldb.parser.util.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,9 @@ import java.util.List;
 public class Columns extends Node {
     private List<Pair<String, FieldType>> holder = new ArrayList<>();
 
-    public Columns() {}
+    public Columns(ParserRuleContext context) {
+        super(context);
+    }
 
     public void addFieldNameAndType(String fieldName, FieldType type) {
         Pair<String, FieldType> pair = new Pair<>(fieldName, type);

@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 
 import com.alibaba.rsqldb.parser.model.Node;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class JoinPhrase extends Node {
     private JoinType joinType;
@@ -25,7 +26,8 @@ public class JoinPhrase extends Node {
     private String asJoinTableName;
     private JoinCondition joinCondition;
 
-    public JoinPhrase(JoinType joinType, String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
+    public JoinPhrase(ParserRuleContext context, JoinType joinType, String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
+        super(context);
         this.joinType = joinType;
         this.joinTableName = joinTableName;
         this.asJoinTableName = asJoinTableName;

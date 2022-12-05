@@ -16,12 +16,15 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import java.util.List;
 
 public class MultiLiteral extends Literal<List<Literal<?>>> {
     private List<Literal<?>> literals;
 
-    public MultiLiteral(List<Literal<?>> literals) {
+    public MultiLiteral(ParserRuleContext context, List<Literal<?>> literals) {
+        super(context);
         this.literals = literals;
     }
 

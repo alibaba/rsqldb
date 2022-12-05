@@ -18,12 +18,14 @@ package com.alibaba.rsqldb.parser.model.statement;
 
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class CreateViewStatement extends Node {
     private String viewTableName;
     private QueryStatement queryStatement;
 
-    public CreateViewStatement(String viewTableName, QueryStatement queryStatement) {
+    public CreateViewStatement(ParserRuleContext context, String viewTableName, QueryStatement queryStatement) {
+        super(context);
         this.viewTableName = viewTableName;
         this.queryStatement = queryStatement;
     }

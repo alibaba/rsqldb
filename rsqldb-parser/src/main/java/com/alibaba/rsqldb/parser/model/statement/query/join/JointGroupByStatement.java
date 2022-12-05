@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 import java.util.Map;
@@ -30,11 +31,11 @@ public class JointGroupByStatement extends JointStatement {
 
     private List<Field> groupByField;
 
-    public JointGroupByStatement(String sourceTableName, Set<Field> outputField,
+    public JointGroupByStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
                                  JoinType joinType, String asSourceTableName,
                                  String joinTableName, String asJoinTableName,
                                  JoinCondition joinCondition, Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
+        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
         this.operator = operator;
         this.groupByField = groupByField;
     }

@@ -17,8 +17,13 @@
 package com.alibaba.rsqldb.parser.model.baseType;
 
 import com.alibaba.rsqldb.parser.model.Node;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public abstract class Literal<T> extends Node {
+
+    public Literal(ParserRuleContext context) {
+        super(context);
+    }
 
     public abstract T getResult();
 

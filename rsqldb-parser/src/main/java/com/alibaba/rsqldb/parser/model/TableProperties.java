@@ -34,7 +34,7 @@ public class TableProperties extends Node {
     }
 
     public void addProperties(List<Pair<String, Literal<?>>> holder) {
-        holder.addAll(holder);
+        this.holder.addAll(holder);
     }
 
     public List<Pair<String, Literal<?>>> getHolder() {

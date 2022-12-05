@@ -16,5 +16,20 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 public abstract class Node {
+    private ParserRuleContext context;
+
+    public Node(ParserRuleContext context) {
+        this.context = context;
+    }
+
+    public ParserRuleContext getContext() {
+        return context;
+    }
+
+    public void setContext(ParserRuleContext context) {
+        this.context = context;
+    }
 }

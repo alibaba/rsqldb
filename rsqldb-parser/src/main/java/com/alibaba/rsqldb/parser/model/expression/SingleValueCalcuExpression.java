@@ -20,12 +20,13 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class SingleValueCalcuExpression extends SingleValueExpression {
      private Calculator calculator;
 
-    public SingleValueCalcuExpression(Field field, Operator operator, Literal<?> value, Calculator calculator) {
-        super(field, operator, value);
+    public SingleValueCalcuExpression(ParserRuleContext context, Field field, Operator operator, Literal<?> value, Calculator calculator) {
+        super(context, field, operator, value);
         this.calculator = calculator;
     }
 

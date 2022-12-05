@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 
@@ -27,7 +28,8 @@ public class GroupByPhrase extends Node {
     private List<Field> groupByFields;
     private WindowInfo windowInfo;
 
-    public GroupByPhrase(List<Field> groupByFields, WindowInfo windowInfo) {
+    public GroupByPhrase(ParserRuleContext context, List<Field> groupByFields, WindowInfo windowInfo) {
+        super(context);
         if (groupByFields == null || groupByFields.size() == 0) {
             throw new SyntaxErrorException("groupBy field is null.");
         }

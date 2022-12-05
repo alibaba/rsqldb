@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 import java.util.Map;
@@ -27,21 +28,21 @@ import java.util.Set;
 public class WindowQueryStatement extends GroupByQueryStatement {
     private WindowInfo groupByWindow;
 
-    public WindowQueryStatement(String sourceTableName, Set<Field> outputField,
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
                                 Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow) {
-        super(sourceTableName, outputField, operator, groupByField);
+        super(context, sourceTableName, outputField, operator, groupByField);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(String sourceTableName, Set<Field> outputField,
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
                                 Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow, Expression filter) {
-        super(sourceTableName, outputField, operator, groupByField, filter);
+        super(context, sourceTableName, outputField, operator, groupByField, filter);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(String sourceTableName, Set<Field> outputField,
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
                                 Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow, Expression whereExpression, Expression havingExpression) {
-        super(sourceTableName, outputField, operator, groupByField, whereExpression, havingExpression);
+        super(context, sourceTableName, outputField, operator, groupByField, whereExpression, havingExpression);
         this.groupByWindow = groupByWindow;
     }
 

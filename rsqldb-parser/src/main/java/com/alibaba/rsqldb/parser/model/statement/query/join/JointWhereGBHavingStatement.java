@@ -21,6 +21,7 @@ import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 import java.util.Map;
@@ -29,19 +30,19 @@ import java.util.Set;
 public class JointWhereGBHavingStatement extends JointWhereGroupByStatement {
     private Expression havingExpression;
 
-    public JointWhereGBHavingStatement(String sourceTableName, Set<Field> outputField, JoinType joinType,
+    public JointWhereGBHavingStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType,
                                        String asSourceTableName, String joinTableName, String asJoinTableName,
                                        JoinCondition joinCondition, Expression expression, boolean before,
                                        Map<Field, Calculator> operator, List<Field> groupByField, Expression havingExpression) {
-        super(sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before, operator, groupByField);
+        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before, operator, groupByField);
         this.havingExpression = havingExpression;
     }
 
-    public JointWhereGBHavingStatement(String sourceTableName, Set<Field> outputField, JoinType joinType,
+    public JointWhereGBHavingStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType,
                                        String asSourceTableName, String joinTableName, String asJoinTableName,
                                        JoinCondition joinCondition, Expression beforeJoinWhereExpression, Expression afterJoinWhereExpression,
                                        Map<Field, Calculator> operator, List<Field> groupByField, Expression havingExpression) {
-        super(sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression, operator, groupByField);
+        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression, operator, groupByField);
         this.havingExpression = havingExpression;
     }
 

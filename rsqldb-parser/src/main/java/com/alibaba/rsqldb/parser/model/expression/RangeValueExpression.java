@@ -18,13 +18,14 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class RangeValueExpression extends SingleExpression {
     private long low;
     private long high;
 
-    public RangeValueExpression(Field field, Operator operator, long low, long high) {
-        super(field, operator);
+    public RangeValueExpression(ParserRuleContext context, Field field, Operator operator, long low, long high) {
+        super(context, field, operator);
         this.low = low;
         this.high = high;
     }

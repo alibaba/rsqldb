@@ -18,12 +18,14 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public abstract class SingleExpression extends Expression {
     private Field fieldName;
     private Operator operator;
 
-    public SingleExpression(Field fieldName, Operator operator) {
+    public SingleExpression(ParserRuleContext context, Field fieldName, Operator operator) {
+        super(context);
         this.fieldName = fieldName;
         this.operator = operator;
     }
