@@ -69,6 +69,7 @@ import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinPhrase;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.WherePhrase;
 import com.alibaba.rsqldb.parser.util.Pair;
 import com.alibaba.rsqldb.parser.util.ParserUtil;
+import com.alibaba.rsqldb.parser.util.Validator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,7 +77,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -110,23 +110,23 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.SelectFieldContext selectFieldContext = ctx.selectField();
         ListNode<SelectFieldResult> selectFieldResults = (ListNode<SelectFieldResult>) visit(selectFieldContext);
 
-        Map<Field, SelectFieldResult> selectFieldResultMap = new HashMap<>();
-        Map<Field, Calculator> groupByCalculator = new HashMap<>();
+        Map<Field, Calculator> selectFieldAndCalculator = new HashMap<>();
+        List<WindowInfo> windowInfos = new ArrayList<>();
 
+        //将select分类
         for (SelectFieldResult selectFieldResult : selectFieldResults) {
             Field field = selectFieldResult.getField();
-            selectFieldResultMap.put(field, selectFieldResult);
+            selectFieldAndCalculator.put(field, null);
             if (selectFieldResult instanceof SelectFunctionResult) {
-                groupByCalculator.put(field, ((SelectFunctionResult) selectFieldResult).getCalculator());
+                selectFieldAndCalculator.put(field, ((SelectFunctionResult) selectFieldResult).getCalculator());
+            }
+            if (selectFieldResult instanceof SelectWindowResult) {
+                SelectWindowResult windowResult = (SelectWindowResult) selectFieldResult;
+                windowInfos.add(windowResult.getWindowInfo());
             }
         }
-        Set<Field> selectFields = selectFieldResultMap.keySet();
 
         String tableName = ParserUtil.getText(ctx.tableName());
-
-        if (selectType == SelectType.SELECT_FROM) {
-            return new QueryStatement(ctx, tableName, selectFields);
-        }
 
         String asSourceTableName = null;
         SqlParser.IdentifierContext identifier = ctx.identifier();
@@ -135,101 +135,125 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             asSourceTableName = temp.getResult();
         }
 
-        JoinPhrase joinPhrase = (JoinPhrase) visit(ctx.joinPhrase());
+        JoinPhrase joinPhrase = null;
+        if (ctx.joinPhrase() != null) {
+            joinPhrase = (JoinPhrase) visit(ctx.joinPhrase());
+        }
         List<WherePhrase> wherePhrases = this.visit(ctx.wherePhrase(), WherePhrase.class);
         List<GroupByPhrase> groupByPhrases = this.visit(ctx.groupByPhrase(), GroupByPhrase.class);
+        for (GroupByPhrase groupByPhrase : groupByPhrases) {
+            if (groupByPhrase.getWindowInfo() != null) {
+                windowInfos.add(groupByPhrase.getWindowInfo());
+            }
+        }
         List<HavingPhrase> havingPhrases = this.visit(ctx.havingPhrase(), HavingPhrase.class);
 
+        //校验sql中各处window信息是否一样
+        Validator.window(windowInfos);
 
         switch (selectType) {
+            case SELECT_FROM:
+                return new QueryStatement(ctx, tableName, selectFieldAndCalculator);
             case SELECT_FROM_WHERE:
-                return new FilterQueryStatement(ctx, tableName, selectFields, wherePhrases.get(0).getWhereExpression());
+                return new FilterQueryStatement(ctx, tableName, selectFieldAndCalculator, wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY:
-                return new GroupByQueryStatement(ctx, tableName, selectFields, groupByCalculator, groupByPhrases.get(0).getGroupByFields());
+                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator, groupByPhrases.get(0).getGroupByFields());
             case SELECT_FROM_WHERE_GROUPBY:
-                return new GroupByQueryStatement(ctx, tableName, selectFields, groupByCalculator,
+                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY_HAVING:
-                return new GroupByQueryStatement(ctx, tableName, selectFields, groupByCalculator,
+                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_WHERE_GROUPBY_HAVING:
-                return new GroupByQueryStatement(ctx, tableName, selectFields, groupByCalculator,
+                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_GROUPBY_WINDOW:
-                return new WindowQueryStatement(ctx, tableName, selectFields, groupByCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), groupByPhrases.get(0).getWindowInfo());
+                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0));
             case SELECT_FROM_WHERE_GROUPBY_WINDOW:
-                return new WindowQueryStatement(ctx, tableName, selectFields, groupByCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), groupByPhrases.get(0).getWindowInfo(), wherePhrases.get(0).getWhereExpression());
+                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY_WINDOW_HAVING:
-                return new WindowQueryStatement(ctx, tableName, selectFields, groupByCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), groupByPhrases.get(0).getWindowInfo(), havingPhrases.get(0).getHavingExpression());
+                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING:
-                return new WindowQueryStatement(ctx, tableName, selectFields, groupByCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), groupByPhrases.get(0).getWindowInfo(), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
-            case SELECT_FROM_JOIN:
-                return new JointStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
+            case SELECT_FROM_JOIN: {
+                assert joinPhrase != null;
+                return new JointStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition());
+            }
             case SELECT_FROM_WHERE_JOIN: {
+                assert joinPhrase != null;
                 Expression whereExpression = wherePhrases.get(0).getWhereExpression();
-                return new JointWhereStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), whereExpression, true);
             }
             case SELECT_FROM_WHERE_JOIN_WHERE: {
-                return new JointWhereStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression());
             }
             case SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY: {
-                return new JointWhereGroupByStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(), groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(),
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY_HAVING: {
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(), groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(),
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             case SELECT_FROM_WHERE_JOIN_GROUPBY: {
-                return new JointWhereGroupByStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), true, groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), true,
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_WHERE_JOIN_GROUPBY_HAVING: {
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), true, groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), true,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             case SELECT_FROM_JOIN_WHERE: {
+                assert joinPhrase != null;
                 Expression whereExpression = wherePhrases.get(0).getWhereExpression();
-                return new JointWhereStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), whereExpression, false);
             }
             case SELECT_FROM_JOIN_WHERE_GROUPBY: {
-                return new JointWhereGroupByStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), false, groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), false,
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_JOIN_WHERE_GROUPBY_HAVING: {
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        wherePhrases.get(0).getWhereExpression(), false, groupByCalculator,
+                        wherePhrases.get(0).getWhereExpression(), false,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             case SELECT_FROM_JOIN_GROUPBY: {
-                return new JointGroupByStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
-                        joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        groupByCalculator, groupByPhrases.get(0).getGroupByFields());
+                assert joinPhrase != null;
+                return new JointGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                        joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_JOIN_GROUPBY_HAVING: {
-                return new JointGroupByHavingStatement(ctx, tableName, selectFields, joinPhrase.getJoinType(), asSourceTableName,
+                assert joinPhrase != null;
+                return new JointGroupByHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
-                        groupByCalculator, groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
+                        groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             default: {
                 throw new UnsupportedOperationException(ParserUtil.getText(ctx));
@@ -323,35 +347,28 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                 }
             }
 
-            int index = 0;
-            for (int i = 0; i < windowInfos.size(); i++) {
-                WindowInfo windowInfo = windowInfos.get(i);
-                index += windowInfo.getTargetTime().getIndex();
-                if (i >= 2) {
-                    throw new RuntimeException("window格式错误, select字段中包含一组window_start，window_end即可。");
-                }
-            }
-
-            if (index != 0) {
-                throw new RuntimeException("window格式错误, select字段中需要同时包含window_start，window_end。");
-            }
 
             String windowStartFieldName = null;
             String windowEndFieldName = null;
+
+            for (WindowInfo info : windowInfos) {
+                if (info.getFirstWordInSQL() == WindowInfo.FirstWordInSQL.WINDOW_START) {
+                    windowStartFieldName = info.getNewFieldName();
+                } else if (info.getFirstWordInSQL() == WindowInfo.FirstWordInSQL.WINDOW_END) {
+                    windowEndFieldName = info.getNewFieldName();
+                }
+            }
+
             Field timestampField = null;
+
             for (WindowInfo windowInfo : windowInfos) {
                 if (timestampField == null) {
                     timestampField = windowInfo.getTimeField();
                 } else if (timestampField.equals(windowInfo.getTimeField())) {
                     throw new RuntimeException("window_start，window_end时间戳必须来自同一字段");
                 }
-                if (windowInfo.getTargetTime() == WindowInfo.TargetTime.WINDOW_START) {
-                    windowStartFieldName = windowInfo.getNewFieldName();
-                } else if (windowInfo.getTargetTime() == WindowInfo.TargetTime.WINDOW_END) {
-                    windowEndFieldName = windowInfo.getNewFieldName();
-                }
 
-                SelectWindowResult selectWindowResult = new SelectWindowResult(timestampField, windowStartFieldName, windowEndFieldName);
+                SelectWindowResult selectWindowResult = new SelectWindowResult(windowInfo.getTimeField(), windowStartFieldName, windowEndFieldName);
                 //用于校验
                 selectWindowResult.setWindowInfo(windowInfo);
                 result.add(selectWindowResult);
@@ -405,13 +422,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.TablePropertiesContext propertiesContext = ctx.tableProperties();
         TableProperties properties = (TableProperties) visit(propertiesContext);
 
-        CreateTableStatement result = new CreateTableStatement();
-
-        result.setTableName(tableName.getResult());
-        result.setColumns(columns);
-        result.setProperties(properties.getHolder());
-
-        return result;
+        return new CreateTableStatement(ctx, tableName.getResult(), columns, properties.getHolder());
     }
 
     @Override
@@ -424,7 +435,8 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitInsertValue(SqlParser.InsertValueContext ctx) {
-        String tableName = ctx.tableName().getText();
+        StringType tableNameStringType = (StringType) visit(ctx.tableName());
+        String tableName = tableNameStringType.getResult();
 
         SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
         Columns targetColumns = null;
@@ -433,13 +445,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
 
         SqlParser.ValuesContext valuesContext = ctx.values();
-        List<String> values = (List<String>) visit(valuesContext);
+        MultiLiteral values = (MultiLiteral) visit(valuesContext);
 
-        if (targetColumns != null && targetColumns.getHolder().size() != values.size()) {
+        if (targetColumns != null && targetColumns.getHolder().size() != values.getLiterals().size()) {
             throw new IllegalArgumentException("number of value is not correct.");
         }
-
-
 
 
         List<ColumnValue> list = new ArrayList<>();
@@ -450,15 +460,14 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                 ColumnValue columnValue = new ColumnValue();
                 columnValue.setFieldName(pair.getKey());
                 columnValue.setFieldType(pair.getValue());
-                columnValue.setValue(values.get(i));
+                columnValue.setValue(values.getLiterals().get(i));
 
                 list.add(columnValue);
             }
         } else {
-            for (String value : values) {
+            for (Literal<?> literal : values.getLiterals()) {
                 ColumnValue temp = new ColumnValue();
-                temp.setValue(value);
-
+                temp.setValue(literal);
                 list.add(temp);
             }
         }
@@ -526,7 +535,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         List<SqlParser.TablePropertyContext> tablePropertyContexts = ctx.tableProperty();
         List<TableProperties> temp = this.visit(tablePropertyContexts, TableProperties.class);
 
-        TableProperties result = new TableProperties();
+        TableProperties result = new TableProperties(ctx);
         for (TableProperties tableProperties : temp) {
             result.addProperties(tableProperties.getHolder());
         }
@@ -547,7 +556,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.LiteralContext literal = ctx.literal();
         Literal<?> result = (Literal<?>) visit(literal);
 
-        TableProperties tableProperties = new TableProperties();
+        TableProperties tableProperties = new TableProperties(ctx);
         tableProperties.addProperties(key, result);
 
         return tableProperties;
@@ -579,7 +588,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         WindowInfo windowInfo = (WindowInfo) visit(ctx.windowFunction());
 
         String newFieldName = getIdentifier(ctx.identifier());
-
+        windowInfo.getTimeField().setAsFieldName(newFieldName);
         windowInfo.setNewFieldName(newFieldName);
 
         return windowInfo;
@@ -588,7 +597,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     @Override
     public Node visitFunction(SqlParser.FunctionContext ctx) {
         String text = ctx.calculator().getText();
-        Calculator calculator = Calculator.valueOf(text);
+        Calculator calculator = Calculator.valueOf(text.toUpperCase());
 
         SqlParser.FieldNameContext fieldNameContext = ctx.fieldName();
         if (fieldNameContext != null) {
@@ -610,13 +619,23 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitTumbleWindow(SqlParser.TumbleWindowContext ctx) {
         SqlParser.Tumble_windowContext tumbleWindowContext = ctx.tumble_window();
 
-        String tumble = tumbleWindowContext.TUMBLE().getText();
-        String tumbleStart = tumbleWindowContext.TUMBLE_START().getText();
-        String tumbleEnd = tumbleWindowContext.TUMBLE_END().getText();
+        String tumble = null;
+        if (tumbleWindowContext.TUMBLE() != null) {
+            tumble = tumbleWindowContext.TUMBLE().getText();
+        }
+        String tumbleStart = null;
+        if (tumbleWindowContext.TUMBLE_START() != null) {
+            tumbleStart = tumbleWindowContext.TUMBLE_START().getText();
+        }
+
+        String tumbleEnd = null;
+        if (tumbleWindowContext.TUMBLE_END() != null) {
+            tumbleEnd = tumbleWindowContext.TUMBLE_END().getText();
+        }
 
         Field field = (Field) visit(tumbleWindowContext.fieldName());
-        NumberType time = (NumberType) visit(tumbleWindowContext.QUOTED_NUMBER());
-        long size = (Long) time.getResult();
+        String time = ParserUtil.getLiteralText(tumbleWindowContext.QUOTED_NUMBER());
+        long size = Long.parseLong(time);
 
         TimeUnit timeUnit = ParserUtil.getTimeUnit(tumbleWindowContext.timeunit().getText());
 
@@ -625,9 +644,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.TUMBLE, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(tumbleStart)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_START);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(tumbleEnd)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_END);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+        } else if (!StringUtils.isEmpty(tumble)) {
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
         }
 
         return windowInfo;
@@ -637,20 +658,30 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitHopWindow(SqlParser.HopWindowContext ctx) {
         SqlParser.Hop_windowContext hopWindowContext = ctx.hop_window();
 
-        String text = hopWindowContext.HOP().getText();
-        String hopStart = hopWindowContext.HOP_START().getText();
-        String hopEnd = hopWindowContext.HOP_END().getText();
+        String hop = null;
+        if (hopWindowContext.HOP() != null) {
+            hop = hopWindowContext.HOP().getText();
+        }
+        String hopStart = null;
+        if (hopWindowContext.HOP_START() != null) {
+            hopStart = hopWindowContext.HOP_START().getText();
+        }
+
+        String hopEnd = null;
+        if (hopWindowContext.HOP_END() != null) {
+            hopEnd = hopWindowContext.HOP_END().getText();
+        }
 
         Field field = (Field) visit(hopWindowContext.fieldName());
 
 
-        NumberType slideSize = (NumberType) visit(hopWindowContext.QUOTED_NUMBER(0));
+        String slideSize = ParserUtil.getLiteralText(hopWindowContext.QUOTED_NUMBER(0));
         TimeUnit slideTimeUnit = ParserUtil.getTimeUnit(hopWindowContext.timeunit(0).getText());
-        long slide = (Long) slideSize.getResult();
+        long slide = Long.parseLong(slideSize);
 
-        NumberType windowSize = (NumberType) visit(hopWindowContext.QUOTED_NUMBER(1));
+        String windowSize = ParserUtil.getLiteralText(hopWindowContext.QUOTED_NUMBER(1));
         TimeUnit windowTimeUnit = ParserUtil.getTimeUnit(hopWindowContext.timeunit(1).getText());
-        long size = (Long) windowSize.getResult();
+        long size = Long.parseLong(windowSize);
 
 
         assert windowTimeUnit != null;
@@ -660,9 +691,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.HOP, secondSlide, secondSize, field);
         if (!StringUtils.isEmpty(hopStart)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_START);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(hopEnd)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_END);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+        } else if (!StringUtils.isEmpty(hop)) {
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
         }
 
         return windowInfo;
@@ -672,24 +705,36 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitSessionWindow(SqlParser.SessionWindowContext ctx) {
         SqlParser.Session_windowContext sessionWindowContext = ctx.session_window();
 
-        String session = sessionWindowContext.SESSION().getText();
-        String sessionStart = sessionWindowContext.SESSION_START().getText();
-        String sessionEnd = sessionWindowContext.SESSION_END().getText();
+        String session = null;
+        if (sessionWindowContext.SESSION() != null) {
+            session = sessionWindowContext.SESSION().getText();
+        }
+        String sessionStart = null;
+        if (sessionWindowContext.SESSION_START() != null) {
+            sessionStart = sessionWindowContext.SESSION_START().getText();
+        }
+
+        String sessionEnd = null;
+        if (sessionWindowContext.SESSION_END() != null) {
+            sessionEnd = sessionWindowContext.SESSION_END().getText();
+        }
 
         Field field = (Field) visit(sessionWindowContext.fieldName());
-        NumberType num = (NumberType) visit(sessionWindowContext.QUOTED_NUMBER());
+        String num = ParserUtil.getLiteralText(sessionWindowContext.QUOTED_NUMBER());
         TimeUnit timeUnit = ParserUtil.getTimeUnit(sessionWindowContext.timeunit().getText());
         //todo 异常体系
-        long size = (Long) num.getResult();
+        long size = Long.parseLong(num);
 
         assert timeUnit != null;
         long secondSize = timeUnit.toSeconds(size);
 
         WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.SESSION, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(sessionStart)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_START);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(sessionEnd)) {
-            windowInfo.setTargetTime(WindowInfo.TargetTime.WINDOW_END);
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+        } else if (!StringUtils.isEmpty(session)) {
+            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
         }
 
         return windowInfo;
@@ -783,15 +828,14 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         String tableName = null;
         String fieldName = null;
 
-        Object identifier = visit(ctx.identifier());
-        if (identifier != null) {
-            StringType fieldNameType = (StringType) identifier;
-            fieldName = fieldNameType.getLiteral();
-        } else {
-            StringType tableNameType = (StringType) visit(ctx.tableName());
+        SqlParser.TableNameContext tableNameContext = ctx.tableName();
+        if (tableNameContext != null) {
+            StringType tableNameType = (StringType) visit(tableNameContext);
             StringType fieldNameType = (StringType) visit(ctx.identifier());
-
-            tableName = tableNameType.getLiteral();
+            fieldName = fieldNameType.getLiteral();
+            tableName = tableNameType.getResult();
+        } else {
+            StringType fieldNameType = (StringType) visit(ctx.identifier());
             fieldName = fieldNameType.getLiteral();
         }
         return new Field(ctx, tableName, fieldName);

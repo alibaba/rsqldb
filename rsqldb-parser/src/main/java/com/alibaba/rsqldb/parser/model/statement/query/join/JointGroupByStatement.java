@@ -27,25 +27,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class JointGroupByStatement extends JointStatement {
-    private Map<Field, Calculator> operator;
-
     private List<Field> groupByField;
 
-    public JointGroupByStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
+    public JointGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                  JoinType joinType, String asSourceTableName,
                                  String joinTableName, String asJoinTableName,
-                                 JoinCondition joinCondition, Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
-        this.operator = operator;
+                                 JoinCondition joinCondition, List<Field> groupByField) {
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
         this.groupByField = groupByField;
-    }
-
-    public Map<Field, Calculator> getOperator() {
-        return operator;
-    }
-
-    public void setOperator(Map<Field, Calculator> operator) {
-        this.operator = operator;
     }
 
     public List<Field> getGroupByField() {

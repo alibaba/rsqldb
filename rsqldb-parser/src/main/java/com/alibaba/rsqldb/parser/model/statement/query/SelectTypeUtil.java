@@ -40,16 +40,16 @@ public class SelectTypeUtil {
             if (wherePhraseNums == 1 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
                 return SelectType.SELECT_FROM_WHERE;
             }
-            if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
+            if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 0 && !windowFunction) {
                 return SelectType.SELECT_FROM_GROUPBY;
             }
-            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
+            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0 && !windowFunction) {
                 return SelectType.SELECT_FROM_WHERE_GROUPBY;
             }
-            if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
+            if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 1 && !windowFunction) {
                 return SelectType.SELECT_FROM_GROUPBY_HAVING;
             }
-            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
+            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1 && !windowFunction) {
                 return SelectType.SELECT_FROM_WHERE_GROUPBY_HAVING;
             }
 

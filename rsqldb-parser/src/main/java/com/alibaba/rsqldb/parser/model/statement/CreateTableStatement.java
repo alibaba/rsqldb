@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.util.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,14 @@ import java.util.List;
 public class CreateTableStatement extends Node {
     private String tableName;
     private Columns columns;
-    private List<Pair<String, Literal<?>>> properties = new ArrayList<>();
+    private List<Pair<String, Literal<?>>> properties;
+
+    public CreateTableStatement(ParserRuleContext context, String tableName, Columns columns, List<Pair<String, Literal<?>>> properties) {
+        super(context);
+        this.tableName = tableName;
+        this.columns = columns;
+        this.properties = properties;
+    }
 
     public String getTableName() {
         return tableName;

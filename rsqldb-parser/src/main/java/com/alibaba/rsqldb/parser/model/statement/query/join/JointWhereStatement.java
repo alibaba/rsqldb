@@ -16,12 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
+import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.util.Map;
 import java.util.Set;
 
 public class JointWhereStatement extends JointStatement {
@@ -29,11 +31,11 @@ public class JointWhereStatement extends JointStatement {
     private Expression afterJoinWhereExpression;
 
 
-    public JointWhereStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
+    public JointWhereStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                JoinType joinType, String asSourceTableName,
                                String joinTableName, String asJoinTableName,
                                JoinCondition joinCondition, Expression expression, boolean before) {
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
         if (expression == null) {
             throw new IllegalArgumentException("expression can not be null");
         }
@@ -45,12 +47,12 @@ public class JointWhereStatement extends JointStatement {
         }
     }
 
-    public JointWhereStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
+    public JointWhereStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                JoinType joinType, String asSourceTableName,
                                String joinTableName, String asJoinTableName,
                                JoinCondition joinCondition, Expression beforeJoinWhereExpression, Expression afterJoinWhereExpression) {
 
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
         if (beforeJoinWhereExpression == null || afterJoinWhereExpression == null) {
             throw new IllegalArgumentException("expression can not be null");
         }

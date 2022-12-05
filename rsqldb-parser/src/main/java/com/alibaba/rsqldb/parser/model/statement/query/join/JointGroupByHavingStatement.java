@@ -30,12 +30,12 @@ import java.util.Set;
 public class JointGroupByHavingStatement extends JointGroupByStatement {
     private Expression havingExpression;
 
-    public JointGroupByHavingStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
+    public JointGroupByHavingStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                        JoinType joinType, String asSourceTableName,
                                        String joinTableName, String asJoinTableName,
-                                       JoinCondition joinCondition, Map<Field, Calculator> operator, List<Field> groupByField,
+                                       JoinCondition joinCondition, List<Field> groupByField,
                                        Expression havingExpression) {
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, operator, groupByField);
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, groupByField);
         this.havingExpression = havingExpression;
     }
 

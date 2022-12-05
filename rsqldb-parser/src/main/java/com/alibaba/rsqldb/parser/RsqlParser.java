@@ -16,7 +16,9 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+
 public interface RsqlParser {
 
-    void parse(String sql) throws Throwable;
+    void parse(String sql) throws SyntaxErrorException;
 }

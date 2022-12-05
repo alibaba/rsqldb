@@ -28,11 +28,11 @@ public class WindowInfo extends Node {
         TUMBLE, HOP, SESSION
     }
 
-    public enum TargetTime {
-        WINDOW_START(-1), WINDOW_END(1);
+    public enum FirstWordInSQL {
+        WINDOW_START(-1), WINDOW(0), WINDOW_END(1);
         private int index;
 
-        TargetTime(int index) {
+        FirstWordInSQL(int index) {
             this.index = index;
         }
 
@@ -49,7 +49,7 @@ public class WindowInfo extends Node {
     private Field timeField;
 
     //----------------非元信息--------------------------------------------------------------------------------------------------------
-    private TargetTime targetTime;
+    private FirstWordInSQL firstWordInSQL;
     private String newFieldName;
 
 
@@ -101,12 +101,12 @@ public class WindowInfo extends Node {
         this.timeUnit = timeUnit;
     }
 
-    public TargetTime getTargetTime() {
-        return targetTime;
+    public FirstWordInSQL getFirstWordInSQL() {
+        return firstWordInSQL;
     }
 
-    public void setTargetTime(TargetTime targetTime) {
-        this.targetTime = targetTime;
+    public void setFirstWordInSQL(FirstWordInSQL firstWordInSQL) {
+        this.firstWordInSQL = firstWordInSQL;
     }
 
     public String getNewFieldName() {

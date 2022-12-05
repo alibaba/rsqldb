@@ -17,5 +17,34 @@
 package com.alibaba.rsqldb.parser.model;
 
 public enum Operator {
-    EQUAL, GREATER, LESS, NOT_EQUAL, GREATER_EQUAL, LESS_EQUAL, BETWEEN_AND, IN, AND, OR
+    EQUAL("="), GREATER(">"), LESS("<"), NOT_EQUAL("!=", "<>"),
+    GREATER_EQUAL(">="), LESS_EQUAL("<="), BETWEEN_AND("between_and"), IN("in"), AND("and"), OR("or");
+
+    private String symbol;
+    private String nickName;
+
+    Operator(String symbol) {
+        this.symbol = symbol;
+    }
+
+    Operator(String symbol, String nickName) {
+        this.symbol = symbol;
+        this.nickName = nickName;
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
 }

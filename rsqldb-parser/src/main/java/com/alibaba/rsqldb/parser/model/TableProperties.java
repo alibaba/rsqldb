@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model;
 
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.util.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,8 @@ import java.util.List;
 public class TableProperties extends Node {
     private List<Pair<String, Literal<?>>> holder = new ArrayList<>();
 
-    public TableProperties() {
+    public TableProperties(ParserRuleContext context) {
+        super(context);
     }
 
     public void addProperties(String key, Literal<?> value) {

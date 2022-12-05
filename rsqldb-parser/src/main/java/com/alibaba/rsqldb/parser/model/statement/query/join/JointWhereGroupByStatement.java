@@ -29,44 +29,31 @@ import java.util.Map;
 import java.util.Set;
 
 public class JointWhereGroupByStatement extends JointWhereStatement {
-    private Map<Field, Calculator> operator;
-
     private List<Field> groupByField;
 
-    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType,
+    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
                                       String asSourceTableName, String joinTableName, String asJoinTableName,
                                       JoinCondition joinCondition, Expression expression, boolean before,
-                                      Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before);
-        if (operator == null || groupByField == null) {
+                                      List<Field> groupByField) {
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before);
+        if (selectFieldAndCalculator == null || groupByField == null) {
             throw new SyntaxErrorException("not a where groupBy join sql.");
         }
-
-        this.operator = operator;
         this.groupByField = groupByField;
     }
 
-    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType,
+    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
                                       String asSourceTableName, String joinTableName, String asJoinTableName,
                                       JoinCondition joinCondition, Expression beforeJoinWhereExpression, Expression afterJoinWhereExpression,
-                                      Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(context, sourceTableName, outputField, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression);
-        if (operator == null || groupByField == null) {
+                                       List<Field> groupByField) {
+
+        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName,
+                asJoinTableName, joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression);
+        if (selectFieldAndCalculator == null || groupByField == null) {
             throw new SyntaxErrorException("not a where groupBy join sql.");
         }
 
-        this.operator = operator;
         this.groupByField = groupByField;
-    }
-
-
-
-    public Map<Field, Calculator> getOperator() {
-        return operator;
-    }
-
-    public void setOperator(Map<Field, Calculator> operator) {
-        this.operator = operator;
     }
 
     public List<Field> getGroupByField() {

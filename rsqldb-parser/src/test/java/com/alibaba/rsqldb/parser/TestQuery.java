@@ -16,6 +16,7 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import org.junit.Test;
 
 public class TestQuery {
@@ -86,7 +87,7 @@ public class TestQuery {
 
     @Test
     public void query12() throws Throwable {
-        String sql = "select `tableName.fei_e3` as newName from rocketmq_source where field_1='1';";
+        String sql = "select `tableName`.`fei_e3` as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
         parser.parse(sql);
@@ -116,6 +117,7 @@ public class TestQuery {
         parser.parse(sql);
     }
 
+    //todo 这种格式是错误的，window，需要groupBy字段
     @Test
     public void query16() throws Throwable {
         String sql = "SELECT\n" +
@@ -126,7 +128,13 @@ public class TestQuery {
                 "FROM user_clicks;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        SyntaxErrorException errorException = null;
+        try {
+            parser.parse(sql);
+        } catch (SyntaxErrorException e) {
+            errorException = e;
+        }
+        assert errorException != null;
     }
 
     @Test
@@ -139,7 +147,13 @@ public class TestQuery {
                 "FROM user_clicks;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        SyntaxErrorException errorException = null;
+        try {
+            parser.parse(sql);
+        } catch (SyntaxErrorException e) {
+            errorException = e;
+        }
+        assert errorException != null;
     }
 
     @Test
@@ -152,7 +166,13 @@ public class TestQuery {
                 "FROM user_clicks;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        SyntaxErrorException errorException = null;
+        try {
+            parser.parse(sql);
+        } catch (SyntaxErrorException e) {
+            errorException = e;
+        }
+        assert errorException != null;
     }
 
     //-----------------------------------------------------select item-----------------------------------------------------------------------
@@ -161,7 +181,7 @@ public class TestQuery {
     public void query20() throws Throwable {
         String sql = "SELECT `position`, avg(num) AS nums\n" +
                 "FROM source_function_0\n" +
-                "GROUP BY `tableName.position`, field2;";
+                "GROUP BY tableName.position, field2;";
 
         DefaultParser parser = new DefaultParser();
         parser.parse(sql);
@@ -218,7 +238,8 @@ public class TestQuery {
                 "       p.name       AS perform_name,\n" +
                 "       p.odeum_id   AS odeum_id\n" +
                 "FROM ticket AS t\n" +
-                "         LEFT JOIN perform AS p ON t.perform_id = p.id;";
+                "         LEFT JOIN perform AS p ON t.perform_id = p.id " +
+                "where p.name = 'nize';";
 
         DefaultParser parser = new DefaultParser();
         parser.parse(sql);

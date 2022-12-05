@@ -28,21 +28,24 @@ import java.util.Set;
 public class WindowQueryStatement extends GroupByQueryStatement {
     private WindowInfo groupByWindow;
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
-                                Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow) {
-        super(context, sourceTableName, outputField, operator, groupByField);
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+                                Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
+                                WindowInfo groupByWindow) {
+        super(context, sourceTableName, selectFieldAndCalculator, groupByField);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
-                                Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow, Expression filter) {
-        super(context, sourceTableName, outputField, operator, groupByField, filter);
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+                                Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
+                                WindowInfo groupByWindow, Expression filter) {
+        super(context, sourceTableName, selectFieldAndCalculator, groupByField, filter);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField,
-                                Map<Field, Calculator> operator, List<Field> groupByField, WindowInfo groupByWindow, Expression whereExpression, Expression havingExpression) {
-        super(context, sourceTableName, outputField, operator, groupByField, whereExpression, havingExpression);
+    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+                                Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
+                                WindowInfo groupByWindow, Expression whereExpression, Expression havingExpression) {
+        super(context, sourceTableName, selectFieldAndCalculator, groupByField, whereExpression, havingExpression);
         this.groupByWindow = groupByWindow;
     }
 

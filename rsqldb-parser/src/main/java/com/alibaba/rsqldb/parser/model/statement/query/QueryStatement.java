@@ -16,21 +16,31 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
+import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class QueryStatement extends Node {
     private String sourceTableName;
 
-    private Set<Field> outputField;
+    private Map<Field/*输出的字段*/, Calculator/*针对字段的计算方式，可能为null*/> selectFieldAndCalculator;
 
-    public QueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField) {
+//    public QueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField) {
+//        super(context);
+//        this.sourceTableName = sourceTableName;
+//        this.outputField = outputField;
+//    }
+
+
+    public QueryStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator) {
         super(context);
         this.sourceTableName = sourceTableName;
-        this.outputField = outputField;
+        this.selectFieldAndCalculator = selectFieldAndCalculator;
     }
 
     public String getSourceTableName() {
@@ -41,11 +51,20 @@ public class QueryStatement extends Node {
         this.sourceTableName = sourceTableName;
     }
 
-    public Set<Field> getOutputField() {
-        return outputField;
+    public Map<Field, Calculator> getSelectFieldAndCalculator() {
+        return selectFieldAndCalculator;
     }
 
-    public void setOutputField(Set<Field> outputField) {
-        this.outputField = outputField;
+    public void setSelectFieldAndCalculator(Map<Field, Calculator> selectFieldAndCalculator) {
+        this.selectFieldAndCalculator = selectFieldAndCalculator;
     }
+
+//    public Set<Field> getOutputField() {
+//        return outputField;
+//    }
+//
+//    public void setOutputField(Set<Field> outputField) {
+//        this.outputField = outputField;
+//    }
+
 }

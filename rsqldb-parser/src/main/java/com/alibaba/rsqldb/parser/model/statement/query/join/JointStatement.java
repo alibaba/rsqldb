@@ -16,12 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
+import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.util.Map;
 import java.util.Set;
 
 public class JointStatement extends QueryStatement {
@@ -32,9 +34,10 @@ public class JointStatement extends QueryStatement {
 
     private JoinCondition joinCondition;
 
-    public JointStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, JoinType joinType, String asSourceTableName,
+    public JointStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
+                          JoinType joinType, String asSourceTableName,
                           String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
-        super(context, sourceTableName, outputField);
+        super(context, sourceTableName, selectFieldAndCalculator);
         this.joinType = joinType;
         this.asSourceTableName = asSourceTableName;
         this.joinTableName = joinTableName;

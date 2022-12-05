@@ -17,9 +17,11 @@
 package com.alibaba.rsqldb.parser.util;
 
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -37,13 +39,30 @@ public class ParserUtil {
         return inputStream.getText(interval);
     }
 
+    public static String getLiteralText(TerminalNode terminalNode) {
+        if (terminalNode == null) {
+            return null;
+        }
+
+        String text = terminalNode.getText();
+        text = text.substring(1, text.length() - 1);
+
+        if (StringUtils.isEmpty(text)) {
+            return null;
+        }
+
+        return text;
+    }
+
     public static Operator getOperator(String operator) {
         if (StringUtils.isEmpty(operator)) {
             throw new IllegalArgumentException("operator is null");
         }
 
         for (Operator value : Operator.values()) {
-            if (value.name().equalsIgnoreCase(operator)) {
+            if (value.name().equalsIgnoreCase(operator)
+                    || value.getSymbol().equalsIgnoreCase(operator)
+                    || (value.getNickName() != null && value.getNickName().equalsIgnoreCase(operator))) {
                 return value;
             }
         }

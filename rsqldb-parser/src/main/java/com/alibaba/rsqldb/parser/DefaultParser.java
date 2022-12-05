@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser;
 
 
+import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.DefaultErrorListener;
 import com.alibaba.rsqldb.parser.impl.DefaultVisitor;
 import com.alibaba.rsqldb.parser.model.Node;
@@ -34,7 +35,7 @@ import com.alibaba.rsqldb.parser.SqlLexer;
 
 public class DefaultParser implements RsqlParser {
     @Override
-    public void parse(String sql) throws Throwable {
+    public void parse(String sql) throws SyntaxErrorException {
         if (StringUtils.isEmpty(sql)) {
             return;
         }

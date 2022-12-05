@@ -20,7 +20,7 @@ package com.alibaba.rsqldb.parser.model.expression;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.Operator;
 import org.antlr.v4.runtime.ParserRuleContext;
-
+//todo and or表达式
 public abstract class Expression extends Node {
     public Expression(ParserRuleContext context) {
         super(context);

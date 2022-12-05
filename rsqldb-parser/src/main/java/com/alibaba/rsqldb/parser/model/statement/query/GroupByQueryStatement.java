@@ -30,40 +30,34 @@ import java.util.Set;
 public class GroupByQueryStatement extends QueryStatement {
     private Expression whereExpression;
     private Expression havingExpression;
-
-
-    private Map<Field, Calculator> operator;
-
+    //groupBy 后跟的字段
     private List<Field> groupByField;
 
-    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator, List<Field> groupByField) {
-        super(context, sourceTableName, outputField);
-        this.operator = operator;
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField) {
+        super(context, sourceTableName, selectFieldAndCalculator);
         this.groupByField = groupByField;
     }
 
-    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                  List<Field> groupByField, Expression expression) {
 
-        super(context, sourceTableName, outputField);
+        super(context, sourceTableName, selectFieldAndCalculator);
         if (expression instanceof SingleValueCalcuExpression) {
             this.havingExpression = expression;
         } else {
             this.whereExpression = expression;
         }
-        this.operator = operator;
         this.groupByField = groupByField;
     }
 
-    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Set<Field> outputField, Map<Field, Calculator> operator,
+    public GroupByQueryStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                  List<Field> groupByField, Expression whereExpression, Expression havingExpression) {
 
-        super(context, sourceTableName, outputField);
+        super(context, sourceTableName, selectFieldAndCalculator);
         assert !(whereExpression instanceof SingleValueCalcuExpression);
         assert havingExpression instanceof SingleValueCalcuExpression;
         this.whereExpression = whereExpression;
         this.havingExpression = havingExpression;
-        this.operator = operator;
         this.groupByField = groupByField;
     }
 
@@ -91,11 +85,4 @@ public class GroupByQueryStatement extends QueryStatement {
         this.groupByField = groupByField;
     }
 
-    public Map<Field, Calculator> getOperator() {
-        return operator;
-    }
-
-    public void setOperator(Map<Field, Calculator> operator) {
-        this.operator = operator;
-    }
 }

@@ -16,10 +16,12 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
+import com.alibaba.rsqldb.parser.model.baseType.Literal;
+
 public class ColumnValue {
     private String fieldName;
     private FieldType fieldType;
-    private String value;
+    private Literal<?> value;
 
     public String getFieldName() {
         return fieldName;
@@ -37,12 +39,11 @@ public class ColumnValue {
         this.fieldType = fieldType;
     }
 
-    public String getValue() {
+    public Literal<?> getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Literal<?> value) {
         this.value = value;
     }
-
 }

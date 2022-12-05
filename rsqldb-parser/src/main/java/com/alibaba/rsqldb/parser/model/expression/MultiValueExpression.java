@@ -21,7 +21,6 @@ import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import java.util.List;
 
 public class MultiValueExpression extends SingleExpression {
     private MultiLiteral values;
