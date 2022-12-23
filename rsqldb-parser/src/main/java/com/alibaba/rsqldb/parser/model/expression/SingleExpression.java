@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public abstract class SingleExpression extends Expression {

@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class RangeValueExpression extends SingleExpression {
@@ -49,5 +50,18 @@ public class RangeValueExpression extends SingleExpression {
     @Override
     public Operator getOperator() {
         return Operator.BETWEEN_AND;
+    }
+
+    @Override
+    public boolean isTrue(JsonNode jsonNode) {
+        String fieldName = this.getFieldName().getFieldName();
+        JsonNode node = jsonNode.get(fieldName);
+        if (node == null) {
+            return false;
+        }
+
+        long value = node.asLong();
+
+        return low <= value && value <= high;
     }
 }

@@ -16,40 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
-import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
-import com.alibaba.rsqldb.parser.model.Operator;
-import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
-import com.alibaba.rsqldb.parser.model.baseType.Literal;
-import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
-import com.alibaba.rsqldb.parser.model.baseType.NumberType;
-import com.alibaba.rsqldb.parser.model.baseType.StringType;
-import com.alibaba.rsqldb.parser.model.expression.AndExpression;
-import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.expression.MultiValueExpression;
-import com.alibaba.rsqldb.parser.model.expression.OrExpression;
-import com.alibaba.rsqldb.parser.model.expression.RangeValueExpression;
-import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
-import com.alibaba.rsqldb.parser.model.expression.SingleValueExpression;
-import com.alibaba.rsqldb.parser.model.statement.SQLType;
+import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.common.filter.impl.Op;
-import org.apache.rocketmq.streams.core.function.FilterAction;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
-import static com.alibaba.rsqldb.parser.model.statement.SQLType.SELECT_FROM_WHERE;
 
 public class FilterQueryStatement extends QueryStatement {
     private static final Logger logger = LoggerFactory.getLogger(FilterQueryStatement.class);
@@ -80,7 +57,7 @@ public class FilterQueryStatement extends QueryStatement {
         RStream<JsonNode> rStream = buildContext.getrStream();
         rStream = rStream.filter(value -> {
             try {
-                return filter(value, filter);
+                return filter.isTrue(value);
             } catch (Throwable t) {
                 //使用错误，例如字段是string，使用>过滤；
                 logger.info("filter error, sql:[{}], value=[{}]", FilterQueryStatement.this.getContent(), value, t);

@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class AndExpression extends Expression {
@@ -48,5 +49,10 @@ public class AndExpression extends Expression {
     @Override
     public Operator getOperator() {
         return Operator.AND;
+    }
+
+    @Override
+    public boolean isTrue(JsonNode jsonNode) {
+        return leftExpression.isTrue(jsonNode) && rightExpression.isTrue(jsonNode);
     }
 }

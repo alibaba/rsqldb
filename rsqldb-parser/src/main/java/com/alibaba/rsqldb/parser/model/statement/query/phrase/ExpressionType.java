@@ -14,21 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.model.expression;
+package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 
-
-import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.Operator;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
-
-// fieldName > 10 and AVG(fieldName) < 12 ...
-public abstract class Expression extends Node {
-    public Expression(String content) {
-        super(content);
-    }
-
-    public abstract Operator getOperator();
-
-    public abstract boolean isTrue(JsonNode jsonNode);
+public enum ExpressionType {
+    HAVING, WHERE
 }

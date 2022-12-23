@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.function.AggregateAction;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.util.Pair;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,125 +127,123 @@ public class QueryStatement extends Statement {
         }
 
         RStream<JsonNode> rStream = context.getrStream();
-        buildSelect(rStream);
+        rStream.aggregate(buildSelect());
 
         context.setrStream(rStream);
         return context;
     }
 
 
-    private void buildSelect(RStream<JsonNode> stream) {
-        stream.aggregate(new AggregateAction<String, JsonNode, ObjectNode>() {
-            @Override
-            public ObjectNode calculate(String key, JsonNode value, ObjectNode accumulator) {
-                for (Field field : selectFieldAndCalculator.keySet()) {
-                    Calculator calculator = selectFieldAndCalculator.get(field);
+    protected AggregateAction<String, JsonNode, ObjectNode> buildSelect() {
+        return (key, value, accumulator) -> {
+            for (Field field : selectFieldAndCalculator.keySet()) {
+                Calculator calculator = selectFieldAndCalculator.get(field);
 
-                    String fieldName = field.getFieldName();
-                    String asName = !StringUtils.isEmpty(field.getAsFieldName()) ? field.getAsFieldName() : field.getFieldName();
+                String fieldName = field.getFieldName();
+                String asName = !StringUtils.isEmpty(field.getAsFieldName()) ? field.getAsFieldName() : field.getFieldName();
 
-                    JsonNode valueNode = value.get(fieldName);
+                JsonNode valueNode = value.get(fieldName);
 
-                    JsonNode storeNode = accumulator.get(asName);
+                JsonNode storeNode = accumulator.get(asName);
 
-                    if (calculator == null) {
-                        accumulator.set(asName, valueNode);
-                        continue;
-                    }
-
-                    switch (calculator) {
-                        case COUNT: {
-                            if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
-                                if (storeNode == null) {
-                                    accumulator.put(asName, 1);
-                                } else {
-                                    int count = storeNode.asInt();
-                                    accumulator.put(asName, ++count);
-                                }
-                            }
-                            break;
-                        }
-
-                        case MIN: {
-                            if (valueNode != null && valueNode.isNumber()) {
-                                double newValue = valueNode.doubleValue();
-                                if (storeNode == null) {
-                                    accumulator.put(asName, newValue);
-                                } else {
-                                    double oldValue = storeNode.doubleValue();
-                                    accumulator.put(asName, Math.min(newValue, oldValue));
-                                }
-                            }
-
-                            if (valueNode != null && !valueNode.isNumber()) {
-                                logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
-                            }
-                            break;
-                        }
-
-                        case MAX: {
-                            if (valueNode != null && valueNode.isNumber()) {
-                                double newValue = valueNode.doubleValue();
-                                if (storeNode == null) {
-                                    accumulator.put(asName, newValue);
-                                } else {
-                                    double oldValue = storeNode.doubleValue();
-                                    accumulator.put(asName, Math.max(newValue, oldValue));
-                                }
-                            }
-
-                            if (valueNode != null && !valueNode.isNumber()) {
-                                logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
-                            }
-                            break;
-                        }
-
-                        case SUM: {
-                            if (valueNode != null && valueNode.isNumber()) {
-                                double newValue = valueNode.doubleValue();
-                                if (storeNode == null) {
-                                    accumulator.put(asName, newValue);
-                                } else {
-                                    double oldValue = storeNode.doubleValue();
-                                    accumulator.put(asName, newValue + oldValue);
-                                }
-                            }
-                        }
-
-                        //todo
-                        case AVG: {
-                            if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
-
-                                JsonNode countNode = accumulator.get(String.join("@", ParserConstant.COUNT, asName));
-                                JsonNode sumNode = accumulator.get(String.join("@", ParserConstant.SUM, asName));
-
-                                if (countNode == null || sumNode == null) {
-                                    accumulator.put(String.join("@", ParserConstant.COUNT, asName), 1);
-                                    if (valueNode != null) {
-                                        double newValue = valueNode.doubleValue();
-                                        accumulator.put(String.join("@", ParserConstant.SUM, asName), newValue);
-                                    } else {
-                                        accumulator.put(String.join("@", ParserConstant.SUM, asName), 0);
-                                    }
-
-                                } else {
-                                    double count = countNode.doubleValue();
-                                    double sum = sumNode.doubleValue();
-                                    accumulator.put(String.join("@", ParserConstant.COUNT, asName), ++count);
-                                    if (valueNode != null) {
-                                        double newValue = valueNode.doubleValue();
-                                        accumulator.put(String.join("@", ParserConstant.SUM, asName), sum + newValue);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
+                if (calculator == null) {
+                    accumulator.set(asName, valueNode);
+                    continue;
                 }
 
-                return null;
+                switch (calculator) {
+                    case COUNT: {
+                        if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
+                            if (storeNode == null) {
+                                accumulator.put(asName, 1);
+                            } else {
+                                int count = storeNode.asInt();
+                                accumulator.put(asName, ++count);
+                            }
+                        }
+                        break;
+                    }
+
+                    case MIN: {
+                        if (valueNode != null && valueNode.isNumber()) {
+                            double newValue = valueNode.doubleValue();
+                            if (storeNode == null) {
+                                accumulator.put(asName, newValue);
+                            } else {
+                                double oldValue = storeNode.doubleValue();
+                                accumulator.put(asName, Math.min(newValue, oldValue));
+                            }
+                        }
+
+                        if (valueNode != null && !valueNode.isNumber()) {
+                            logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
+                        }
+                        break;
+                    }
+
+                    case MAX: {
+                        if (valueNode != null && valueNode.isNumber()) {
+                            double newValue = valueNode.doubleValue();
+                            if (storeNode == null) {
+                                accumulator.put(asName, newValue);
+                            } else {
+                                double oldValue = storeNode.doubleValue();
+                                accumulator.put(asName, Math.max(newValue, oldValue));
+                            }
+                        }
+
+                        if (valueNode != null && !valueNode.isNumber()) {
+                            logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
+                        }
+                        break;
+                    }
+
+                    case SUM: {
+                        if (valueNode != null && valueNode.isNumber()) {
+                            double newValue = valueNode.doubleValue();
+                            if (storeNode == null) {
+                                accumulator.put(asName, newValue);
+                            } else {
+                                double oldValue = storeNode.doubleValue();
+                                accumulator.put(asName, newValue + oldValue);
+                            }
+                        }
+                        break;
+                    }
+
+                    //todo
+                    case AVG: {
+                        if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
+
+                            JsonNode countNode = accumulator.get(String.join("@", ParserConstant.COUNT, asName));
+                            JsonNode sumNode = accumulator.get(String.join("@", ParserConstant.SUM, asName));
+
+                            if (countNode == null || sumNode == null) {
+                                accumulator.put(String.join("@", ParserConstant.COUNT, asName), 1);
+                                if (valueNode != null) {
+                                    double newValue = valueNode.doubleValue();
+                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), newValue);
+                                } else {
+                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), 0);
+                                }
+
+                            } else {
+                                double count = countNode.doubleValue();
+                                double sum = sumNode.doubleValue();
+                                accumulator.put(String.join("@", ParserConstant.COUNT, asName), ++count);
+                                if (valueNode != null) {
+                                    double newValue = valueNode.doubleValue();
+                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), sum + newValue);
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
             }
-        });
+
+            return accumulator;
+        };
     }
 
     protected boolean filter(JsonNode jsonNode, Expression filter) {
@@ -381,7 +380,7 @@ public class QueryStatement extends Statement {
         return null;
     }
 
-    private boolean isSelectAll() {
+    protected boolean isSelectAll() {
         if (selectFieldAndCalculator.size() == 1) {
             Set<Field> fields = selectFieldAndCalculator.keySet();
             for (Field field : fields) {

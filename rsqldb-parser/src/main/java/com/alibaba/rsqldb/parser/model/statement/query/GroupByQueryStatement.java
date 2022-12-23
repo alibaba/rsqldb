@@ -16,17 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
-import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
-import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
+import com.alibaba.rsqldb.parser.model.statement.query.phrase.ExpressionType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.common.Constant;
-import org.apache.rocketmq.streams.core.function.FilterAction;
+import org.apache.rocketmq.streams.core.function.AggregateAction;
 import org.apache.rocketmq.streams.core.function.SelectAction;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
@@ -46,40 +46,38 @@ public class GroupByQueryStatement extends QueryStatement {
     //groupBy 后跟的字段
     private List<Field> groupByField;
 
-    //
-    private List<Pair<Field, Calculator>> havingPairs;
-
     public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField) {
         super(content, sourceTableName, selectFieldAndCalculator);
+
         this.groupByField = groupByField;
         validate();
     }
 
     public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
-                                 List<Field> groupByField, Expression expression) {
-
+                                 List<Field> groupByField, Expression expression, ExpressionType expressionType) {
         super(content, sourceTableName, selectFieldAndCalculator);
-        if (expression instanceof SingleValueCalcuExpression) {//todo
+
+        if (expressionType == ExpressionType.HAVING) {
             this.havingExpression = expression;
-        } else {
+        } else if (expressionType == ExpressionType.WHERE) {
             this.whereExpression = expression;
+        } else {
+            throw new IllegalArgumentException("unknown expressionType=" + expressionType);
         }
         this.groupByField = groupByField;
         validate();
-        havingPairs = super.validate(havingExpression);
+        super.validate(havingExpression);
     }
 
     public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                  List<Field> groupByField, Expression whereExpression, Expression havingExpression) {
-
         super(content, sourceTableName, selectFieldAndCalculator);
-        assert !(whereExpression instanceof SingleValueCalcuExpression);
-        assert havingExpression instanceof SingleValueCalcuExpression; // todo
+
         this.whereExpression = whereExpression;
         this.havingExpression = havingExpression;
         this.groupByField = groupByField;
         validate();
-        havingPairs = super.validate(havingExpression);
+        super.validate(havingExpression);
     }
 
     /**
@@ -88,10 +86,6 @@ public class GroupByQueryStatement extends QueryStatement {
      * 【否】select上的字段，如果没有计算符，必须在groupBy上
      */
     private void validate() {
-//        List<String> fieldNameInSelect = this.getSelectFieldAndCalculator()
-//                .keySet().stream()
-//                .map(Field::getFieldName)
-//                .collect(Collectors.toList());
         if (groupByField == null || groupByField.size() == 0) {
             throw new SyntaxErrorException("groupBy field is null. sql=" + this.getContent());
         }
@@ -133,16 +127,15 @@ public class GroupByQueryStatement extends QueryStatement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-//        context = super.build(context);
         RStream<JsonNode> stream = context.getrStream();
         //1 where 过滤
         if (whereExpression != null) {
             stream = stream.filter(value -> {
                 try {
-                    return filter(value, whereExpression);
+                    return whereExpression.isTrue(value);
                 } catch (Throwable t) {
                     //使用错误，例如字段是string，使用>过滤；
-                    logger.info("filter error, sql:[{}], value=[{}]", GroupByQueryStatement.this.getContent(), value, t);
+                    logger.info("where filter error, sql:[{}], value=[{}]", GroupByQueryStatement.this.getContent(), value, t);
                     return false;
                 }
             });
@@ -165,72 +158,27 @@ public class GroupByQueryStatement extends QueryStatement {
             }
         });
 
-        Map<String, Calculator> field2Calculator = super.getSelectField2Calculator();
-
-
-        for (String fieldName : field2Calculator.keySet()) {
-            Calculator calculator = field2Calculator.get(fieldName);
-            switch (calculator) {
-                case COUNT: {
-                    if (RSQLConstant.STAR.equals(fieldName)) {
-                        groupedStream.count();
-                    } else {
-                        groupedStream.count(new SelectAction<JsonNode, JsonNode>() {
-                            @Override
-                            public JsonNode select(JsonNode value) {
-                                return value.get(fieldName);
-                            }
-                        });
-                    }
-                    break;
-                }
-                case AVG: {
-
-                    break;
-                }
-                case MIN: {
-                    groupedStream.min(new SelectAction<JsonNode, JsonNode>() {
-                        @Override
-                        public JsonNode select(JsonNode value) {
-                            return value.get(fieldName);
-                        }
-                    });
-                    break;
-                }
-                case MAX: {
-                    groupedStream.max(new SelectAction<JsonNode, JsonNode>() {
-                        @Override
-                        public JsonNode select(JsonNode value) {
-                            return value.get(fieldName);
-                        }
-                    });
-                    break;
-                }
-                case SUM: {
-                    groupedStream.sum(new SelectAction<JsonNode, JsonNode>() {
-                        @Override
-                        public JsonNode select(JsonNode value) {
-                            return value.get(fieldName);
-                        }
-                    });
-                    break;
-                }
-            }
+        GroupedStream<String, ? extends JsonNode> selectField = groupedStream;
+        if (!isSelectAll()) {
+            AggregateAction<String, JsonNode, ObjectNode> select = buildSelect();
+            selectField = groupedStream.aggregate(select);
         }
+
         //3 having
         if (havingExpression != null) {
-
-            stream = stream.filter(value -> {
+            selectField = selectField.filter(value -> {
                 try {
-                    return filter(value, havingExpression);
+                    return havingExpression.isTrue(value);
                 } catch (Throwable t) {
                     //使用错误，例如字段是string，使用>过滤；
-                    logger.info("filter error, sql:[{}], value=[{}]", GroupByQueryStatement.this.getContent(), value, t);
+                    logger.info("having filter error, sql:[{}], value=[{}]", GroupByQueryStatement.this.getContent(), value, t);
                     return false;
                 }
             });
         }
 
-        return null;
+        context.setGroupedStream(selectField);
+
+        return context;
     }
 }

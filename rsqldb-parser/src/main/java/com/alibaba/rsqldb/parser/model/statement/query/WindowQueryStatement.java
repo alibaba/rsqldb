@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.SQLType;
+import com.alibaba.rsqldb.parser.model.statement.query.phrase.ExpressionType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
@@ -38,8 +39,8 @@ public class WindowQueryStatement extends GroupByQueryStatement {
 
     public WindowQueryStatement(String content, String sourceTableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
-                                WindowInfo groupByWindow, Expression filter) {
-        super(content, sourceTableName, selectFieldAndCalculator, groupByField, filter);
+                                WindowInfo groupByWindow, Expression filter, ExpressionType expressionType) {
+        super(content, sourceTableName, selectFieldAndCalculator, groupByField, filter, expressionType);
         this.groupByWindow = groupByWindow;
     }
 

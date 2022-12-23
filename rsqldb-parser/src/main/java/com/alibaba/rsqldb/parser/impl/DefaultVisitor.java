@@ -37,6 +37,7 @@ import com.alibaba.rsqldb.parser.model.FieldType;
 import com.alibaba.rsqldb.parser.model.Function;
 import com.alibaba.rsqldb.parser.model.statement.InsertQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.InsertValueStatement;
+import com.alibaba.rsqldb.parser.model.statement.query.phrase.ExpressionType;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import com.alibaba.rsqldb.parser.model.Operator;
@@ -161,10 +162,10 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                 return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator, groupByPhrases.get(0).getGroupByFields());
             case SELECT_FROM_WHERE_GROUPBY:
                 return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression());
+                        groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression(), ExpressionType.WHERE);
             case SELECT_FROM_GROUPBY_HAVING:
                 return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
+                        groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression(), ExpressionType.HAVING);
             case SELECT_FROM_WHERE_GROUPBY_HAVING:
                 return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
@@ -173,10 +174,10 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0));
             case SELECT_FROM_WHERE_GROUPBY_WINDOW:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression());
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), ExpressionType.WHERE);
             case SELECT_FROM_GROUPBY_WINDOW_HAVING:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), havingPhrases.get(0).getHavingExpression());
+                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), havingPhrases.get(0).getHavingExpression(), ExpressionType.HAVING);
             case SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());

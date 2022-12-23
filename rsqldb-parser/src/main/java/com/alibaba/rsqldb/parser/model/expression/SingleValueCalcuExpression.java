@@ -20,7 +20,7 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.databind.JsonNode;
 //一定会和groupby一起使用
 // HAVING aggregate_function(column_name) operator value;
 public class SingleValueCalcuExpression extends SingleValueExpression {
