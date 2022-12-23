@@ -14,37 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.util;
+package com.alibaba.rsqldb.rest.store;
 
-public class Pair<KEY, VALUE> {
-    private KEY key;
-    private VALUE value;
 
-    public Pair(KEY key, VALUE value) {
-        this.key = key;
-        this.value = value;
-    }
+import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.statement.Statement;
 
-    public KEY getKey() {
-        return key;
-    }
+public class FIFOQueue implements CommandQueue {
 
-    public void setKey(KEY key) {
-        this.key = key;
-    }
+    @Override
+    public void start() {
 
-    public VALUE getValue() {
-        return value;
-    }
-
-    public void setValue(VALUE value) {
-        this.value = value;
     }
 
     @Override
-    public String toString() {
-        return "(" +
-                key + "=" + value
-                + ')';
+    public void putCommand(Statement node) {
+
     }
+
+    @Override
+    public Node getNextCommand() {
+        return null;
+    }
+
+
+    @Override
+    public CreateTableStatement findTable(String tableName) {
+        return null;
+    }
+
 }

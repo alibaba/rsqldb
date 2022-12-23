@@ -16,7 +16,10 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.parser.model.statement.Statement;
 import org.junit.Test;
+
+import java.util.List;
 
 public class TestInsertValueStatement {
 
@@ -25,7 +28,8 @@ public class TestInsertValueStatement {
         String sql = "INSERT INTO `purchaser_dim` VALUES (1,'tom','male','16');";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
     @Test
@@ -34,7 +38,8 @@ public class TestInsertValueStatement {
                 "VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
     @Test
@@ -47,6 +52,20 @@ public class TestInsertValueStatement {
                 "from test_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
+    }
+
+    @Test
+    public void insert4() throws Throwable {
+        String sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City)\n" +
+                "select field_1\n" +
+                "     , field_2\n" +
+                "     , field_3\n" +
+                "     , field_4\n" +
+                "from test_source where field_1='1';";
+
+        DefaultParser parser = new DefaultParser();
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 }

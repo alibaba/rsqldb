@@ -24,8 +24,8 @@ public abstract class SingleExpression extends Expression {
     private Field fieldName;
     private Operator operator;
 
-    public SingleExpression(ParserRuleContext context, Field fieldName, Operator operator) {
-        super(context);
+    public SingleExpression(String content, Field fieldName, Operator operator) {
+        super(content);
         this.fieldName = fieldName;
         this.operator = operator;
     }

@@ -16,13 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NumberType extends Literal<Number> {
     private Number number;
 
-    public NumberType(ParserRuleContext context, Number number) {
-        super(context);
+    @JsonCreator
+    public NumberType(@JsonProperty("content") String content, @JsonProperty("number") Number number) {
+        super(content);
         this.number = number;
     }
 

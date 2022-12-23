@@ -16,7 +16,23 @@
  */
 package com.alibaba.rsqldb.common;
 
-public class Constant {
+public class RSQLConstant {
+
     public static final String STAR = "*";
+
+    public static final String BODY_TYPE = "body.type";
+
+    public static final String TABLE_TYPE = "table.type";
+    public enum TableType {
+        SINK, SOURCE
+    }
+
+
+    public static class Properties {
+        public static final String TYPE = "type";
+        public static final String TOPIC = "topic";
+        public static final String DATA_FORMAT = "data_format";
+    }
+
 
 }

@@ -14,9 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.model.statement.query;
+package com.alibaba.rsqldb.parser.model.statement;
 
-public enum SelectType {
+public enum SQLType {
+    //---------------------------------insert------------------------------
+    INSERT_VALUE,
+    INSERT_QUERY,
+    //---------------------------------create------------------------------
+    CREATE_VIEW,
+    CREATE_TABLE,
+
+    //---------------------------------select------------------------------
     SELECT_FROM,
     SELECT_FROM_WHERE,
 

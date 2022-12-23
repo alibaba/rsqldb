@@ -16,26 +16,15 @@
  */
 package com.alibaba.rsqldb.parser.model.statement;
 
-import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
-import org.antlr.v4.runtime.ParserRuleContext;
 
-public class CreateViewStatement extends Node {
-    private String viewTableName;
+public class CreateViewStatement extends Statement {
     private QueryStatement queryStatement;
 
-    public CreateViewStatement(ParserRuleContext context, String viewTableName, QueryStatement queryStatement) {
-        super(context);
-        this.viewTableName = viewTableName;
+    public CreateViewStatement(String content, String tableName, QueryStatement queryStatement) {
+        super(content, tableName);
         this.queryStatement = queryStatement;
-    }
-
-    public String getViewTableName() {
-        return viewTableName;
-    }
-
-    public void setViewTableName(String viewTableName) {
-        this.viewTableName = viewTableName;
     }
 
     public QueryStatement getQueryStatement() {
@@ -44,5 +33,11 @@ public class CreateViewStatement extends Node {
 
     public void setQueryStatement(QueryStatement queryStatement) {
         this.queryStatement = queryStatement;
+    }
+
+    @Override
+    public BuildContext build(BuildContext context) throws Throwable {
+
+        return null;
     }
 }

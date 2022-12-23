@@ -18,9 +18,14 @@ package com.alibaba.rsqldb.parser.model;
 
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 
+
 public class ColumnValue {
+    //指定字段名情况下才不为空
     private String fieldName;
+    //指定字段名情况下才不为空
     private FieldType fieldType;
+
+    //任何情况都不为空
     private Literal<?> value;
 
     public String getFieldName() {

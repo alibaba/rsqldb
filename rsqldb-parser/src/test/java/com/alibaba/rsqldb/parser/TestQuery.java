@@ -16,8 +16,11 @@
  */
 package com.alibaba.rsqldb.parser;
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.model.statement.Statement;
 import org.junit.Test;
+
+import java.util.List;
 
 public class TestQuery {
     //----------------------------------where-------------------------------------
@@ -30,7 +33,9 @@ public class TestQuery {
                 "from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+
+        System.out.println(statements);
     }
 
     @Test
@@ -42,7 +47,7 @@ public class TestQuery {
                 "from rocketmq_source where field_1 is null;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -54,7 +59,7 @@ public class TestQuery {
                 "from rocketmq_source where field_1 between 1 and 10;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -66,7 +71,7 @@ public class TestQuery {
                 "from rocketmq_source where field_1 in('qw', '1q2', 'w2q', 122, \"dss\");";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
     //-----------------------------------------------------select item-----------------------------------------------------------------------
     @Test
@@ -74,7 +79,7 @@ public class TestQuery {
         String sql = "select * from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -82,7 +87,7 @@ public class TestQuery {
         String sql = "select oldName as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -90,7 +95,7 @@ public class TestQuery {
         String sql = "select `tableName`.`fei_e3` as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -98,7 +103,7 @@ public class TestQuery {
         String sql = "select count(`fieldName`) as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -106,7 +111,7 @@ public class TestQuery {
         String sql = "select count(*) as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -114,7 +119,7 @@ public class TestQuery {
         String sql = "select count(tableName.fieldName) as newName from rocketmq_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     //todo 这种格式是错误的，window，需要groupBy字段
@@ -130,7 +135,7 @@ public class TestQuery {
         DefaultParser parser = new DefaultParser();
         SyntaxErrorException errorException = null;
         try {
-            parser.parse(sql);
+            parser.parseStatement(sql);
         } catch (SyntaxErrorException e) {
             errorException = e;
         }
@@ -144,12 +149,12 @@ public class TestQuery {
                 "    SESSION_END(ts, INTERVAL '1' SECOND)     as window_end,\n" +
                 "    username                                as username,\n" +
                 "    count(click_url)                        as clicks\n" +
-                "FROM user_clicks;";
+                "FROM user_clicks";
 
         DefaultParser parser = new DefaultParser();
         SyntaxErrorException errorException = null;
         try {
-            parser.parse(sql);
+            parser.parseStatement(sql);
         } catch (SyntaxErrorException e) {
             errorException = e;
         }
@@ -168,7 +173,7 @@ public class TestQuery {
         DefaultParser parser = new DefaultParser();
         SyntaxErrorException errorException = null;
         try {
-            parser.parse(sql);
+            parser.parseStatement(sql);
         } catch (SyntaxErrorException e) {
             errorException = e;
         }
@@ -181,10 +186,11 @@ public class TestQuery {
     public void query20() throws Throwable {
         String sql = "SELECT `position`, avg(num) AS nums\n" +
                 "FROM source_function_0\n" +
-                "GROUP BY tableName.position, field2;";
+                "GROUP BY position;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
     @Test
@@ -198,7 +204,7 @@ public class TestQuery {
                 "GROUP BY TUMBLE(ts, INTERVAL '1' MINUTE), username;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -213,7 +219,7 @@ public class TestQuery {
                 "GROUP BY SESSION(ts, INTERVAL '30' SECOND), username;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
     @Test
@@ -227,8 +233,22 @@ public class TestQuery {
                 "GROUP BY HOP (ts, INTERVAL '30' SECOND, INTERVAL '1' MINUTE), username;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
+
+    @Test
+    public void query24() throws Throwable {
+        String sql = "SELECT `position`, avg(num) AS nums\n" +
+                "FROM source_function_0\n" +
+                "WHERE position= 'shenzhen'\n" +
+                "GROUP BY position\n" +
+                "HAVING avg(num) > 10;";
+
+        DefaultParser parser = new DefaultParser();
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
+    }
+
 
     //-----------------------------------------------------join--------------------------------------------------------------------------
     @Test
@@ -242,7 +262,7 @@ public class TestQuery {
                 "where p.name = 'nize';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
 }

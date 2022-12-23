@@ -24,7 +24,7 @@ public class TestView {
     @Test
     public void test1() throws Throwable {
         DefaultParser parser = new DefaultParser();
-        parser.parse(sql);
+        parser.parseStatement(sql);
     }
 
 }

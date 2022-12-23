@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,8 +23,8 @@ import java.util.List;
 public class ListNode<T> extends Node implements Iterable<T> {
     private List<T> holder = new ArrayList<>();
 
-    public ListNode(ParserRuleContext context, List<T> holder) {
-        super(context);
+    public ListNode(String content, List<T> holder) {
+        super(content);
         this.holder.addAll(holder);
     }
 

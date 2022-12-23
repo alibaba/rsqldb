@@ -21,13 +21,13 @@ import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-
+//in("123", "1122", "221")
 public class MultiValueExpression extends SingleExpression {
     private MultiLiteral values;
 
 
-    public MultiValueExpression(ParserRuleContext context, Field field, Operator operator, MultiLiteral values) {
-        super(context, field, operator);
+    public MultiValueExpression(String content, Field field, MultiLiteral values) {
+        super(content, field, Operator.IN);
         this.values = values;
     }
 
@@ -37,5 +37,10 @@ public class MultiValueExpression extends SingleExpression {
 
     public void setValues(MultiLiteral values) {
         this.values = values;
+    }
+
+    @Override
+    public Operator getOperator() {
+        return Operator.IN;
     }
 }

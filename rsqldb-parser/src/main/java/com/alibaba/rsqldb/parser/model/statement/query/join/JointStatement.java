@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.parser.model.statement.query.join;
 
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
+import com.alibaba.rsqldb.parser.model.statement.SQLType;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
@@ -34,10 +35,10 @@ public class JointStatement extends QueryStatement {
 
     private JoinCondition joinCondition;
 
-    public JointStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
+    public JointStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                           JoinType joinType, String asSourceTableName,
                           String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
-        super(context, sourceTableName, selectFieldAndCalculator);
+        super(content, sourceTableName, selectFieldAndCalculator);
         this.joinType = joinType;
         this.asSourceTableName = asSourceTableName;
         this.joinTableName = joinTableName;

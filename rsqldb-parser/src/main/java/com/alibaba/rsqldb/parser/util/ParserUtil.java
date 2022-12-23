@@ -36,7 +36,24 @@ public class ParserUtil {
         int start = context.start.getStartIndex();
         int end = context.stop.getStopIndex();
         Interval interval = Interval.of(start, end);
-        return inputStream.getText(interval);
+
+        String text = inputStream.getText(interval);
+        return removeQuoted(text);
+    }
+
+
+    private static String removeQuoted(String content) {
+        if (StringUtils.isEmpty(content)) {
+            return null;
+        }
+
+        if (content.startsWith("'") && content.endsWith("'")
+                || content.startsWith("`") && content.endsWith("`")
+                || content.startsWith("\"") && content.endsWith("\"")) {
+            return content.substring(1, content.length() - 1);
+        }
+
+        return content;
     }
 
     public static String getLiteralText(TerminalNode terminalNode) {

@@ -17,7 +17,8 @@
 package com.alibaba.rsqldb.parser.model.statement.query;
 
 import com.alibaba.rsqldb.parser.SqlParser;
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.model.statement.SQLType;
 
 import java.util.List;
 
@@ -30,81 +31,81 @@ public class SelectTypeUtil {
     private static boolean windowFunction = false;
     private static boolean join = false;
 
-    public static SelectType whichType(SqlParser.QueryContext ctx) {
+    public static SQLType whichType(SqlParser.QueryContext ctx) {
         valid(ctx);
 
         if (!join) {
             if (wherePhraseNums == 0 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM;
+                return SQLType.SELECT_FROM;
             }
             if (wherePhraseNums == 1 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE;
+                return SQLType.SELECT_FROM_WHERE;
             }
             if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 0 && !windowFunction) {
-                return SelectType.SELECT_FROM_GROUPBY;
+                return SQLType.SELECT_FROM_GROUPBY;
             }
-            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0 && !windowFunction) {
-                return SelectType.SELECT_FROM_WHERE_GROUPBY;
+            if (wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0 && !windowFunction) {
+                return SQLType.SELECT_FROM_WHERE_GROUPBY;
             }
             if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 1 && !windowFunction) {
-                return SelectType.SELECT_FROM_GROUPBY_HAVING;
+                return SQLType.SELECT_FROM_GROUPBY_HAVING;
             }
-            if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1 && !windowFunction) {
-                return SelectType.SELECT_FROM_WHERE_GROUPBY_HAVING;
+            if (wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1 && !windowFunction) {
+                return SQLType.SELECT_FROM_WHERE_GROUPBY_HAVING;
             }
 
             //window
             if (wherePhraseNums == 0 && windowFunction && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_GROUPBY_WINDOW;
+                return SQLType.SELECT_FROM_GROUPBY_WINDOW;
             }
             if (wherePhraseNums == 1 && windowFunction && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE_GROUPBY_WINDOW;
+                return SQLType.SELECT_FROM_WHERE_GROUPBY_WINDOW;
             }
             if (wherePhraseNums == 0 && windowFunction && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_GROUPBY_WINDOW_HAVING;
+                return SQLType.SELECT_FROM_GROUPBY_WINDOW_HAVING;
             }
             if (wherePhraseNums == 1 && windowFunction && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING;
+                return SQLType.SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING;
             }
         } else {
             if (wherePhraseNums == 0 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_JOIN;
+                return SQLType.SELECT_FROM_JOIN;
             }
             if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE_JOIN;
+                return SQLType.SELECT_FROM_WHERE_JOIN;
             }
             if (wherePhraseNums == 2 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE_JOIN_WHERE;
+                return SQLType.SELECT_FROM_WHERE_JOIN_WHERE;
             }
             if (wherePhraseNums == 2 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY;
+                return SQLType.SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY;
             }
             if (wherePhraseNums == 2 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY_HAVING;
+                return SQLType.SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY_HAVING;
             }
 
             if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_WHERE_JOIN_GROUPBY;
+                return SQLType.SELECT_FROM_WHERE_JOIN_GROUPBY;
             }
             if (hasBeforeWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_WHERE_JOIN_GROUPBY_HAVING;
+                return SQLType.SELECT_FROM_WHERE_JOIN_GROUPBY_HAVING;
             }
             if (hasAfterWhere && wherePhraseNums == 1 && groupByPhraseNums == 0 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_JOIN_WHERE;
+                return SQLType.SELECT_FROM_JOIN_WHERE;
             }
             if (hasAfterWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_JOIN_WHERE_GROUPBY;
+                return SQLType.SELECT_FROM_JOIN_WHERE_GROUPBY;
             }
             if (hasAfterWhere && wherePhraseNums == 1 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_JOIN_WHERE_GROUPBY_HAVING;
+                return SQLType.SELECT_FROM_JOIN_WHERE_GROUPBY_HAVING;
             }
 
             if (hasBeforeWhere && wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 0) {
-                return SelectType.SELECT_FROM_JOIN_GROUPBY;
+                return SQLType.SELECT_FROM_JOIN_GROUPBY;
             }
 
             if (wherePhraseNums == 0 && groupByPhraseNums == 1 && havingPhraseNums == 1) {
-                return SelectType.SELECT_FROM_JOIN_GROUPBY_HAVING;
+                return SQLType.SELECT_FROM_JOIN_GROUPBY_HAVING;
             }
 
         }
@@ -180,7 +181,7 @@ public class SelectTypeUtil {
                     if (whereStartIndex < joinStartIndex) {
                         hasBeforeWhere = true;
                     } else {
-                        hasAfterWhere = true;
+                        hasAfterWhere = false;
                     }
                 }
 

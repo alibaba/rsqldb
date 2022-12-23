@@ -53,8 +53,8 @@ public class WindowInfo extends Node {
     private String newFieldName;
 
 
-    public WindowInfo(ParserRuleContext context, WindowType type, long slide, long size, Field timeField) {
-        super(context);
+    public WindowInfo(String content, WindowType type, long slide, long size, Field timeField) {
+        super(content);
         this.type = type;
         this.slide = slide;
         this.size = size;

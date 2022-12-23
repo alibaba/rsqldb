@@ -29,11 +29,11 @@ import java.util.Set;
 public class JointGroupByStatement extends JointStatement {
     private List<Field> groupByField;
 
-    public JointGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
+    public JointGroupByStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
                                  JoinType joinType, String asSourceTableName,
                                  String joinTableName, String asJoinTableName,
                                  JoinCondition joinCondition, List<Field> groupByField) {
-        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
+        super(content, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
         this.groupByField = groupByField;
     }
 

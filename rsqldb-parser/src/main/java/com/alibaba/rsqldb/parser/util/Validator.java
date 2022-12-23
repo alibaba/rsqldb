@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
 

@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
+import com.alibaba.rsqldb.parser.model.statement.SQLType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
@@ -28,24 +29,24 @@ import java.util.Set;
 public class WindowQueryStatement extends GroupByQueryStatement {
     private WindowInfo groupByWindow;
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+    public WindowQueryStatement(String content, String sourceTableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
                                 WindowInfo groupByWindow) {
-        super(context, sourceTableName, selectFieldAndCalculator, groupByField);
+        super(content, sourceTableName, selectFieldAndCalculator, groupByField);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+    public WindowQueryStatement(String content, String sourceTableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
                                 WindowInfo groupByWindow, Expression filter) {
-        super(context, sourceTableName, selectFieldAndCalculator, groupByField, filter);
+        super(content, sourceTableName, selectFieldAndCalculator, groupByField, filter);
         this.groupByWindow = groupByWindow;
     }
 
-    public WindowQueryStatement(ParserRuleContext context, String sourceTableName,
+    public WindowQueryStatement(String content, String sourceTableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
                                 WindowInfo groupByWindow, Expression whereExpression, Expression havingExpression) {
-        super(context, sourceTableName, selectFieldAndCalculator, groupByField, whereExpression, havingExpression);
+        super(content, sourceTableName, selectFieldAndCalculator, groupByField, whereExpression, havingExpression);
         this.groupByWindow = groupByWindow;
     }
 
@@ -56,4 +57,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
     public void setGroupByWindow(WindowInfo groupByWindow) {
         this.groupByWindow = groupByWindow;
     }
+
+
+
 }

@@ -16,17 +16,24 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
-import com.alibaba.rsqldb.parser.util.Pair;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Columns extends Node {
+    //pair 的顺序就是create table中field顺序
+    //create table odeum(`id` INT,`name` VARCHAR, `gmt_modified` TIMESTAMP) WITH (type = null, topic = 'rsqldb-odeum', data_format='JSON');
     private List<Pair<String, FieldType>> holder = new ArrayList<>();
 
-    public Columns(ParserRuleContext context) {
-        super(context);
+    @JsonCreator
+    public Columns(@JsonProperty("content") String content) {
+        super(content);
     }
 
     public void addFieldNameAndType(String fieldName, FieldType type) {
@@ -44,6 +51,16 @@ public class Columns extends Node {
 
     public void setHolder(List<Pair<String, FieldType>> holder) {
         this.holder = holder;
+    }
+
+    public Set<String> getFields() {
+        HashSet<String> fieldName = new HashSet<>();
+
+        for (Pair<String, FieldType> pair : holder) {
+            fieldName.add(pair.getKey());
+        }
+
+        return fieldName;
     }
 
     @Override

@@ -24,8 +24,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public class SingleValueExpression extends SingleExpression {
     private Literal<?> value;
 
-    public SingleValueExpression(ParserRuleContext context, Field field, Operator operator, Literal<?> value) {
-        super(context, field, operator);
+    public SingleValueExpression(String content, Field field, Operator operator, Literal<?> value) {
+        super(content, field, operator);
         this.value = value;
     }
 

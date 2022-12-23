@@ -16,38 +16,47 @@
  */
 package com.alibaba.rsqldb.parser.model.statement;
 
+import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
-import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.FieldType;
+import com.alibaba.rsqldb.parser.model.statement.query.FilterQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.rocketmq.streams.core.function.FilterAction;
+import org.apache.rocketmq.streams.core.rstream.RStream;
+import org.apache.rocketmq.streams.core.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class InsertQueryStatement extends Node {
-    private String sinkTableName;
+/**
+ * String sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City)\n" +
+ *                 "select field_1\n" +
+ *                 "     , field_2\n" +
+ *                 "     , field_3\n" +
+ *                 "     , field_4\n" +
+ *                 "from test_source where field_1='1';";
+ */
+public class InsertQueryStatement extends Statement {
+    private static final Logger logger = LoggerFactory.getLogger(InsertQueryStatement.class);
     private QueryStatement queryStatement;
     private Columns columns;
 
-    public InsertQueryStatement(ParserRuleContext context, String sinkTableName, QueryStatement queryStatement) {
-        super(context);
-        this.sinkTableName = sinkTableName;
+    public InsertQueryStatement(String content, String tableName, QueryStatement queryStatement) {
+        super(content, tableName);
         this.queryStatement = queryStatement;
     }
 
-    public InsertQueryStatement(ParserRuleContext context, String sinkTableName, QueryStatement queryStatement, Columns columns) {
-        super(context);
-        this.sinkTableName = sinkTableName;
+    public InsertQueryStatement(String content, String tableName, QueryStatement queryStatement, Columns columns) {
+        super(content, tableName);
         this.queryStatement = queryStatement;
         this.columns = columns;
-    }
-
-    public String getSinkTableName() {
-        return sinkTableName;
-    }
-
-    public void setSinkTableName(String sinkTableName) {
-        this.sinkTableName = sinkTableName;
     }
 
     public QueryStatement getQueryStatement() {
@@ -64,5 +73,29 @@ public class InsertQueryStatement extends Node {
 
     public void setColumns(Columns columns) {
         this.columns = columns;
+    }
+
+    //只需要对queryStatement的结果进行columns过滤即可。
+    @Override
+    public BuildContext build(BuildContext context) throws Throwable {
+        Set<String> fieldName;
+
+        HashMap<String, String> fieldName2NewName = new HashMap<>();
+        if (this.columns == null) {
+            fieldName = new HashSet<>();
+            fieldName.add(RSQLConstant.STAR);
+        } else {
+            fieldName = this.columns.getFields();
+        }
+        for (String name : fieldName) {
+            fieldName2NewName.put(name, name);
+        }
+
+        RStream<JsonNode> stream = context.getrStream();
+
+        stream = stream.map(value -> map(value, fieldName2NewName));
+
+        context.setrStream(stream);
+        return context;
     }
 }

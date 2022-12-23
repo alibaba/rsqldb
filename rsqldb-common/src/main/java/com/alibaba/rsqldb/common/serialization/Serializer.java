@@ -14,17 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.exception;
+package com.alibaba.rsqldb.common.serialization;
 
-public class SyntaxErrorException extends RuntimeException {
-    public SyntaxErrorException() {
-    }
-
-    public SyntaxErrorException(String msg) {
-        super(msg);
-    }
-
-    public SyntaxErrorException(Throwable t) {
-        super(t);
-    }
+public interface Serializer {
+    byte[] serialize(Object obj);
 }

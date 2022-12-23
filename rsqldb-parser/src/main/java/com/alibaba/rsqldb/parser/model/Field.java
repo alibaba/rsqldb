@@ -16,7 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.model;
 
-import org.antlr.v4.runtime.ParserRuleContext;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Objects;
 
 public class Field extends Node {
     //可能为null
@@ -24,19 +27,19 @@ public class Field extends Node {
     private String fieldName;
     private String asFieldName;
 
-    public Field(ParserRuleContext context, String fieldName) {
-        super(context);
+    public Field(String content, String fieldName) {
+        super(content);
         this.fieldName = fieldName;
     }
 
-    public Field(ParserRuleContext context, String tableName, String fieldName) {
-        super(context);
+    public Field(String content, String tableName, String fieldName) {
+        super(content);
         this.tableName = tableName;
         this.fieldName = fieldName;
     }
 
-    public Field(ParserRuleContext context, String tableName, String fieldName, String asFieldName) {
-        super(context);
+    public Field(String content, String tableName, String fieldName, String asFieldName) {
+        super(content);
         this.tableName = tableName;
         this.fieldName = fieldName;
         this.asFieldName = asFieldName;
@@ -64,6 +67,37 @@ public class Field extends Node {
 
     public void setAsFieldName(String asFieldName) {
         this.asFieldName = asFieldName;
+    }
+
+    @Override
+    public int hashCode() {
+        int total = 0;
+        if (!StringUtils.isEmpty(tableName)) {
+            total += tableName.hashCode();
+        }
+
+        if (!StringUtils.isEmpty(fieldName)) {
+            total += fieldName.hashCode();
+        }
+
+        if (!StringUtils.isEmpty(asFieldName)) {
+            total += asFieldName.hashCode();
+        }
+
+        return total;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Field)) {
+            return false;
+        }
+
+        Field that = (Field) obj;
+
+        return Objects.equals(this.tableName, that.tableName)
+                && Objects.equals(this.fieldName, that.fieldName)
+                && Objects.equals(this.asFieldName, that.asFieldName);
     }
 
     @Override

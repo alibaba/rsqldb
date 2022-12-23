@@ -23,8 +23,8 @@ public class AndExpression extends Expression {
     private Expression leftExpression;
     private Expression rightExpression;
 
-    public AndExpression(ParserRuleContext context, Expression leftExpression, Expression rightExpression) {
-        super(context);
+    public AndExpression(String content, Expression leftExpression, Expression rightExpression) {
+        super(content);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
     }

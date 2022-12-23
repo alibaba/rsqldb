@@ -19,11 +19,18 @@ package com.alibaba.rsqldb.parser.model;
 import org.apache.commons.lang3.StringUtils;
 
 public enum FieldType {
-    INT("int"), BIGINT("bigint"), VARCHAR("varchar"), TIMESTAMP("timestamp");
-    private final String type;
+    INT("int", Number.class),
+    BIGINT("bigint", Number.class),
+    VARCHAR("varchar", String.class),
+    TIMESTAMP("timestamp", Number.class);
 
-    FieldType(String type) {
+    //type 与Literal中的T对应
+    private final String type;
+    private final Class<?> clazz;
+
+    FieldType(String type, Class<?> clazz) {
         this.type = type;
+        this.clazz = clazz;
     }
 
     public static FieldType getByType(String type) {
@@ -48,6 +55,10 @@ public enum FieldType {
         }
 
         throw new IllegalArgumentException("unrecognizable type: " + type);
+    }
+
+    public Class<?> getClazz() {
+        return clazz;
     }
 
     @Override

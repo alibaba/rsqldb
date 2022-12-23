@@ -24,8 +24,8 @@ public class RangeValueExpression extends SingleExpression {
     private long low;
     private long high;
 
-    public RangeValueExpression(ParserRuleContext context, Field field, Operator operator, long low, long high) {
-        super(context, field, operator);
+    public RangeValueExpression(String content, Field field, long low, long high) {
+        super(content, field, Operator.BETWEEN_AND);
         this.low = low;
         this.high = high;
     }
@@ -44,5 +44,10 @@ public class RangeValueExpression extends SingleExpression {
 
     public void setHigh(long high) {
         this.high = high;
+    }
+
+    @Override
+    public Operator getOperator() {
+        return Operator.BETWEEN_AND;
     }
 }

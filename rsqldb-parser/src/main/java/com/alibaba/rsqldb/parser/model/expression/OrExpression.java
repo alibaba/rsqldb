@@ -23,8 +23,8 @@ public class OrExpression extends Expression {
     private Expression leftExpression;
     private Expression rightExpression;
 
-    public OrExpression(ParserRuleContext context, Expression leftExpression, Expression rightExpression) {
-        super(context);
+    public OrExpression(String content, Expression leftExpression, Expression rightExpression) {
+        super(content);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
     }

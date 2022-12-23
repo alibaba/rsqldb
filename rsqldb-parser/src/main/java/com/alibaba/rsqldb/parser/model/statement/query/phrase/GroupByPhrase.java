@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
@@ -28,8 +28,8 @@ public class GroupByPhrase extends Node {
     private List<Field> groupByFields;
     private WindowInfo windowInfo;
 
-    public GroupByPhrase(ParserRuleContext context, List<Field> groupByFields, WindowInfo windowInfo) {
-        super(context);
+    public GroupByPhrase(String content, List<Field> groupByFields, WindowInfo windowInfo) {
+        super(content);
         if (groupByFields == null || groupByFields.size() == 0) {
             throw new SyntaxErrorException("groupBy field is null.");
         }

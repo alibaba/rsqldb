@@ -16,9 +16,12 @@
  */
 package com.alibaba.rsqldb.parser;
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.model.statement.Statement;
+
+import java.util.List;
 
 public interface RsqlParser {
 
-    void parse(String sql) throws SyntaxErrorException;
+    List<Statement> parseStatement(String sql) throws SyntaxErrorException;
 }

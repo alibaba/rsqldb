@@ -22,8 +22,8 @@ public class Function extends Node {
     private Calculator calculator;
     private Field field;
 
-    public Function(ParserRuleContext context, Calculator calculator, Field field) {
-        super(context);
+    public Function(String content, Calculator calculator, Field field) {
+        super(content);
         this.calculator = calculator;
         this.field = field;
     }

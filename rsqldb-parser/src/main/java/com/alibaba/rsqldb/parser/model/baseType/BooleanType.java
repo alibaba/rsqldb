@@ -16,13 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BooleanType extends Literal<Boolean> {
     private boolean result;
 
-    public BooleanType(ParserRuleContext context, boolean result) {
-        super(context);
+    @JsonCreator
+    public BooleanType(@JsonProperty("content") String content, @JsonProperty("result") boolean result) {
+        super(content);
         this.result = result;
     }
 

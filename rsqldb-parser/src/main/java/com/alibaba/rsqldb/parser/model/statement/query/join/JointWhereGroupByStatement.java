@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
@@ -26,28 +26,27 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class JointWhereGroupByStatement extends JointWhereStatement {
     private List<Field> groupByField;
 
-    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
+    public JointWhereGroupByStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
                                       String asSourceTableName, String joinTableName, String asJoinTableName,
                                       JoinCondition joinCondition, Expression expression, boolean before,
                                       List<Field> groupByField) {
-        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before);
+        super(content, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, expression, before);
         if (selectFieldAndCalculator == null || groupByField == null) {
             throw new SyntaxErrorException("not a where groupBy join sql.");
         }
         this.groupByField = groupByField;
     }
 
-    public JointWhereGroupByStatement(ParserRuleContext context, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
+    public JointWhereGroupByStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
                                       String asSourceTableName, String joinTableName, String asJoinTableName,
                                       JoinCondition joinCondition, Expression beforeJoinWhereExpression, Expression afterJoinWhereExpression,
                                        List<Field> groupByField) {
 
-        super(context, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName,
+        super(content, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName,
                 asJoinTableName, joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression);
         if (selectFieldAndCalculator == null || groupByField == null) {
             throw new SyntaxErrorException("not a where groupBy join sql.");

@@ -17,13 +17,17 @@
 package com.alibaba.rsqldb.parser.model.baseType;
 
 
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StringType extends Literal<String> {
     private String literal;
 
-    public StringType(ParserRuleContext context, String literal) {
-        super(context);
+    @JsonCreator
+    public StringType(@JsonProperty("content") String content, @JsonProperty("literal") String literal) {
+        super(content);
         this.literal = literal;
     }
 

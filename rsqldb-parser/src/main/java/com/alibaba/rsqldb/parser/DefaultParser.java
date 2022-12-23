@@ -17,47 +17,62 @@
 package com.alibaba.rsqldb.parser;
 
 
-import com.alibaba.rsqldb.parser.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.serialization.Deserializer;
+import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.common.serialization.Serializer;
 import com.alibaba.rsqldb.parser.impl.DefaultErrorListener;
 import com.alibaba.rsqldb.parser.impl.DefaultVisitor;
+import com.alibaba.rsqldb.parser.model.ListNode;
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.util.ParserUtil;
-import org.antlr.v4.runtime.CharStream;
+import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.atn.PredictionMode;
-import org.antlr.v4.runtime.misc.Interval;
 import org.apache.commons.lang3.StringUtils;
-import com.alibaba.rsqldb.parser.SqlParser;
-import com.alibaba.rsqldb.parser.SqlLexer;
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultParser implements RsqlParser {
     @Override
-    public void parse(String sql) throws SyntaxErrorException {
+    @SuppressWarnings("unchecked")
+    public List<Statement> parseStatement(String sql) throws SyntaxErrorException {
+        List<Statement> result = new ArrayList<>();
         if (StringUtils.isEmpty(sql)) {
-            return;
+            return result;
         }
 
         CodePointCharStream charStream = CharStreams.fromString(sql);
-        SqlLexer sqlLexer = new SqlLexer(charStream);
+        com.alibaba.rsqldb.parser.SqlLexer sqlLexer = new com.alibaba.rsqldb.parser.SqlLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(sqlLexer);
-        SqlParser parser = new SqlParser(tokens);
+        com.alibaba.rsqldb.parser.SqlParser parser = new com.alibaba.rsqldb.parser.SqlParser(tokens);
 
         sqlLexer.addErrorListener(new DefaultErrorListener());
         parser.addErrorListener(new DefaultErrorListener());
 
+        com.alibaba.rsqldb.parser.SqlParser.SqlStatementsContext statements = parser.sqlStatements();
 
-//        parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-
-        SqlParser.SqlStatementsContext statements = parser.sqlStatements();
 
         DefaultVisitor visitor = new DefaultVisitor();
-        Node result = visitor.visit(statements);
+        ListNode<Node> nodes = (ListNode<Node>)visitor.visit(statements);
 
-//        String result = ParserUtil.getText(statements);
+        for (Node node : nodes.getHolder()) {
+            System.out.println(node);
 
-        System.out.println(result);
+            if (node instanceof Statement) {
+                result.add((Statement) node);
+            } else {
+                throw new RuntimeException("not a statement sql.");
+            }
+        }
+
+        return result;
     }
 }

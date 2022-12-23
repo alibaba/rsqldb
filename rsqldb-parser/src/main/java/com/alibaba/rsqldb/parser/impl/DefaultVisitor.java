@@ -16,7 +16,8 @@
  */
 package com.alibaba.rsqldb.parser.impl;
 
-import com.alibaba.rsqldb.common.Constant;
+import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.SqlParser;
 import com.alibaba.rsqldb.parser.SqlParserBaseVisitor;
 import com.alibaba.rsqldb.parser.model.Calculator;
@@ -44,7 +45,7 @@ import com.alibaba.rsqldb.parser.model.statement.query.GroupByQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.SelectFieldResult;
 import com.alibaba.rsqldb.parser.model.statement.query.SelectFunctionResult;
-import com.alibaba.rsqldb.parser.model.statement.query.SelectType;
+import com.alibaba.rsqldb.parser.model.statement.SQLType;
 import com.alibaba.rsqldb.parser.model.statement.query.SelectTypeUtil;
 import com.alibaba.rsqldb.parser.model.statement.query.SelectWindowResult;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
@@ -67,11 +68,11 @@ import com.alibaba.rsqldb.parser.model.statement.query.phrase.GroupByPhrase;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.HavingPhrase;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinPhrase;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.WherePhrase;
-import com.alibaba.rsqldb.parser.util.Pair;
 import com.alibaba.rsqldb.parser.util.ParserUtil;
 import com.alibaba.rsqldb.parser.util.Validator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,7 +91,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         System.out.println("all over");
 
-        return new ListNode<>(ctx, result);
+        return new ListNode<>(ParserUtil.getText(ctx), result);
     }
 
     @Override
@@ -105,7 +106,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitQuery(SqlParser.QueryContext ctx) {
-        SelectType selectType = SelectTypeUtil.whichType(ctx);
+        SQLType SQLType = SelectTypeUtil.whichType(ctx);
 
         SqlParser.SelectFieldContext selectFieldContext = ctx.selectField();
         ListNode<SelectFieldResult> selectFieldResults = (ListNode<SelectFieldResult>) visit(selectFieldContext);
@@ -150,76 +151,76 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         //校验sql中各处window信息是否一样
         Validator.window(windowInfos);
-
-        switch (selectType) {
+        String content = ParserUtil.getText(ctx);
+        switch (SQLType) {
             case SELECT_FROM:
-                return new QueryStatement(ctx, tableName, selectFieldAndCalculator);
+                return new QueryStatement(content, tableName, selectFieldAndCalculator);
             case SELECT_FROM_WHERE:
-                return new FilterQueryStatement(ctx, tableName, selectFieldAndCalculator, wherePhrases.get(0).getWhereExpression());
+                return new FilterQueryStatement(content, tableName, selectFieldAndCalculator, wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY:
-                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator, groupByPhrases.get(0).getGroupByFields());
+                return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator, groupByPhrases.get(0).getGroupByFields());
             case SELECT_FROM_WHERE_GROUPBY:
-                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY_HAVING:
-                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_WHERE_GROUPBY_HAVING:
-                return new GroupByQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new GroupByQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_GROUPBY_WINDOW:
-                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0));
             case SELECT_FROM_WHERE_GROUPBY_WINDOW:
-                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression());
             case SELECT_FROM_GROUPBY_WINDOW_HAVING:
-                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING:
-                return new WindowQueryStatement(ctx, tableName, selectFieldAndCalculator,
+                return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
                         groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_JOIN: {
                 assert joinPhrase != null;
-                return new JointStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition());
             }
             case SELECT_FROM_WHERE_JOIN: {
                 assert joinPhrase != null;
                 Expression whereExpression = wherePhrases.get(0).getWhereExpression();
-                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), whereExpression, true);
             }
             case SELECT_FROM_WHERE_JOIN_WHERE: {
                 assert joinPhrase != null;
-                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression());
             }
             case SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY: {
                 assert joinPhrase != null;
-                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGroupByStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(),
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_WHERE_JOIN_WHERE_GROUPBY_HAVING: {
                 assert joinPhrase != null;
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGBHavingStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), wherePhrases.get(1).getWhereExpression(),
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             case SELECT_FROM_WHERE_JOIN_GROUPBY: {
                 assert joinPhrase != null;
-                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGroupByStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), true,
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_WHERE_JOIN_GROUPBY_HAVING: {
                 assert joinPhrase != null;
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGBHavingStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), true,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
@@ -227,31 +228,31 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             case SELECT_FROM_JOIN_WHERE: {
                 assert joinPhrase != null;
                 Expression whereExpression = wherePhrases.get(0).getWhereExpression();
-                return new JointWhereStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), whereExpression, false);
             }
             case SELECT_FROM_JOIN_WHERE_GROUPBY: {
                 assert joinPhrase != null;
-                return new JointWhereGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGroupByStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), false,
                         groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_JOIN_WHERE_GROUPBY_HAVING: {
                 assert joinPhrase != null;
-                return new JointWhereGBHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointWhereGBHavingStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         wherePhrases.get(0).getWhereExpression(), false,
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
             case SELECT_FROM_JOIN_GROUPBY: {
                 assert joinPhrase != null;
-                return new JointGroupByStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointGroupByStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(), groupByPhrases.get(0).getGroupByFields());
             }
             case SELECT_FROM_JOIN_GROUPBY_HAVING: {
                 assert joinPhrase != null;
-                return new JointGroupByHavingStatement(ctx, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
+                return new JointGroupByHavingStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
                         joinPhrase.getJoinTableName(), joinPhrase.getAsJoinTableName(), joinPhrase.getJoinCondition(),
                         groupByPhrases.get(0).getGroupByFields(), havingPhrases.get(0).getHavingExpression());
             }
@@ -262,12 +263,95 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
     }
 
+    @Override
+    public Node visitCreateTable(SqlParser.CreateTableContext ctx) {
+        SqlParser.IdentifierContext identifier = ctx.tableName().identifier();
+        StringType tableName = (StringType) visit(identifier);
+
+        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
+        Columns columns = (Columns) visit(tableDescriptor);
+
+
+        SqlParser.TablePropertiesContext propertiesContext = ctx.tableProperties();
+        TableProperties properties = (TableProperties) visit(propertiesContext);
+
+        return new CreateTableStatement(ParserUtil.getText(ctx), tableName.getResult(), columns, properties.getHolder());
+    }
+
+    @Override
+    public Node visitCreateView(SqlParser.CreateViewContext ctx) {
+        SqlParser.ViewNameContext viewNameContext = ctx.viewName();
+        StringType viewTableName = (StringType) visit(viewNameContext.identifier());
+        QueryStatement queryStatement = (QueryStatement) visit(ctx.query());
+        return new CreateViewStatement(ParserUtil.getText(ctx), viewTableName.getResult(), queryStatement);
+    }
+
+    @Override
+    public Node visitInsertSelect(SqlParser.InsertSelectContext ctx) {
+        String tableName = ctx.tableName().getText();
+
+        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
+        Columns targetColumns = null;
+        if (tableDescriptor != null) {
+            targetColumns = (Columns) visit(tableDescriptor);
+        }
+
+        QueryStatement queryStatement = (QueryStatement) visit(ctx.query());
+
+        if (targetColumns == null) {
+            return new InsertQueryStatement(ParserUtil.getText(ctx), tableName, queryStatement);
+        } else {
+            return new InsertQueryStatement(ParserUtil.getText(ctx), tableName, queryStatement, targetColumns);
+        }
+    }
+
+    @Override
+    public Node visitInsertValue(SqlParser.InsertValueContext ctx) {
+        StringType tableNameStringType = (StringType) visit(ctx.tableName());
+        String tableName = tableNameStringType.getResult();
+
+        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
+        Columns targetColumns = null;
+        if (tableDescriptor != null) {
+            targetColumns = (Columns) visit(tableDescriptor);
+        }
+
+        SqlParser.ValuesContext valuesContext = ctx.values();
+        MultiLiteral values = (MultiLiteral) visit(valuesContext);
+
+        if (targetColumns != null && targetColumns.getHolder().size() != values.getLiterals().size()) {
+            throw new IllegalArgumentException("number of value is not correct.");
+        }
+
+
+        List<ColumnValue> list = new ArrayList<>();
+        if (targetColumns != null) {
+            for (int i = 0; i < targetColumns.getHolder().size(); i++) {
+                Pair<String, FieldType> pair = targetColumns.getHolder().get(i);
+
+                ColumnValue columnValue = new ColumnValue();
+                columnValue.setFieldName(pair.getKey());
+                columnValue.setFieldType(pair.getValue());
+                columnValue.setValue(values.getLiterals().get(i));
+
+                list.add(columnValue);
+            }
+        } else {
+            for (Literal<?> literal : values.getLiterals()) {
+                ColumnValue temp = new ColumnValue();
+                temp.setValue(literal);
+                list.add(temp);
+            }
+        }
+
+        return new InsertValueStatement(ParserUtil.getText(ctx), tableName, list);
+    }
 
     @Override
     public Node visitWherePhrase(SqlParser.WherePhraseContext ctx) {
         SqlParser.BooleanExpressionContext firstBooleanExpressionContext = ctx.booleanExpression();
         Expression whereExpression = (Expression) visit(firstBooleanExpressionContext);
-        return new WherePhrase(ctx, whereExpression);
+        return new WherePhrase(ParserUtil.getText(ctx), whereExpression);
     }
 
     @Override
@@ -282,7 +366,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             windowInfo = (WindowInfo) visit(windowFunctionContext);
         }
 
-        return new GroupByPhrase(ctx, groupByFields, windowInfo);
+        return new GroupByPhrase(ParserUtil.getText(ctx), groupByFields, windowInfo);
     }
 
     @Override
@@ -291,7 +375,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         Expression havingExpression = (Expression) visit(secondBooleanExpressionContext);
 
-        return new HavingPhrase(ctx, havingExpression);
+        return new HavingPhrase(ParserUtil.getText(ctx), havingExpression);
     }
 
     @Override
@@ -316,7 +400,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.JoinConditionContext joinConditionContext = ctx.joinCondition();
         JoinCondition joinCondition = (JoinCondition) visit(joinConditionContext);
 
-        return new JoinPhrase(ctx, joinType, joinTableName, asJoinTableName, joinCondition);
+        return new JoinPhrase(ParserUtil.getText(ctx), joinType, joinTableName, asJoinTableName, joinCondition);
     }
 
     @Override
@@ -379,14 +463,14 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             //默认是null，需要选择原表中所有字段；
         }
 
-        return new ListNode<SelectFieldResult>(ctx, result);
+        return new ListNode<SelectFieldResult>(ParserUtil.getText(ctx), result);
     }
 
     @Override
     public Node visitJoinCondition(SqlParser.JoinConditionContext ctx) {
         List<JoinCondition> visit = this.visit(ctx.oneJoinCondition(), JoinCondition.class);
 
-        JoinCondition condition = new JoinCondition(ctx);
+        JoinCondition condition = new JoinCondition(ParserUtil.getText(ctx));
         for (JoinCondition joinCondition : visit) {
             condition.addJoinCondition(joinCondition);
         }
@@ -404,94 +488,10 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         assert ctx.EQUAL_SYMBOL().getSymbol().getType() == SqlParser.EQUAL_SYMBOL;
 
-        JoinCondition condition = new JoinCondition(ctx);
+        JoinCondition condition = new JoinCondition(ParserUtil.getText(ctx));
         condition.addField(firstField, secondField);
 
         return condition;
-    }
-
-    @Override
-    public Node visitCreateTable(SqlParser.CreateTableContext ctx) {
-        SqlParser.IdentifierContext identifier = ctx.tableName().identifier();
-        StringType tableName = (StringType) visit(identifier);
-
-        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
-        Columns columns = (Columns) visit(tableDescriptor);
-
-
-        SqlParser.TablePropertiesContext propertiesContext = ctx.tableProperties();
-        TableProperties properties = (TableProperties) visit(propertiesContext);
-
-        return new CreateTableStatement(ctx, tableName.getResult(), columns, properties.getHolder());
-    }
-
-    @Override
-    public Node visitCreateView(SqlParser.CreateViewContext ctx) {
-        SqlParser.ViewNameContext viewNameContext = ctx.viewName();
-        StringType viewTableName = (StringType) visit(viewNameContext.identifier());
-        QueryStatement queryStatement = (QueryStatement) visit(ctx.query());
-        return new CreateViewStatement(ctx, viewTableName.getResult(), queryStatement);
-    }
-
-    @Override
-    public Node visitInsertValue(SqlParser.InsertValueContext ctx) {
-        StringType tableNameStringType = (StringType) visit(ctx.tableName());
-        String tableName = tableNameStringType.getResult();
-
-        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
-        Columns targetColumns = null;
-        if (tableDescriptor != null) {
-            targetColumns = (Columns) visit(tableDescriptor);
-        }
-
-        SqlParser.ValuesContext valuesContext = ctx.values();
-        MultiLiteral values = (MultiLiteral) visit(valuesContext);
-
-        if (targetColumns != null && targetColumns.getHolder().size() != values.getLiterals().size()) {
-            throw new IllegalArgumentException("number of value is not correct.");
-        }
-
-
-        List<ColumnValue> list = new ArrayList<>();
-        if (targetColumns != null) {
-            for (int i = 0; i < targetColumns.getHolder().size(); i++) {
-                Pair<String, FieldType> pair = targetColumns.getHolder().get(i);
-
-                ColumnValue columnValue = new ColumnValue();
-                columnValue.setFieldName(pair.getKey());
-                columnValue.setFieldType(pair.getValue());
-                columnValue.setValue(values.getLiterals().get(i));
-
-                list.add(columnValue);
-            }
-        } else {
-            for (Literal<?> literal : values.getLiterals()) {
-                ColumnValue temp = new ColumnValue();
-                temp.setValue(literal);
-                list.add(temp);
-            }
-        }
-
-        return new InsertValueStatement(ctx, tableName, list);
-    }
-
-    @Override
-    public Node visitInsertSelect(SqlParser.InsertSelectContext ctx) {
-        String tableName = ctx.tableName().getText();
-
-        SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
-        Columns targetColumns = null;
-        if (tableDescriptor != null) {
-            targetColumns = (Columns) visit(tableDescriptor);
-        }
-
-        QueryStatement queryStatement = (QueryStatement) visit(ctx.query());
-
-        if (targetColumns == null) {
-            return new InsertQueryStatement(ctx, tableName, queryStatement);
-        } else {
-            return new InsertQueryStatement(ctx, tableName, queryStatement, targetColumns);
-        }
     }
 
     @Override
@@ -499,7 +499,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         List<SqlParser.ColumnDescriptorContext> list = ctx.columnDescriptor();
         List<Columns> temp = this.visit(list, Columns.class);
 
-        Columns columns = new Columns(ctx);
+        Columns columns = new Columns(ParserUtil.getText(ctx));
 
         for (Columns item : temp) {
             columns.addColumns(item.getHolder());
@@ -512,7 +512,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitColumnDescriptor(SqlParser.ColumnDescriptorContext ctx) {
         System.out.println("visitColumnDescriptor");
 
-        Columns columns = new Columns(ctx);
+        Columns columns = new Columns(ParserUtil.getText(ctx));
 
         SqlParser.IdentifierContext identifierContext = ctx.identifier();
         StringType columnName = (StringType) visit(identifierContext);
@@ -535,7 +535,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         List<SqlParser.TablePropertyContext> tablePropertyContexts = ctx.tableProperty();
         List<TableProperties> temp = this.visit(tablePropertyContexts, TableProperties.class);
 
-        TableProperties result = new TableProperties(ctx);
+        TableProperties result = new TableProperties(ParserUtil.getText(ctx));
         for (TableProperties tableProperties : temp) {
             result.addProperties(tableProperties.getHolder());
         }
@@ -556,7 +556,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.LiteralContext literal = ctx.literal();
         Literal<?> result = (Literal<?>) visit(literal);
 
-        TableProperties tableProperties = new TableProperties(ctx);
+        TableProperties tableProperties = new TableProperties(ParserUtil.getText(ctx));
         tableProperties.addProperties(key, result);
 
         return tableProperties;
@@ -602,13 +602,13 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.FieldNameContext fieldNameContext = ctx.fieldName();
         if (fieldNameContext != null) {
             Field field = (Field) visit(fieldNameContext);
-            return new Function(ctx, calculator, field);
+            return new Function(ParserUtil.getText(ctx), calculator, field);
         }
 
         String star = ctx.STAR().getText();
         if (!StringUtils.isEmpty(star)) {
-            Field field = new Field(ctx, Constant.STAR);
-            return new Function(ctx, calculator, field);
+            Field field = new Field(ParserUtil.getText(ctx), RSQLConstant.STAR);
+            return new Function(ParserUtil.getText(ctx), calculator, field);
         }
 
         throw new IllegalArgumentException("parser function error: " + ParserUtil.getText(ctx));
@@ -642,7 +642,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert timeUnit != null;
         long secondSize = timeUnit.toSeconds(size);
 
-        WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.TUMBLE, secondSize, secondSize, field);
+        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.TUMBLE, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(tumbleStart)) {
             windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(tumbleEnd)) {
@@ -689,7 +689,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert slideTimeUnit != null;
         long secondSlide = slideTimeUnit.toSeconds(slide);
 
-        WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.HOP, secondSlide, secondSize, field);
+        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.HOP, secondSlide, secondSize, field);
         if (!StringUtils.isEmpty(hopStart)) {
             windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(hopEnd)) {
@@ -728,7 +728,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert timeUnit != null;
         long secondSize = timeUnit.toSeconds(size);
 
-        WindowInfo windowInfo = new WindowInfo(ctx, WindowInfo.WindowType.SESSION, secondSize, secondSize, field);
+        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.SESSION, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(sessionStart)) {
             windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(sessionEnd)) {
@@ -750,11 +750,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         Expression right = (Expression) visit(rightExpressionContext);
 
         if (ctx.AND().getSymbol().getType() == SqlParser.AND) {
-            return new AndExpression(ctx, left, right);
+            return new AndExpression(ParserUtil.getText(ctx), left, right);
         }
 
         if (ctx.OR().getSymbol().getType() == SqlParser.OR) {
-            return new OrExpression(ctx, left, right);
+            return new OrExpression(ParserUtil.getText(ctx), left, right);
         }
 
 
@@ -770,9 +770,9 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         Node node = visit(ctx.literal());
         if (node == null) {
-            return new SingleValueExpression(ctx, field, operator, null);
+            return new SingleValueExpression(ParserUtil.getText(ctx), field, operator, null);
         } else {
-            return new SingleValueExpression(ctx, field, operator, (Literal<?>) node);
+            return new SingleValueExpression(ParserUtil.getText(ctx), field, operator, (Literal<?>) node);
         }
 
     }
@@ -784,7 +784,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert ctx.IS().getSymbol().getType() == SqlParser.IS;
         assert ctx.NULL().getSymbol().getType() == SqlParser.NULL;
 
-        return new SingleValueExpression(ctx, field, Operator.EQUAL, null);
+        return new SingleValueExpression(ParserUtil.getText(ctx), field, Operator.EQUAL, null);
     }
 
     @Override
@@ -795,16 +795,19 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         String high = ctx.NUMBER(1).getText();
 
 
-        return new RangeValueExpression(ctx, field, Operator.BETWEEN_AND, Long.parseLong(low), Long.parseLong(high));
+        return new RangeValueExpression(ParserUtil.getText(ctx), field, Long.parseLong(low), Long.parseLong(high));
     }
 
     @Override
     public Node visitInExpression(SqlParser.InExpressionContext ctx) {
         Field field = (Field) visit(ctx.fieldName());
-        assert ctx.IN().getSymbol().getType() == SqlParser.IN;
+        if (ctx.IN().getSymbol().getType() != SqlParser.IN) {
+            throw new SyntaxErrorException("operator must be in.");
+        }
+
         MultiLiteral visit = (MultiLiteral) visit(ctx.values());
 
-        return new MultiValueExpression(ctx, field, Operator.IN, visit);
+        return new MultiValueExpression(ParserUtil.getText(ctx), field, visit);
     }
 
     @Override
@@ -816,10 +819,10 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         Node node = visit(ctx.literal());
         if (node == null) {
-            return new SingleValueCalcuExpression(ctx, function.getField(), operator, null, function.getCalculator());
+            return new SingleValueCalcuExpression(ParserUtil.getText(ctx), function.getField(), operator, null, function.getCalculator());
         } else {
             Literal<?> literal = (Literal<?>) node;
-            return new SingleValueCalcuExpression(ctx, function.getField(), operator, literal, function.getCalculator());
+            return new SingleValueCalcuExpression(ParserUtil.getText(ctx), function.getField(), operator, literal, function.getCalculator());
         }
     }
 
@@ -838,14 +841,14 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             StringType fieldNameType = (StringType) visit(ctx.identifier());
             fieldName = fieldNameType.getLiteral();
         }
-        return new Field(ctx, tableName, fieldName);
+        return new Field(ParserUtil.getText(ctx), tableName, fieldName);
     }
 
 
     @Override
     public Node visitAlphabetIdentifier(SqlParser.AlphabetIdentifierContext ctx) {
         String text = ctx.ALPHABET_STRING().getText();
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -858,7 +861,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         text = text.substring(1, text.length() - 1);
 
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -869,7 +872,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
 
         text = text.substring(1, text.length() - 1);
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -881,7 +884,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
 
         text = text.substring(1, text.length() - 1);
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -893,7 +896,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
 
         text = text.substring(1, text.length() - 1);
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -905,12 +908,12 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitValues(SqlParser.ValuesContext ctx) {
         List<SqlParser.LiteralContext> literals = ctx.literal();
         List<Literal<?>> values = literals.stream().map(this::visit).map(value -> (Literal<?>) value).collect(Collectors.toList());
-        return new MultiLiteral(ctx, values);
+        return new MultiLiteral(ParserUtil.getText(ctx), values);
     }
 
     @Override
     public Node visitNullLiteral(SqlParser.NullLiteralContext ctx) {
-        return new StringType(ctx, null);
+        return new StringType(ParserUtil.getText(ctx), null);
     }
 
     @Override
@@ -925,7 +928,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             value = Boolean.parseBoolean(trueBoolean);
         }
 
-        return new BooleanType(ctx, value);
+        return new BooleanType(ParserUtil.getText(ctx), value);
     }
 
     @Override
@@ -937,7 +940,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         } else {
             result = Long.valueOf(text);
         }
-        return new NumberType(ctx, result);
+        return new NumberType(ParserUtil.getText(ctx), result);
     }
 
     @Override
@@ -950,7 +953,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         text = text.substring(1, text.length() - 1);
 
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
@@ -973,7 +976,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         } else {
             result = Long.valueOf(text);
         }
-        return new NumberType(ctx, result);
+        return new NumberType(ParserUtil.getText(ctx), result);
     }
 
     @Override
@@ -985,7 +988,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         text = text.substring(1, text.length() - 1);
 
-        return new StringType(ctx, text);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     private String getIdentifier(SqlParser.IdentifierContext identifier) {

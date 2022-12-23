@@ -21,12 +21,13 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import org.antlr.v4.runtime.ParserRuleContext;
-
+//一定会和groupby一起使用
+// HAVING aggregate_function(column_name) operator value;
 public class SingleValueCalcuExpression extends SingleValueExpression {
      private Calculator calculator;
 
-    public SingleValueCalcuExpression(ParserRuleContext context, Field field, Operator operator, Literal<?> value, Calculator calculator) {
-        super(context, field, operator, value);
+    public SingleValueCalcuExpression(String content, Field field, Operator operator, Literal<?> value, Calculator calculator) {
+        super(content, field, operator, value);
         this.calculator = calculator;
     }
 

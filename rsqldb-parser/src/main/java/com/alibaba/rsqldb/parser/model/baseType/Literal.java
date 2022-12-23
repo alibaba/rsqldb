@@ -17,12 +17,21 @@
 package com.alibaba.rsqldb.parser.model.baseType;
 
 import com.alibaba.rsqldb.parser.model.Node;
-import org.antlr.v4.runtime.ParserRuleContext;
-
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StringType.class, name = "stringType"),
+        @JsonSubTypes.Type(value = BooleanType.class, name = "booleanType"),
+        @JsonSubTypes.Type(value = NumberType.class, name = "numberType")
+})
 public abstract class Literal<T> extends Node {
 
-    public Literal(ParserRuleContext context) {
-        super(context);
+    public Literal(String content) {
+        super(content);
     }
 
     public abstract T getResult();

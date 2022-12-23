@@ -26,8 +26,8 @@ public class JoinPhrase extends Node {
     private String asJoinTableName;
     private JoinCondition joinCondition;
 
-    public JoinPhrase(ParserRuleContext context, JoinType joinType, String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
-        super(context);
+    public JoinPhrase(String content, JoinType joinType, String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
+        super(content);
         this.joinType = joinType;
         this.joinTableName = joinTableName;
         this.asJoinTableName = asJoinTableName;
