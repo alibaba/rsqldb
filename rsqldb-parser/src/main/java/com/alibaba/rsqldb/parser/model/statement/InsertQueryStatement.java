@@ -19,22 +19,16 @@ package com.alibaba.rsqldb.parser.model.statement;
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
-import com.alibaba.rsqldb.parser.model.FieldType;
-import com.alibaba.rsqldb.parser.model.statement.query.FilterQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.rocketmq.streams.core.function.FilterAction;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.WindowStream;
-import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -93,18 +87,19 @@ public class InsertQueryStatement extends Statement {
             fieldName2NewName.put(name, name);
         }
 
-        RStream<JsonNode> stream = context.getrStream();
-        WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStream();
-        GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStream();
+        RStream<JsonNode> stream = context.getRStreamSource(this.getTableName());
+
+        WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
+        GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
         if (windowStream != null) {
             windowStream = windowStream.map(value -> map(value, fieldName2NewName));
-            context.setWindowStream(windowStream);
+            context.setWindowStreamResult(windowStream);
         } else if (groupedStream != null) {
             groupedStream = groupedStream.map(value -> map(value, fieldName2NewName));
-            context.setGroupedStream(groupedStream);
+            context.setGroupedStreamResult(groupedStream);
         } else {
             stream = stream.map(value -> map(value, fieldName2NewName));
-            context.setrStream(stream);
+            context.setrStreamResult(stream);
         }
 
         return context;

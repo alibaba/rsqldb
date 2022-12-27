@@ -28,7 +28,9 @@ import com.alibaba.rsqldb.parser.model.statement.query.FilterQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.GroupByQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowQueryStatement;
+import com.alibaba.rsqldb.parser.model.statement.query.join.JointStatement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
+import com.alibaba.rsqldb.rest.store.CommandStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
@@ -38,13 +40,17 @@ import java.util.function.Function;
 @Service
 public class TaskFactory {
     private RSQLConfig rsqlConfig;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private Function<String, CreateTableStatement> function;
 
     public TaskFactory(RSQLConfig rsqlConfig) {
         this.rsqlConfig = rsqlConfig;
     }
 
-    public void dispatch(Statement statement, Function<String, CreateTableStatement> function, BuildContext context) throws Throwable {
+    public void init(Function<String, CreateTableStatement> function) {
+        this.function = function;
+    }
+
+    public void dispatch(Statement statement, BuildContext context) throws Throwable {
         String tableName = statement.getTableName();
 
         if (statement instanceof InsertValueStatement) {
@@ -57,13 +63,13 @@ public class TaskFactory {
             InsertQueryStatement insertQueryStatement = (InsertQueryStatement) statement;
             QueryStatement queryStatement = insertQueryStatement.getQueryStatement();
             tableName = queryStatement.getTableName();
-            context = prepare(tableName, function, context, RSQLConstant.TableType.SOURCE);
+            context = prepare(tableName, context, RSQLConstant.TableType.SOURCE);
 
             context = this.build(insertQueryStatement, context);
 
-            context = prepare(tableName, function, context, RSQLConstant.TableType.SINK);
+            context = prepare(tableName, context, RSQLConstant.TableType.SINK);
         } else if (statement instanceof QueryStatement) {
-            context = prepare(tableName, function, context, RSQLConstant.TableType.SOURCE);
+            context = prepare(tableName, context, RSQLConstant.TableType.SOURCE);
             context = build((QueryStatement) statement, context);
 
 
@@ -102,13 +108,20 @@ public class TaskFactory {
         } else if (queryStatement instanceof WindowQueryStatement) {
             WindowQueryStatement windowQueryStatement = (WindowQueryStatement) queryStatement;
             windowQueryStatement.build(context);
+        } else if (queryStatement.getClass().getName().equals(JointStatement.class.getName())) {
+            JointStatement jointStatement = (JointStatement) queryStatement;
+
+            String joinTableName = jointStatement.getJoinTableName();
+            prepare(joinTableName, context, RSQLConstant.TableType.SOURCE);
+
+
+            jointStatement.build(context);
         }
 
         return context;
     }
 
-    private BuildContext prepare(String tableName, Function<String, CreateTableStatement> function,
-                                 BuildContext context, RSQLConstant.TableType type) throws Throwable {
+    private BuildContext prepare(String tableName, BuildContext context, RSQLConstant.TableType type) throws Throwable {
         CreateTableStatement createTableStatement = function.apply(tableName);
         if (createTableStatement == null) {
             throw new RSQLServerException("createTableStatement is null query by table name:[" + tableName + "]");

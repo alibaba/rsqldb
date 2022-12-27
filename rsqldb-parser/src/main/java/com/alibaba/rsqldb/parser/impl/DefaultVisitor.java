@@ -497,16 +497,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitOneJoinCondition(SqlParser.OneJoinConditionContext ctx) {
-        SqlParser.FieldNameContext firstFieldNameContext = ctx.fieldName().get(0);
-        SqlParser.FieldNameContext secondFieldNameContext = ctx.fieldName().get(1);
+        SqlParser.FieldNameContext leftFieldNameContext = ctx.fieldName().get(0);
+        SqlParser.FieldNameContext rightFieldNameContext = ctx.fieldName().get(1);
 
-        Field firstField = (Field) visit(firstFieldNameContext);
-        Field secondField = (Field) visit(secondFieldNameContext);
+        Field leftField = (Field) visit(leftFieldNameContext);
+        Field rightField = (Field) visit(rightFieldNameContext);
 
         assert ctx.EQUAL_SYMBOL().getSymbol().getType() == SqlParser.EQUAL_SYMBOL;
 
         JoinCondition condition = new JoinCondition(ParserUtil.getText(ctx));
-        condition.addField(firstField, secondField);
+        condition.addField(leftField, rightField);
 
         return condition;
     }

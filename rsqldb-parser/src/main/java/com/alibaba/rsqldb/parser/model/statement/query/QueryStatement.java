@@ -192,21 +192,26 @@ public class QueryStatement extends Statement {
             return context;
         }
 
-        RStream<JsonNode> rStream = context.getrStream();
+        RStream<JsonNode> rStream = context.getRStreamSource(this.getTableName());
 
-        if (isSelectField()) {
-            rStream = rStream.map(value -> map(value, fieldName2AsName()));
-            context.setrStream(rStream);
-        } else {
-            //select * from table就是所有值都只能在一个实例上计算，不然结果不准确
-            GroupedStream<String, ObjectNode> groupedStream = rStream.keyBy(value -> QueryStatement.this.getContent()).aggregate(buildSelect());
-            context.setGroupedStream(groupedStream);
-        }
+        buildSelectItem(rStream, context);
 
         return context;
     }
 
-    protected Accumulator<JsonNode, ObjectNode> buildSelect() {
+    protected void buildSelectItem(RStream<JsonNode> rStream, BuildContext context) {
+        if (isSelectField()) {
+            rStream = rStream.map(value -> map(value, fieldName2AsName()));
+            context.setrStreamResult(rStream);
+        } else {
+            //select class, avg(score) from table就是所有值都只能在一个实例上计算，不然结果不准确
+            GroupedStream<String, ObjectNode> groupedStream = rStream.keyBy(value -> QueryStatement.this.getContent()).aggregate(buildAccumulator());
+            context.setGroupedStreamResult(groupedStream);
+        }
+    }
+
+
+    protected Accumulator<JsonNode, ObjectNode> buildAccumulator() {
         return new RSQLAccumulator(sqlFunctions);
     }
 

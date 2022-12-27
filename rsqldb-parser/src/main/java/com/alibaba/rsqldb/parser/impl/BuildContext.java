@@ -16,11 +16,9 @@
  */
 package com.alibaba.rsqldb.parser.impl;
 
-import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
@@ -38,14 +36,17 @@ public class BuildContext {
     private ObjectMapper objectMapper = new ObjectMapper();
     private Map<String, Object> header = new HashMap<>();
 
-    //------------------------------streams------------------------------
-    private RStream<JsonNode> rStream;
+    //------------------------------source------------------------------
+    private final Map<String/*tableName*/, RStream<JsonNode>> rStreamSource = new HashMap<>();
 
-    private GroupedStream<String, ? extends JsonNode> groupedStream;
+    //--------------------------------生成结果---------------------------------
+    private RStream<? extends JsonNode> rStreamResult;
 
-    private WindowStream<String, ? extends JsonNode> windowStream;
+    private GroupedStream<String, ? extends JsonNode> groupedStreamResult;
 
-    private JoinedStream<?, ?> joinedStream;
+    private WindowStream<String, ? extends JsonNode> windowStreamResult;
+
+    private JoinedStream<?, ?> joinedStreamResult;
 
     //在build过程中生成的
     //-------------------------------context-----------------------------
@@ -66,36 +67,44 @@ public class BuildContext {
         this.streamBuilder = streamBuilder;
     }
 
-    public RStream<JsonNode> getrStream() {
-        return rStream;
+    public RStream<? extends JsonNode> getrStreamResult() {
+        return rStreamResult;
     }
 
-    public void setrStream(RStream<JsonNode> rStream) {
-        this.rStream = rStream;
+    public void setrStreamResult(RStream<? extends JsonNode> rStreamResult) {
+        this.rStreamResult = rStreamResult;
     }
 
-    public GroupedStream<String, ? extends JsonNode> getGroupedStream() {
-        return groupedStream;
+    public RStream<JsonNode> getRStreamSource(String tableName) {
+        return this.rStreamSource.get(tableName);
     }
 
-    public void setGroupedStream(GroupedStream<String, ? extends JsonNode> groupedStream) {
-        this.groupedStream = groupedStream;
+    public void addRStreamSource(String tableName, RStream<JsonNode> rStream) {
+        this.rStreamSource.put(tableName, rStream);
     }
 
-    public WindowStream<String, ? extends JsonNode> getWindowStream() {
-        return windowStream;
+    public GroupedStream<String, ? extends JsonNode> getGroupedStreamResult() {
+        return groupedStreamResult;
     }
 
-    public void setWindowStream(WindowStream<String, ? extends JsonNode> windowStream) {
-        this.windowStream = windowStream;
+    public void setGroupedStreamResult(GroupedStream<String, ? extends JsonNode> groupedStreamResult) {
+        this.groupedStreamResult = groupedStreamResult;
     }
 
-    public JoinedStream<?, ?> getJoinedStream() {
-        return joinedStream;
+    public WindowStream<String, ? extends JsonNode> getWindowStreamResult() {
+        return windowStreamResult;
     }
 
-    public void setJoinedStream(JoinedStream<?, ?> joinedStream) {
-        this.joinedStream = joinedStream;
+    public void setWindowStreamResult(WindowStream<String, ? extends JsonNode> windowStreamResult) {
+        this.windowStreamResult = windowStreamResult;
+    }
+
+    public JoinedStream<?, ?> getJoinedStreamResult() {
+        return joinedStreamResult;
+    }
+
+    public void setJoinedStreamResult(JoinedStream<?, ?> joinedStreamResult) {
+        this.joinedStreamResult = joinedStreamResult;
     }
 
     public CreateTableStatement getCreateTableStatement() {

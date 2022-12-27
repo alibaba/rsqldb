@@ -16,18 +16,26 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
+import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.SQLType;
+import com.alibaba.rsqldb.parser.model.statement.query.GroupByQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.apache.rocketmq.streams.core.function.FilterAction;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
 public class JointWhereGBHavingStatement extends JointWhereGroupByStatement {
+    private static final Logger logger = LoggerFactory.getLogger(JointWhereGBHavingStatement.class);
     private Expression havingExpression;
 
     public JointWhereGBHavingStatement(String content, String sourceTableName,
@@ -56,5 +64,24 @@ public class JointWhereGBHavingStatement extends JointWhereGroupByStatement {
 
     public void setHavingExpression(Expression havingExpression) {
         this.havingExpression = havingExpression;
+    }
+
+    @Override
+    public BuildContext build(BuildContext context) throws Throwable {
+        GroupedStream<String, ? extends JsonNode> groupedStream = super.buildJoinWhereGBSelect(context);
+
+        groupedStream = groupedStream.filter(value -> {
+            try {
+                return havingExpression.isTrue(value);
+            } catch (Throwable t) {
+                //使用错误，例如字段是string，使用>过滤；
+                logger.info("having filter error, sql:[{}], value=[{}]", JointWhereGBHavingStatement.this.getContent(), value, t);
+                return false;
+            }
+        });
+
+        context.setGroupedStreamResult(groupedStream);
+
+        return context;
     }
 }

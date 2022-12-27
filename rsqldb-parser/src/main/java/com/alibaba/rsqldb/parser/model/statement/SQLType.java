@@ -60,9 +60,7 @@ public enum SQLType {
 
     SELECT_FROM_JOIN_GROUPBY,
     /**
-     * SELECT Websites.name, Websites.url, SUM(access_log.count) AS nums FROM (access_log
-     * INNER JOIN Websites
-     * ON access_log.site_id=Websites.id)
+     * SELECT Websites.name, Websites.url, SUM(access_log.count) AS nums FROM access_log INNER JOIN Websites ON access_log.site_id=Websites.id
      * GROUP BY Websites.name
      * HAVING SUM(access_log.count) > 200;
      */

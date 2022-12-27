@@ -17,8 +17,5 @@
 package com.alibaba.rsqldb.parser.impl;
 
 public class ParserConstant {
-
-    public static final String COUNT = "COUNT_KEY";
-
-    public static final String SUM = "SUM_KEY";
+    public static final String JOIN_TEMPORARY = "join_temporary";
 }

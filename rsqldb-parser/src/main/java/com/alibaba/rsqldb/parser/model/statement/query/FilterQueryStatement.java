@@ -22,8 +22,6 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +54,7 @@ public class FilterQueryStatement extends QueryStatement {
     public BuildContext build(BuildContext context) throws Throwable {
 
         //先where过滤在select 过滤
-        RStream<JsonNode> rStream = context.getrStream();
+        RStream<JsonNode> rStream = context.getRStreamSource(this.getTableName());
 
         rStream = rStream.filter(value -> {
             try {
@@ -68,10 +66,10 @@ public class FilterQueryStatement extends QueryStatement {
             }
         });
 
-        context.setrStream(rStream);
-
         //select 过滤
-        return super.build(context);
+        buildSelectItem(rStream, context);
+
+        return context;
     }
 
 

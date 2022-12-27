@@ -17,12 +17,18 @@
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.rocketmq.streams.core.common.Constant;
+import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
+import org.apache.rocketmq.streams.core.rstream.RStream;
 
 import java.util.List;
 import java.util.Map;
@@ -63,4 +69,38 @@ public class JointWhereGroupByStatement extends JointWhereStatement {
         this.groupByField = groupByField;
     }
 
+    @Override
+    public BuildContext build(BuildContext context) throws Throwable {
+        GroupedStream<String, ? extends JsonNode> selectField = buildJoinWhereGBSelect(context);
+
+        context.setGroupedStreamResult(selectField);
+
+        return context;
+    }
+
+    protected GroupedStream<String, ? extends JsonNode> buildJoinWhereGBSelect(BuildContext context) {
+        RStream<JsonNode> rStream = super.buildJoinWhere(context);
+
+        GroupedStream<String, JsonNode> groupedStream = rStream.keyBy(value -> {
+            StringBuilder sb = new StringBuilder();
+            for (Field field : groupByField) {
+                String fieldName = field.getFieldName();
+                String temp = String.valueOf(value.get(fieldName));
+                sb.append(temp);
+                sb.append(Constant.SPLIT);
+            }
+
+            String result = sb.toString();
+            return result.substring(0, result.length() - 1);
+        });
+
+        //select
+        GroupedStream<String, ? extends JsonNode> selectField = groupedStream;
+        if (!isSelectAll()) {
+            Accumulator<JsonNode, ObjectNode> select = buildAccumulator();
+            selectField = groupedStream.aggregate(select);
+        }
+
+        return selectField;
+    }
 }

@@ -16,13 +16,26 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
+import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
+import com.alibaba.rsqldb.parser.impl.ParserConstant;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.rstream.JoinedStream;
+import org.apache.rocketmq.streams.core.rstream.RStream;
+import org.apache.rocketmq.streams.core.runtime.operators.Time;
+import org.apache.rocketmq.streams.core.runtime.operators.WindowBuilder;
+import org.apache.rocketmq.streams.core.util.Pair;
 
+import java.util.List;
 import java.util.Map;
 
 public class JointStatement extends QueryStatement {
@@ -42,6 +55,7 @@ public class JointStatement extends QueryStatement {
         this.joinTableName = joinTableName;
         this.asJoinTableName = asJoinTableName;
         this.joinCondition = joinCondition;
+        validator();
     }
 
     public String getAsSourceTableName() {
@@ -84,9 +98,133 @@ public class JointStatement extends QueryStatement {
         this.joinCondition = joinCondition;
     }
 
+    public void validator() {
+        //joinCondition 中key的tablename=asSourceTableName/table
+        //value的tableName = asJoinTableName/joinTableName
+        List<Pair<Field, Field>> conditionHolder = joinCondition.getHolder();
+        for (Pair<Field, Field> pair : conditionHolder) {
+            Field left = pair.getKey();
+            String leftTableName = left.getTableName();
+
+            if (!StringUtils.isEmpty(leftTableName) && (!leftTableName.equals(this.getTableName()) && !leftTableName.equals(asSourceTableName))) {
+                throw new SyntaxErrorException("left table " + leftTableName +
+                        " not equals to table name=" + this.getTableName() + " or asTable name=" + asSourceTableName + ".sql=" + this.getContent());
+            }
+
+            Field right = pair.getValue();
+            String rightTableName = right.getTableName();
+            if (!StringUtils.isEmpty(rightTableName) && (!rightTableName.equals(joinTableName) && !rightTableName.equals(asJoinTableName))) {
+                throw new SyntaxErrorException("right table " + rightTableName +
+                        " not equals to join table name=" + joinTableName + " or join asTable name=" + asJoinTableName + ".sql=" + this.getContent());
+            }
+        }
+
+        for (Field field : this.getSelectFieldAndCalculator().keySet()) {
+            String tableName = field.getTableName();
+
+            if (StringUtils.isEmpty(tableName)) {
+                throw new SyntaxErrorException("table in join select is null. sql=" + this.getContent());
+            }
+
+            if (!tableName.equals(this.getTableName())
+                    && !tableName.equals(asSourceTableName)
+                    && !tableName.equals(joinTableName)
+                    && !tableName.equals(asJoinTableName)) {
+                throw new SyntaxErrorException("table in field=" + tableName
+                        + " not equals to source table name=" + this.getTableName() + ", not equals to source asTable name=" + asSourceTableName
+                        + ".or not equals to join table name=" + joinTableName + ", not equals to join asTable name=" + asJoinTableName
+                        + ".sql=" + this.getContent());
+            }
+        }
+    }
+
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
+        RStream<JsonNode> leftStream = context.getRStreamSource(this.getTableName());
+        RStream<JsonNode> rightStream = context.getRStreamSource(this.joinTableName);
 
-        return null;
+        //join
+        RStream<JsonNode> rStream = join(leftStream, rightStream);
+
+        //select
+        buildSelectItem(rStream, context);
+
+        return context;
+    }
+
+    protected RStream<JsonNode> join(RStream<JsonNode> leftStream, RStream<JsonNode> rightStream) {
+        JoinedStream<JsonNode, JsonNode> joinedStream;
+        switch (joinType) {
+            case LEFT_JOIN: {
+                joinedStream = leftStream.leftJoin(rightStream);
+                break;
+            }
+            case INNER_JOIN: {
+                joinedStream = leftStream.join(rightStream);
+                break;
+            }
+            default: {
+                throw new RSQLServerException("unknown join type=" + joinType);
+            }
+        }
+
+        List<Pair<Field, Field>> conditionHolder = joinCondition.getHolder();
+
+        return joinedStream.where(value -> {
+                    ObjectNode result = JsonNodeFactory.instance.objectNode();
+
+                    for (Pair<Field, Field> pair : conditionHolder) {
+                        Field leftField = pair.getKey();
+                        String fieldName = leftField.getFieldName();
+
+                        JsonNode node = value.get(fieldName);
+
+                        result.set(fieldName, node);
+                    }
+
+                    return result;
+                }).equalTo(value -> {
+                    ObjectNode result = JsonNodeFactory.instance.objectNode();
+
+                    for (Pair<Field, Field> pair : conditionHolder) {
+                        Field leftField = pair.getValue();
+                        String fieldName = leftField.getFieldName();
+
+                        JsonNode node = value.get(fieldName);
+
+                        result.set(fieldName, node);
+                    }
+
+                    return result;
+                }).window(WindowBuilder.tumblingWindow(Time.seconds(30)))
+                .apply((value1, value2) -> {
+                    ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+                    //新建临时表
+
+                    //放入出现在select中的所有字段，字段名为fieldName，如果字段上有运算，先不做运算
+                    for (Field field : JointStatement.this.getSelectFieldAndCalculator().keySet()) {
+                        String tableName = field.getTableName();
+                        String fieldName = field.getFieldName();
+
+                        JsonNode node;
+                        if (tableName.equals(JointStatement.this.getTableName()) || tableName.equals(JointStatement.this.asSourceTableName)) {
+                            //左侧流 从value1中取值
+                            node = value1.get(fieldName);
+                        } else if (tableName.equals(JointStatement.this.joinTableName) || tableName.equals(JointStatement.this.asJoinTableName)) {
+                            //右侧流，从value2中取值
+                            node = value2.get(fieldName);
+                        } else {
+                            throw new SyntaxErrorException("can not find a match table name.tableName=" + tableName + ", sql=" + JointStatement.this.getContent());
+                        }
+
+                        objectNode.set(fieldName, node);
+
+                        //使用临时表名代替Field中的tableName,防止误用
+                        field.setTableName(ParserConstant.JOIN_TEMPORARY);
+                    }
+
+                    //父类中再做最后计算；
+                    return objectNode;
+                });
     }
 }

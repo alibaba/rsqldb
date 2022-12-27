@@ -20,26 +20,23 @@ import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.common.serialization.Deserializer;
-import com.alibaba.rsqldb.common.serialization.JsonKeyValueSer;
+import com.alibaba.rsqldb.common.serialization.JsonObjectKVSer;
+import com.alibaba.rsqldb.common.serialization.JsonStringKVSer;
 import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
-import com.alibaba.rsqldb.parser.model.FieldType;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.StreamBuilder;
 import org.apache.rocketmq.streams.core.rstream.WindowStream;
-import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
 import org.apache.rocketmq.streams.core.util.Pair;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -186,25 +183,20 @@ public class CreateTableStatement extends Statement {
                 return new Pair<>(null, result);
             });
 
-            context.setrStream(rStream);
+            context.addRStreamSource(this.getTableName(), rStream);
             context.setCreateTableStatement(this);
         } else if (context.getHeader(RSQLConstant.TABLE_TYPE) == RSQLConstant.TableType.SINK) {
-            RStream<JsonNode> stream = context.getrStream();
-            WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStream();
-            GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStream();
+            RStream<? extends JsonNode> stream = context.getrStreamResult();
+            WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
+            GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
             //todo join
 
             if (windowStream != null) {
-                windowStream.sink(topicName, new JsonKeyValueSer<>());
+                windowStream.sink(topicName, new JsonStringKVSer<>());
             } else if (groupedStream != null) {
-                groupedStream.sink(topicName, new JsonKeyValueSer<>());
+                groupedStream.sink(topicName, new JsonStringKVSer<>());
             } else {
-                stream.sink(topicName, new KeyValueSerializer<Object, JsonNode>() {
-                    @Override
-                    public byte[] serialize(Object o, JsonNode data) throws Throwable {
-                        return new byte[0];
-                    }
-                });
+                stream.sink(topicName, new JsonObjectKVSer<>());
             }
 
 

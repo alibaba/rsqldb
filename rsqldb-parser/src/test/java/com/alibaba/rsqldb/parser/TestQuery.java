@@ -258,9 +258,10 @@ public class TestQuery {
                 "       t.`position` AS `position`,\n" +
                 "       p.name       AS perform_name,\n" +
                 "       p.odeum_id   AS odeum_id\n" +
-                "FROM ticket AS t\n" +
-                "         LEFT JOIN perform AS p ON t.perform_id = p.id " +
-                "where p.name = 'nize';";
+                "FROM ticket AS t\n"
+                + "where t.id > 100"
+                + "         LEFT JOIN perform AS p ON t.perform_id = p.id "
+                + "where p.name = 'nize';";
 
         DefaultParser parser = new DefaultParser();
         List<Statement> statements = parser.parseStatement(sql);

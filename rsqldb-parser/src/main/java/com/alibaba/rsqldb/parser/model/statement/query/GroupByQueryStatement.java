@@ -125,19 +125,19 @@ public class GroupByQueryStatement extends QueryStatement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-        GroupedStream<String, JsonNode> groupedStream = buildGroupBy(context.getrStream());
+        GroupedStream<String, JsonNode> groupedStream = buildGroupBy(context.getRStreamSource(this.getTableName()));
 
         //select
         GroupedStream<String, ? extends JsonNode> selectField = groupedStream;
         if (!isSelectAll()) {
-            Accumulator<JsonNode, ObjectNode> select = buildSelect();
+            Accumulator<JsonNode, ObjectNode> select = buildAccumulator();
             selectField = groupedStream.aggregate(select);
         }
 
         //having
         selectField = buildHaving(selectField);
 
-        context.setGroupedStream(selectField);
+        context.setGroupedStreamResult(selectField);
 
         return context;
     }

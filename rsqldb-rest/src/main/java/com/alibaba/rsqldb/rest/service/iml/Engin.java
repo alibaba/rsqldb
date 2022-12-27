@@ -68,6 +68,8 @@ public class Engin {
 
 
     public void start() {
+        this.taskFactory.init(commandStore::findTable);
+
         try {
             producer.start();
         } catch (MQClientException e) {
@@ -86,7 +88,7 @@ public class Engin {
                             //
                             StreamBuilder builder = new StreamBuilder("");
                             if (nextCommand instanceof Statement) {
-                                taskFactory.dispatch((Statement) nextCommand, commandStore::findTable, new BuildContext(producer, builder));
+                                taskFactory.dispatch((Statement) nextCommand, new BuildContext(producer, builder));
                             }
 
                         } catch (Throwable t) {

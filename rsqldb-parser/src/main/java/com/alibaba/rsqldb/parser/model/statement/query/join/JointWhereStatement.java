@@ -16,16 +16,16 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query.join;
 
+import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
-import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.statement.SQLType;
+import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.rocketmq.streams.core.rstream.RStream;
 
 import java.util.Map;
-import java.util.Set;
 
 public class JointWhereStatement extends JointStatement {
     private Expression beforeJoinWhereExpression;
@@ -75,5 +75,31 @@ public class JointWhereStatement extends JointStatement {
 
     public void setAfterJoinWhereExpression(Expression afterJoinWhereExpression) {
         this.afterJoinWhereExpression = afterJoinWhereExpression;
+    }
+
+    @Override
+    public BuildContext build(BuildContext context) throws Throwable {
+        RStream<JsonNode> rStream = buildJoinWhere(context);
+
+        //select
+        buildSelectItem(rStream, context);
+
+        return context;
+    }
+
+    protected RStream<JsonNode> buildJoinWhere(BuildContext context) {
+        //before where
+        RStream<JsonNode> leftStream = context.getRStreamSource(this.getTableName());
+        if (beforeJoinWhereExpression != null) {
+            leftStream = leftStream.filter(value -> beforeJoinWhereExpression.isTrue(value));
+        }
+
+        RStream<JsonNode> rightStream = context.getRStreamSource(this.getJoinTableName());
+
+        //join
+        RStream<JsonNode> rStream = join(leftStream, rightStream);
+
+        //after where
+        return rStream.filter(value -> afterJoinWhereExpression.isTrue(value));
     }
 }

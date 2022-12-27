@@ -83,7 +83,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-        RStream<JsonNode> rStream = context.getrStream();
+        RStream<JsonNode> rStream = context.getRStreamSource(this.getTableName());
         RStream<JsonNode> stream = rStream.selectTimestamp(value -> {
             String timeField = groupByWindow.getTimeField().getFieldName();
             JsonNode node = value.get(timeField);
@@ -123,7 +123,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
         WindowStream<String, ? extends JsonNode> selectField = windowStream;
         //select
         if (!isSelectAll()) {
-            Accumulator<JsonNode, ObjectNode> action = buildSelect();
+            Accumulator<JsonNode, ObjectNode> action = buildAccumulator();
             selectField = windowStream.aggregate(action);
         }
 
@@ -131,7 +131,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
         selectField = buildHaving(selectField);
 
 
-        context.setWindowStream(selectField);
+        context.setWindowStreamResult(selectField);
 
         return context;
     }
