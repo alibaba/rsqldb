@@ -14,8 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.model;
+package com.alibaba.rsqldb.common.function;
 
-public enum Calculator {
-    AVG, COUNT, MAX, MIN, SUM, WINDOW_START, WINDOW_END
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
+public interface SQLFunction {
+    void apply(JsonNode jsonNode, final ConcurrentHashMap<String, Object> container);
+
+    default void secondCalcu(final ConcurrentHashMap<String, Object> container, Properties context){}
+
 }

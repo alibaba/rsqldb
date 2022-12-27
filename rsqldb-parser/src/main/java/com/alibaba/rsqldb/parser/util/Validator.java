@@ -18,7 +18,7 @@ package com.alibaba.rsqldb.parser.util;
 
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
+import com.alibaba.rsqldb.parser.model.statement.query.WindowInfoInSQL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,28 +27,28 @@ public class Validator {
 
     //校验sql中定义在select字段上的window与定义在groupBy中的window一致,校验Type, Field、slide、size字段
     //sql中必须在要有一个windowInfos中FirstWordInSQL是WINDOW
-    public static void window(List<WindowInfo> windowInfos) {
-        if (windowInfos == null || windowInfos.size() == 0) {
+    public static void window(List<WindowInfoInSQL> windowInfoInSQLS) {
+        if (windowInfoInSQLS == null || windowInfoInSQLS.size() == 0) {
             return;
         }
-        if (windowInfos.size() > 3) {
+        if (windowInfoInSQLS.size() > 3) {
             throw new SyntaxErrorException("window sql num large than 3.");
         }
 
-        List<WindowInfo.WindowType> windowTypes = new ArrayList<>();
+        List<WindowInfoInSQL.WindowType> windowTypes = new ArrayList<>();
         List<Field> windowFields = new ArrayList<>();
         List<Long> windowSlide = new ArrayList<>();
         List<Long> windowSize = new ArrayList<>();
 
         int windowInGroupBy = 0;
-        for (WindowInfo info : windowInfos) {
+        for (WindowInfoInSQL info : windowInfoInSQLS) {
             //FirstWordInSQL
-            if (info.getFirstWordInSQL().equals(WindowInfo.FirstWordInSQL.WINDOW)) {
+            if (info.getFirstWordInSQL().equals(WindowInfoInSQL.FirstWordInSQL.WINDOW)) {
                 windowInGroupBy++;
             }
 
-            WindowInfo.WindowType newType = info.getType();
-            for (WindowInfo.WindowType old : windowTypes) {
+            WindowInfoInSQL.WindowType newType = info.getType();
+            for (WindowInfoInSQL.WindowType old : windowTypes) {
                 if (newType != old) {
                     throw new SyntaxErrorException("window type not same.");
                 }

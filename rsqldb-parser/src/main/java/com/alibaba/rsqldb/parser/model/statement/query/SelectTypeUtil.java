@@ -180,8 +180,10 @@ public class SelectTypeUtil {
                     int whereStartIndex = wherePhraseContext.start.getStartIndex();
                     if (whereStartIndex < joinStartIndex) {
                         hasBeforeWhere = true;
-                    } else {
                         hasAfterWhere = false;
+                    } else {
+                        hasBeforeWhere = false;
+                        hasAfterWhere = true;
                     }
                 }
 

@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.common.serialization.Deserializer;
+import com.alibaba.rsqldb.common.serialization.JsonKeyValueSer;
 import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
@@ -29,9 +30,12 @@ import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.StreamBuilder;
+import org.apache.rocketmq.streams.core.rstream.WindowStream;
 import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
 import org.apache.rocketmq.streams.core.util.Pair;
 
@@ -186,14 +190,24 @@ public class CreateTableStatement extends Statement {
             context.setCreateTableStatement(this);
         } else if (context.getHeader(RSQLConstant.TABLE_TYPE) == RSQLConstant.TableType.SINK) {
             RStream<JsonNode> stream = context.getrStream();
-            stream.sink(topicName, new KeyValueSerializer<Object, JsonNode>() {
-                @Override
-                public byte[] serialize(Object key, JsonNode data) throws Throwable {
+            WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStream();
+            GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStream();
+            //todo join
 
-                    //todo
-                    return new byte[0];
-                }
-            });
+            if (windowStream != null) {
+                windowStream.sink(topicName, new JsonKeyValueSer<>());
+            } else if (groupedStream != null) {
+                groupedStream.sink(topicName, new JsonKeyValueSer<>());
+            } else {
+                stream.sink(topicName, new KeyValueSerializer<Object, JsonNode>() {
+                    @Override
+                    public byte[] serialize(Object o, JsonNode data) throws Throwable {
+                        return new byte[0];
+                    }
+                });
+            }
+
+
 
         }
 

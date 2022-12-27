@@ -16,17 +16,9 @@
  */
 package com.alibaba.rsqldb.rest.service.iml;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-
 import com.alibaba.rsqldb.common.RSQLConstant;
-import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
-import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.common.serialization.Serializer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
-import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.statement.InsertQueryStatement;
@@ -40,6 +32,8 @@ import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
+
+import java.util.function.Function;
 
 @Service
 public class TaskFactory {
@@ -84,27 +78,30 @@ public class TaskFactory {
     public void build(CreateViewStatement createViewStatement, BuildContext context) throws Exception {
     }
 
-    public BuildContext build(InsertQueryStatement insertQueryStatement, BuildContext context) throws Throwable {
+    private BuildContext build(InsertQueryStatement insertQueryStatement, BuildContext context) throws Throwable {
         context = this.build(insertQueryStatement.getQueryStatement(), context);
 
         return insertQueryStatement.build(context);
     }
 
-    public void build(InsertValueStatement insertValueStatement, BuildContext context, String topicName) throws Throwable {
+    private void build(InsertValueStatement insertValueStatement, BuildContext context, String topicName) throws Throwable {
         context = insertValueStatement.build(context);
 
         Message message = new Message(topicName, context.getInsertValueData());
         context.getProducer().send(message);
     }
 
-    public BuildContext build(QueryStatement queryStatement, BuildContext context) throws Throwable {
-        if (queryStatement instanceof FilterQueryStatement) {
+    private BuildContext build(QueryStatement queryStatement, BuildContext context) throws Throwable {
+        if (queryStatement.getClass().getName().equals(QueryStatement.class.getName())) {
+            context = queryStatement.build(context);
+        }else if (queryStatement instanceof FilterQueryStatement) {
             context = ((FilterQueryStatement)queryStatement).build(context);
         } else if (queryStatement.getClass().getName().equals(GroupByQueryStatement.class.getName())) {
             GroupByQueryStatement groupByQueryStatement = (GroupByQueryStatement) queryStatement;
             context = groupByQueryStatement.build(context);
         } else if (queryStatement instanceof WindowQueryStatement) {
-
+            WindowQueryStatement windowQueryStatement = (WindowQueryStatement) queryStatement;
+            windowQueryStatement.build(context);
         }
 
         return context;

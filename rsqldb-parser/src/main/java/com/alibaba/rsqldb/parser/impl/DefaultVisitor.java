@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.impl;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.SqlParser;
 import com.alibaba.rsqldb.parser.SqlParserBaseVisitor;
@@ -51,7 +52,7 @@ import com.alibaba.rsqldb.parser.model.statement.query.SelectTypeUtil;
 import com.alibaba.rsqldb.parser.model.statement.query.SelectWindowResult;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.ColumnValue;
-import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
+import com.alibaba.rsqldb.parser.model.statement.query.WindowInfoInSQL;
 import com.alibaba.rsqldb.parser.model.expression.AndExpression;
 import com.alibaba.rsqldb.parser.model.expression.MultiValueExpression;
 import com.alibaba.rsqldb.parser.model.expression.OrExpression;
@@ -73,6 +74,7 @@ import com.alibaba.rsqldb.parser.util.ParserUtil;
 import com.alibaba.rsqldb.parser.util.Validator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.ArrayList;
@@ -113,7 +115,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         ListNode<SelectFieldResult> selectFieldResults = (ListNode<SelectFieldResult>) visit(selectFieldContext);
 
         Map<Field, Calculator> selectFieldAndCalculator = new HashMap<>();
-        List<WindowInfo> windowInfos = new ArrayList<>();
+        List<WindowInfoInSQL> windowInfoInSQLS = new ArrayList<>();
 
         //将select分类
         for (SelectFieldResult selectFieldResult : selectFieldResults) {
@@ -124,7 +126,9 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             }
             if (selectFieldResult instanceof SelectWindowResult) {
                 SelectWindowResult windowResult = (SelectWindowResult) selectFieldResult;
-                windowInfos.add(windowResult.getWindowInfo());
+                windowInfoInSQLS.add(windowResult.getWindowInfo());
+
+                selectFieldAndCalculator.put(field, windowResult.getCalculator());
             }
         }
 
@@ -145,13 +149,13 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         List<GroupByPhrase> groupByPhrases = this.visit(ctx.groupByPhrase(), GroupByPhrase.class);
         for (GroupByPhrase groupByPhrase : groupByPhrases) {
             if (groupByPhrase.getWindowInfo() != null) {
-                windowInfos.add(groupByPhrase.getWindowInfo());
+                windowInfoInSQLS.add(groupByPhrase.getWindowInfo());
             }
         }
         List<HavingPhrase> havingPhrases = this.visit(ctx.havingPhrase(), HavingPhrase.class);
 
         //校验sql中各处window信息是否一样
-        Validator.window(windowInfos);
+        Validator.window(windowInfoInSQLS);
         String content = ParserUtil.getText(ctx);
         switch (SQLType) {
             case SELECT_FROM:
@@ -171,16 +175,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                         groupByPhrases.get(0).getGroupByFields(), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_GROUPBY_WINDOW:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0));
+                        groupByPhrases.get(0).getGroupByFields(), windowInfoInSQLS.get(0));
             case SELECT_FROM_WHERE_GROUPBY_WINDOW:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), ExpressionType.WHERE);
+                        groupByPhrases.get(0).getGroupByFields(), windowInfoInSQLS.get(0), wherePhrases.get(0).getWhereExpression(), ExpressionType.WHERE);
             case SELECT_FROM_GROUPBY_WINDOW_HAVING:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), havingPhrases.get(0).getHavingExpression(), ExpressionType.HAVING);
+                        groupByPhrases.get(0).getGroupByFields(), windowInfoInSQLS.get(0), havingPhrases.get(0).getHavingExpression(), ExpressionType.HAVING);
             case SELECT_FROM_WHERE_GROUPBY_WINDOW_HAVING:
                 return new WindowQueryStatement(content, tableName, selectFieldAndCalculator,
-                        groupByPhrases.get(0).getGroupByFields(), windowInfos.get(0), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
+                        groupByPhrases.get(0).getGroupByFields(), windowInfoInSQLS.get(0), wherePhrases.get(0).getWhereExpression(), havingPhrases.get(0).getHavingExpression());
             case SELECT_FROM_JOIN: {
                 assert joinPhrase != null;
                 return new JointStatement(content, tableName, selectFieldAndCalculator, joinPhrase.getJoinType(), asSourceTableName,
@@ -362,12 +366,12 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         List<Field> groupByFields = fieldNameContexts.stream().map(this::visit).map(target -> (Field) target).collect(Collectors.toList());
 
         SqlParser.WindowFunctionContext windowFunctionContext = ctx.windowFunction();
-        WindowInfo windowInfo = null;
+        WindowInfoInSQL windowInfoInSQL = null;
         if (windowFunctionContext != null) {
-            windowInfo = (WindowInfo) visit(windowFunctionContext);
+            windowInfoInSQL = (WindowInfoInSQL) visit(windowFunctionContext);
         }
 
-        return new GroupByPhrase(ParserUtil.getText(ctx), groupByFields, windowInfo);
+        return new GroupByPhrase(ParserUtil.getText(ctx), groupByFields, windowInfoInSQL);
     }
 
     @Override
@@ -412,7 +416,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         if (asFieldContexts != null) {
 
-            List<WindowInfo> windowInfos = new ArrayList<>();
+            List<WindowInfoInSQL> windowInfoInSQLS = new ArrayList<>();
 
             List<Object> collect = asFieldContexts.stream().map(this::visit).collect(Collectors.toList());
             for (Object item : collect) {
@@ -426,42 +430,54 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
                     result.add(new SelectFunctionResult(function.getField(), function.getCalculator()));
                 }
 
-                if (item instanceof WindowInfo) {
-                    WindowInfo windowInfo = (WindowInfo) item;
-                    windowInfos.add(windowInfo);
+                if (item instanceof WindowInfoInSQL) {
+                    WindowInfoInSQL windowInfoInSQL = (WindowInfoInSQL) item;
+                    windowInfoInSQLS.add(windowInfoInSQL);
                 }
             }
 
 
             String windowStartFieldName = null;
             String windowEndFieldName = null;
+            Field timestampField = null;
 
-            for (WindowInfo info : windowInfos) {
-                if (info.getFirstWordInSQL() == WindowInfo.FirstWordInSQL.WINDOW_START) {
+            for (WindowInfoInSQL info : windowInfoInSQLS) {
+                if (info.getFirstWordInSQL() == WindowInfoInSQL.FirstWordInSQL.WINDOW_START) {
                     windowStartFieldName = info.getNewFieldName();
-                } else if (info.getFirstWordInSQL() == WindowInfo.FirstWordInSQL.WINDOW_END) {
+                } else if (info.getFirstWordInSQL() == WindowInfoInSQL.FirstWordInSQL.WINDOW_END) {
                     windowEndFieldName = info.getNewFieldName();
+                }
+
+                if (timestampField == null) {
+                    timestampField = info.getTimeField();
+                } else if (timestampField.equals(info.getTimeField())) {
+                    throw new SyntaxErrorException("window_start，window_end时间戳必须来自同一字段");
                 }
             }
 
-            Field timestampField = null;
+            for (WindowInfoInSQL windowInfoInSQL : windowInfoInSQLS) {
 
-            for (WindowInfo windowInfo : windowInfos) {
-                if (timestampField == null) {
-                    timestampField = windowInfo.getTimeField();
-                } else if (timestampField.equals(windowInfo.getTimeField())) {
-                    throw new RuntimeException("window_start，window_end时间戳必须来自同一字段");
+                SelectWindowResult selectWindowResult;
+                if (windowInfoInSQL.getFirstWordInSQL() == WindowInfoInSQL.FirstWordInSQL.WINDOW_START) {
+                    selectWindowResult = new SelectWindowResult(windowInfoInSQL.getTimeField(), Calculator.WINDOW_START, windowStartFieldName, windowEndFieldName);
+                } else if (windowInfoInSQL.getFirstWordInSQL() == WindowInfoInSQL.FirstWordInSQL.WINDOW_END) {
+                    selectWindowResult = new SelectWindowResult(windowInfoInSQL.getTimeField(), Calculator.WINDOW_END, windowStartFieldName, windowEndFieldName);
+                } else {
+                    throw new RSQLServerException("unknown type=" + windowInfoInSQL.getFirstWordInSQL());
                 }
 
-                SelectWindowResult selectWindowResult = new SelectWindowResult(windowInfo.getTimeField(), windowStartFieldName, windowEndFieldName);
+
                 //用于校验
-                selectWindowResult.setWindowInfo(windowInfo);
+                selectWindowResult.setWindowInfo(windowInfoInSQL);
                 result.add(selectWindowResult);
             }
 
         } else {
             String starText = ctx.STAR().getText();
             //默认是null，需要选择原表中所有字段；
+            Field field = new Field(starText, "", starText);
+            SelectFieldResult fieldResult = new SelectFieldResult(field);
+            result.add(fieldResult);
         }
 
         return new ListNode<SelectFieldResult>(ParserUtil.getText(ctx), result);
@@ -586,13 +602,13 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitAsWindowFunctionField(SqlParser.AsWindowFunctionFieldContext ctx) {
-        WindowInfo windowInfo = (WindowInfo) visit(ctx.windowFunction());
+        WindowInfoInSQL windowInfoInSQL = (WindowInfoInSQL) visit(ctx.windowFunction());
 
         String newFieldName = getIdentifier(ctx.identifier());
-        windowInfo.getTimeField().setAsFieldName(newFieldName);
-        windowInfo.setNewFieldName(newFieldName);
+        windowInfoInSQL.getTimeField().setAsFieldName(newFieldName);
+        windowInfoInSQL.setNewFieldName(newFieldName);
 
-        return windowInfo;
+        return windowInfoInSQL;
     }
 
     @Override
@@ -643,16 +659,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert timeUnit != null;
         long secondSize = timeUnit.toSeconds(size);
 
-        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.TUMBLE, secondSize, secondSize, field);
+        WindowInfoInSQL windowInfoInSQL = new WindowInfoInSQL(ParserUtil.getText(ctx), WindowInfoInSQL.WindowType.TUMBLE, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(tumbleStart)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(tumbleEnd)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_END);
         } else if (!StringUtils.isEmpty(tumble)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW);
         }
 
-        return windowInfo;
+        return windowInfoInSQL;
     }
 
     @Override
@@ -690,16 +706,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert slideTimeUnit != null;
         long secondSlide = slideTimeUnit.toSeconds(slide);
 
-        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.HOP, secondSlide, secondSize, field);
+        WindowInfoInSQL windowInfoInSQL = new WindowInfoInSQL(ParserUtil.getText(ctx), WindowInfoInSQL.WindowType.HOP, secondSlide, secondSize, field);
         if (!StringUtils.isEmpty(hopStart)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(hopEnd)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_END);
         } else if (!StringUtils.isEmpty(hop)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW);
         }
 
-        return windowInfo;
+        return windowInfoInSQL;
     }
 
     @Override
@@ -729,16 +745,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         assert timeUnit != null;
         long secondSize = timeUnit.toSeconds(size);
 
-        WindowInfo windowInfo = new WindowInfo(ParserUtil.getText(ctx), WindowInfo.WindowType.SESSION, secondSize, secondSize, field);
+        WindowInfoInSQL windowInfoInSQL = new WindowInfoInSQL(ParserUtil.getText(ctx), WindowInfoInSQL.WindowType.SESSION, secondSize, secondSize, field);
         if (!StringUtils.isEmpty(sessionStart)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_START);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_START);
         } else if (!StringUtils.isEmpty(sessionEnd)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW_END);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW_END);
         } else if (!StringUtils.isEmpty(session)) {
-            windowInfo.setFirstWordInSQL(WindowInfo.FirstWordInSQL.WINDOW);
+            windowInfoInSQL.setFirstWordInSQL(WindowInfoInSQL.FirstWordInSQL.WINDOW);
         }
 
-        return windowInfo;
+        return windowInfoInSQL;
     }
 
     @Override

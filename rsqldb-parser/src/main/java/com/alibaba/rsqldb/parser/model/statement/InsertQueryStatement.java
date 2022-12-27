@@ -24,7 +24,9 @@ import com.alibaba.rsqldb.parser.model.statement.query.FilterQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.rocketmq.streams.core.function.FilterAction;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
+import org.apache.rocketmq.streams.core.rstream.WindowStream;
 import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,10 +94,19 @@ public class InsertQueryStatement extends Statement {
         }
 
         RStream<JsonNode> stream = context.getrStream();
+        WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStream();
+        GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStream();
+        if (windowStream != null) {
+            windowStream = windowStream.map(value -> map(value, fieldName2NewName));
+            context.setWindowStream(windowStream);
+        } else if (groupedStream != null) {
+            groupedStream = groupedStream.map(value -> map(value, fieldName2NewName));
+            context.setGroupedStream(groupedStream);
+        } else {
+            stream = stream.map(value -> map(value, fieldName2NewName));
+            context.setrStream(stream);
+        }
 
-        stream = stream.map(value -> map(value, fieldName2NewName));
-
-        context.setrStream(stream);
         return context;
     }
 }

@@ -27,6 +27,10 @@ public class RSQLConstant {
         SINK, SOURCE
     }
 
+    public static final String COUNT = "COUNT_KEY";
+
+    public static final String SUM = "SUM_KEY";
+
 
     public static class Properties {
         public static final String TYPE = "type";

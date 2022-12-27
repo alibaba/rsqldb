@@ -19,32 +19,37 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.common.function.AVGFunction;
+import com.alibaba.rsqldb.common.function.CountFunction;
+import com.alibaba.rsqldb.common.function.EmptyFunction;
+import com.alibaba.rsqldb.common.function.MaxFunction;
+import com.alibaba.rsqldb.common.function.MinFunction;
+import com.alibaba.rsqldb.common.function.RSQLAccumulator;
+import com.alibaba.rsqldb.common.function.SQLFunction;
+import com.alibaba.rsqldb.common.function.SumFunction;
+import com.alibaba.rsqldb.common.function.WindowBoundaryTimeFunction;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
-import com.alibaba.rsqldb.parser.impl.ParserConstant;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.Operator;
-import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.expression.AndExpression;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
-import com.alibaba.rsqldb.parser.model.expression.MultiValueExpression;
 import com.alibaba.rsqldb.parser.model.expression.OrExpression;
-import com.alibaba.rsqldb.parser.model.expression.RangeValueExpression;
 import com.alibaba.rsqldb.parser.model.expression.SingleExpression;
 import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
-import com.alibaba.rsqldb.parser.model.expression.SingleValueExpression;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.streams.core.function.AggregateAction;
+import org.apache.rocketmq.streams.core.common.Constant;
+import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.util.Pair;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,12 +62,73 @@ public class QueryStatement extends Statement {
 
     private Map<Field/*输出的字段*/, Calculator/*针对字段的计算方式，可能为null*/> selectFieldAndCalculator;
 
+    private List<SQLFunction> sqlFunctions;
+
     public QueryStatement(String content, String tableName, Map<Field, Calculator> selectFieldAndCalculator) {
         super(content, tableName);
         if (selectFieldAndCalculator == null || selectFieldAndCalculator.size() == 0) {
             throw new SyntaxErrorException("select field is null. sql=" + this.getContent());
         }
         this.selectFieldAndCalculator = selectFieldAndCalculator;
+
+        sqlFunctions = buildFunction();
+    }
+
+    private List<SQLFunction> buildFunction() {
+        ArrayList<SQLFunction> result = new ArrayList<>();
+        if (isSelectAll()) {
+            return result;
+        }
+
+        for (Field field : selectFieldAndCalculator.keySet()) {
+            Calculator calculator = selectFieldAndCalculator.get(field);
+
+            String fieldName = field.getFieldName();
+            String asName = !StringUtils.isEmpty(field.getAsFieldName()) ? field.getAsFieldName() : field.getFieldName();
+
+            SQLFunction function;
+            if (calculator == null) {
+                function = new EmptyFunction(fieldName, asName);
+            } else {
+                switch (calculator) {
+                    case COUNT: {
+                        function = new CountFunction(fieldName, asName);
+                        break;
+                    }
+                    case MAX: {
+                        function = new MaxFunction(fieldName, asName);
+                        break;
+                    }
+                    case MIN: {
+                        function = new MinFunction(fieldName, asName);
+                        break;
+                    }
+                    case SUM: {
+                        function = new SumFunction(fieldName, asName);
+                        break;
+                    }
+                    case AVG: {
+                        function = new AVGFunction(fieldName, asName);
+                        break;
+                    }
+                    case WINDOW_START: {
+                        function = new WindowBoundaryTimeFunction(Constant.WINDOW_START_TIME, asName);
+                        break;
+                    }
+                    case WINDOW_END: {
+                        function = new WindowBoundaryTimeFunction(Constant.WINDOW_END_TIME, asName);
+                        break;
+                    }
+                    default: {
+                        throw new RSQLServerException("unknown calculator type=" + calculator);
+                    }
+                }
+            }
+
+            result.add(function);
+        }
+
+        return result;
     }
 
     public Map<Field, Calculator> getSelectFieldAndCalculator() {
@@ -127,124 +193,23 @@ public class QueryStatement extends Statement {
         }
 
         RStream<JsonNode> rStream = context.getrStream();
-        rStream.aggregate(buildSelect());
 
-        context.setrStream(rStream);
+        if (isSelectField()) {
+            rStream = rStream.map(value -> map(value, fieldName2AsName()));
+            context.setrStream(rStream);
+        } else {
+            //select * from table就是所有值都只能在一个实例上计算，不然结果不准确
+            GroupedStream<String, ObjectNode> groupedStream = rStream.keyBy(value -> QueryStatement.this.getContent()).aggregate(buildSelect());
+            context.setGroupedStream(groupedStream);
+        }
+
         return context;
     }
 
-
-    protected AggregateAction<String, JsonNode, ObjectNode> buildSelect() {
-        return (key, value, accumulator) -> {
-            for (Field field : selectFieldAndCalculator.keySet()) {
-                Calculator calculator = selectFieldAndCalculator.get(field);
-
-                String fieldName = field.getFieldName();
-                String asName = !StringUtils.isEmpty(field.getAsFieldName()) ? field.getAsFieldName() : field.getFieldName();
-
-                JsonNode valueNode = value.get(fieldName);
-
-                JsonNode storeNode = accumulator.get(asName);
-
-                if (calculator == null) {
-                    accumulator.set(asName, valueNode);
-                    continue;
-                }
-
-                switch (calculator) {
-                    case COUNT: {
-                        if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
-                            if (storeNode == null) {
-                                accumulator.put(asName, 1);
-                            } else {
-                                int count = storeNode.asInt();
-                                accumulator.put(asName, ++count);
-                            }
-                        }
-                        break;
-                    }
-
-                    case MIN: {
-                        if (valueNode != null && valueNode.isNumber()) {
-                            double newValue = valueNode.doubleValue();
-                            if (storeNode == null) {
-                                accumulator.put(asName, newValue);
-                            } else {
-                                double oldValue = storeNode.doubleValue();
-                                accumulator.put(asName, Math.min(newValue, oldValue));
-                            }
-                        }
-
-                        if (valueNode != null && !valueNode.isNumber()) {
-                            logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
-                        }
-                        break;
-                    }
-
-                    case MAX: {
-                        if (valueNode != null && valueNode.isNumber()) {
-                            double newValue = valueNode.doubleValue();
-                            if (storeNode == null) {
-                                accumulator.put(asName, newValue);
-                            } else {
-                                double oldValue = storeNode.doubleValue();
-                                accumulator.put(asName, Math.max(newValue, oldValue));
-                            }
-                        }
-
-                        if (valueNode != null && !valueNode.isNumber()) {
-                            logger.error("calculator min by field:[{}], but the value is not a number:[{}].", fieldName, valueNode);
-                        }
-                        break;
-                    }
-
-                    case SUM: {
-                        if (valueNode != null && valueNode.isNumber()) {
-                            double newValue = valueNode.doubleValue();
-                            if (storeNode == null) {
-                                accumulator.put(asName, newValue);
-                            } else {
-                                double oldValue = storeNode.doubleValue();
-                                accumulator.put(asName, newValue + oldValue);
-                            }
-                        }
-                        break;
-                    }
-
-                    //todo
-                    case AVG: {
-                        if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
-
-                            JsonNode countNode = accumulator.get(String.join("@", ParserConstant.COUNT, asName));
-                            JsonNode sumNode = accumulator.get(String.join("@", ParserConstant.SUM, asName));
-
-                            if (countNode == null || sumNode == null) {
-                                accumulator.put(String.join("@", ParserConstant.COUNT, asName), 1);
-                                if (valueNode != null) {
-                                    double newValue = valueNode.doubleValue();
-                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), newValue);
-                                } else {
-                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), 0);
-                                }
-
-                            } else {
-                                double count = countNode.doubleValue();
-                                double sum = sumNode.doubleValue();
-                                accumulator.put(String.join("@", ParserConstant.COUNT, asName), ++count);
-                                if (valueNode != null) {
-                                    double newValue = valueNode.doubleValue();
-                                    accumulator.put(String.join("@", ParserConstant.SUM, asName), sum + newValue);
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-
-            return accumulator;
-        };
+    protected Accumulator<JsonNode, ObjectNode> buildSelect() {
+        return new RSQLAccumulator(sqlFunctions);
     }
+
 
     private boolean inSelectField(String fieldName) {
         if (StringUtils.isEmpty(fieldName)) {
@@ -283,5 +248,28 @@ public class QueryStatement extends Statement {
         }
 
         return false;
+    }
+
+    //只过滤字段，没有对字段进行计算
+    protected boolean isSelectField() {
+        for (Field field : selectFieldAndCalculator.keySet()) {
+            Calculator calculator = selectFieldAndCalculator.get(field);
+            if (calculator != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected HashMap<String, String> fieldName2AsName() {
+        Set<Field> fields = selectFieldAndCalculator.keySet();
+
+        HashMap<String, String> result = new HashMap<>();
+        for (Field field : fields) {
+            String asName = !StringUtils.isEmpty(field.getAsFieldName()) ?  field.getAsFieldName() : field.getFieldName();
+            result.put(field.getFieldName(), asName);
+        }
+
+        return result;
     }
 }

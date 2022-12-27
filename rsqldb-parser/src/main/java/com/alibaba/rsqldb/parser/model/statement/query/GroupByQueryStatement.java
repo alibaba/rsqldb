@@ -26,11 +26,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.common.Constant;
-import org.apache.rocketmq.streams.core.function.AggregateAction;
-import org.apache.rocketmq.streams.core.function.SelectAction;
+import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
-import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,8 +125,27 @@ public class GroupByQueryStatement extends QueryStatement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-        RStream<JsonNode> stream = context.getrStream();
-        //1 where 过滤
+        GroupedStream<String, JsonNode> groupedStream = buildGroupBy(context.getrStream());
+
+        //select
+        GroupedStream<String, ? extends JsonNode> selectField = groupedStream;
+        if (!isSelectAll()) {
+            Accumulator<JsonNode, ObjectNode> select = buildSelect();
+            selectField = groupedStream.aggregate(select);
+        }
+
+        //having
+        selectField = buildHaving(selectField);
+
+        context.setGroupedStream(selectField);
+
+        return context;
+    }
+
+
+    protected GroupedStream<String, JsonNode> buildGroupBy(RStream<JsonNode> stream) {
+
+        //where 过滤
         if (whereExpression != null) {
             stream = stream.filter(value -> {
                 try {
@@ -141,32 +158,24 @@ public class GroupByQueryStatement extends QueryStatement {
             });
         }
 
-        //2 groupBy
-        GroupedStream<String, JsonNode> groupedStream = stream.keyBy(new SelectAction<String, JsonNode>() {
-            @Override
-            public String select(JsonNode value) {
-                StringBuilder sb = new StringBuilder();
-                for (Field field : groupByField) {
-                    String fieldName = field.getFieldName();
-                    String temp = String.valueOf(value.get(fieldName));
-                    sb.append(temp);
-                    sb.append(Constant.SPLIT);
-                }
-
-                String result = sb.toString();
-                return result.substring(0, result.length() - 1);
+        // groupBy
+        return stream.keyBy(value -> {
+            StringBuilder sb = new StringBuilder();
+            for (Field field : groupByField) {
+                String fieldName = field.getFieldName();
+                String temp = String.valueOf(value.get(fieldName));
+                sb.append(temp);
+                sb.append(Constant.SPLIT);
             }
+
+            String result = sb.toString();
+            return result.substring(0, result.length() - 1);
         });
+    }
 
-        GroupedStream<String, ? extends JsonNode> selectField = groupedStream;
-        if (!isSelectAll()) {
-            AggregateAction<String, JsonNode, ObjectNode> select = buildSelect();
-            selectField = groupedStream.aggregate(select);
-        }
-
-        //3 having
+    protected GroupedStream<String, ? extends JsonNode> buildHaving(GroupedStream<String, ? extends JsonNode> selectField) {
         if (havingExpression != null) {
-            selectField = selectField.filter(value -> {
+            return selectField.filter(value -> {
                 try {
                     return havingExpression.isTrue(value);
                 } catch (Throwable t) {
@@ -177,8 +186,6 @@ public class GroupByQueryStatement extends QueryStatement {
             });
         }
 
-        context.setGroupedStream(selectField);
-
-        return context;
+        return selectField;
     }
 }

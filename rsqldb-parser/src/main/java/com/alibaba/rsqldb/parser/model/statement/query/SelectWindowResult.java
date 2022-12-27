@@ -16,19 +16,31 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
+import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 
 public class SelectWindowResult extends SelectFieldResult {
+    private Calculator calculator;
     private String windowStartFieldName;
     private String windowEndFieldName;
 
     //用于校验select字段的信息是否与groupBy信息一致
-    private WindowInfo windowInfo;
+    private WindowInfoInSQL windowInfoInSQL;
 
-    public SelectWindowResult(Field timestampField, String windowStartFieldName, String windowEndFieldName) {
+    public SelectWindowResult(Field timestampField, Calculator calculator,
+                              String windowStartFieldName, String windowEndFieldName) {
         super(timestampField);
+        this.calculator = calculator;
         this.windowStartFieldName = windowStartFieldName;
         this.windowEndFieldName = windowEndFieldName;
+    }
+
+    public Calculator getCalculator() {
+        return calculator;
+    }
+
+    public void setCalculator(Calculator calculator) {
+        this.calculator = calculator;
     }
 
     public String getWindowStartFieldName() {
@@ -47,11 +59,11 @@ public class SelectWindowResult extends SelectFieldResult {
         this.windowEndFieldName = windowEndFieldName;
     }
 
-    public WindowInfo getWindowInfo() {
-        return windowInfo;
+    public WindowInfoInSQL getWindowInfo() {
+        return windowInfoInSQL;
     }
 
-    public void setWindowInfo(WindowInfo windowInfo) {
-        this.windowInfo = windowInfo;
+    public void setWindowInfo(WindowInfoInSQL windowInfoInSQL) {
+        this.windowInfoInSQL = windowInfoInSQL;
     }
 }

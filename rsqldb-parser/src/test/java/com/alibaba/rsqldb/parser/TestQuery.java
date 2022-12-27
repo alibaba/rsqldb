@@ -233,7 +233,8 @@ public class TestQuery {
                 "GROUP BY HOP (ts, INTERVAL '30' SECOND, INTERVAL '1' MINUTE), username;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
     @Test
@@ -262,7 +263,9 @@ public class TestQuery {
                 "where p.name = 'nize';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+
+        System.out.println(statements);
     }
 
 }

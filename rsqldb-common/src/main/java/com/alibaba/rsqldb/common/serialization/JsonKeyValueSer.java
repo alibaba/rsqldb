@@ -14,8 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.model;
+package com.alibaba.rsqldb.common.serialization;
 
-public enum Calculator {
-    AVG, COUNT, MAX, MIN, SUM, WINDOW_START, WINDOW_END
+
+import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
+
+public class JsonKeyValueSer<V> implements KeyValueSerializer<String, V> {
+
+    @Override
+    public byte[] serialize(String s, V data) throws Throwable {
+        return new byte[0];
+    }
 }

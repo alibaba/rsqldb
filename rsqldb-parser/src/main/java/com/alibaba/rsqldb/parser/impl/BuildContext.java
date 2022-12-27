@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
@@ -40,9 +41,9 @@ public class BuildContext {
     //------------------------------streams------------------------------
     private RStream<JsonNode> rStream;
 
-    private GroupedStream<?, ?> groupedStream;
+    private GroupedStream<String, ? extends JsonNode> groupedStream;
 
-    private WindowStream<?, ?> windowStream;
+    private WindowStream<String, ? extends JsonNode> windowStream;
 
     private JoinedStream<?, ?> joinedStream;
 
@@ -73,19 +74,19 @@ public class BuildContext {
         this.rStream = rStream;
     }
 
-    public GroupedStream<?, ?> getGroupedStream() {
+    public GroupedStream<String, ? extends JsonNode> getGroupedStream() {
         return groupedStream;
     }
 
-    public void setGroupedStream(GroupedStream<?, ?> groupedStream) {
+    public void setGroupedStream(GroupedStream<String, ? extends JsonNode> groupedStream) {
         this.groupedStream = groupedStream;
     }
 
-    public WindowStream<?, ?> getWindowStream() {
+    public WindowStream<String, ? extends JsonNode> getWindowStream() {
         return windowStream;
     }
 
-    public void setWindowStream(WindowStream<?, ?> windowStream) {
+    public void setWindowStream(WindowStream<String, ? extends JsonNode> windowStream) {
         this.windowStream = windowStream;
     }
 

@@ -19,11 +19,10 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.concurrent.TimeUnit;
 
-public class WindowInfo extends Node {
+public class WindowInfoInSQL extends Node {
     public enum WindowType {
         TUMBLE, HOP, SESSION
     }
@@ -53,7 +52,7 @@ public class WindowInfo extends Node {
     private String newFieldName;
 
 
-    public WindowInfo(String content, WindowType type, long slide, long size, Field timeField) {
+    public WindowInfoInSQL(String content, WindowType type, long slide, long size, Field timeField) {
         super(content);
         this.type = type;
         this.slide = slide;

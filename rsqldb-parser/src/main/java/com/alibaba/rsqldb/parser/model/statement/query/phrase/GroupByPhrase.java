@@ -19,22 +19,21 @@ package com.alibaba.rsqldb.parser.model.statement.query.phrase;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.query.WindowInfo;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.alibaba.rsqldb.parser.model.statement.query.WindowInfoInSQL;
 
 import java.util.List;
 
 public class GroupByPhrase extends Node {
     private List<Field> groupByFields;
-    private WindowInfo windowInfo;
+    private WindowInfoInSQL windowInfoInSQL;
 
-    public GroupByPhrase(String content, List<Field> groupByFields, WindowInfo windowInfo) {
+    public GroupByPhrase(String content, List<Field> groupByFields, WindowInfoInSQL windowInfoInSQL) {
         super(content);
         if (groupByFields == null || groupByFields.size() == 0) {
             throw new SyntaxErrorException("groupBy field is null.");
         }
         this.groupByFields = groupByFields;
-        this.windowInfo = windowInfo;
+        this.windowInfoInSQL = windowInfoInSQL;
     }
 
     public List<Field> getGroupByFields() {
@@ -45,11 +44,11 @@ public class GroupByPhrase extends Node {
         this.groupByFields = groupByFields;
     }
 
-    public WindowInfo getWindowInfo() {
-        return windowInfo;
+    public WindowInfoInSQL getWindowInfo() {
+        return windowInfoInSQL;
     }
 
-    public void setWindowInfo(WindowInfo windowInfo) {
-        this.windowInfo = windowInfo;
+    public void setWindowInfo(WindowInfoInSQL windowInfoInSQL) {
+        this.windowInfoInSQL = windowInfoInSQL;
     }
 }
