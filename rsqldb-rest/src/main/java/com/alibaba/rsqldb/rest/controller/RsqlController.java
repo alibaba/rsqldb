@@ -20,12 +20,13 @@ import com.alibaba.rsqldb.rest.service.RsqlService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 @RequestMapping("/command")
 public class RsqlController {
-
     private RsqlService rsqlService;
 
     public RsqlController(RsqlService rsqlService) {
@@ -33,7 +34,23 @@ public class RsqlController {
     }
 
     @PostMapping("/task/submit")
-    public void executeSql(@RequestBody String sql) {
-        this.rsqlService.executeSql(sql);
+    public void executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
+        this.rsqlService.executeSql(sql, jobId);
     }
+
+    //查询任务，以及运行状态
+    public void queryTask() {
+
+    }
+
+    public void queryTaskByJobId(String jobId) {
+
+    }
+
+    //停止任务
+    public void terminate(String jobId) {
+
+    }
+
+
 }

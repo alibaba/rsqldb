@@ -73,6 +73,7 @@ import com.alibaba.rsqldb.parser.model.statement.query.phrase.WherePhrase;
 import com.alibaba.rsqldb.parser.util.ParserUtil;
 import com.alibaba.rsqldb.parser.util.Validator;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.util.Pair;
@@ -386,8 +387,8 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     @Override
     public Node visitJoinPhrase(SqlParser.JoinPhraseContext ctx) {
         JoinType joinType;
-        String leftJoin = ctx.LEFT().getText();
-        if (!StringUtils.isEmpty(leftJoin)) {
+        TerminalNode terminalNode = ctx.LEFT();
+        if (terminalNode != null) {
             joinType = JoinType.LEFT_JOIN;
         } else {
             joinType = JoinType.INNER_JOIN;
@@ -562,7 +563,6 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitTableProperty(SqlParser.TablePropertyContext ctx) {
-        System.out.println("visitTableProperty");
 
         SqlParser.IdentifierContext identifier = ctx.identifier();
 

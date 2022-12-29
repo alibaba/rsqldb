@@ -16,32 +16,6 @@
  */
 package com.alibaba.rsqldb.rest.store;
 
-
-import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
-import com.alibaba.rsqldb.parser.model.statement.Statement;
-
-public class FIFOQueue implements CommandQueue {
-
-    @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void putCommand(Statement node) {
-
-    }
-
-    @Override
-    public Node getNextCommand() {
-        return null;
-    }
-
-
-    @Override
-    public CreateTableStatement findTable(String tableName) {
-        return null;
-    }
-
+public enum CommandStatus {
+    STORE, CONSUMED, SKIPPED, RUNNING, TERMINATED;
 }

@@ -37,7 +37,6 @@ public class CreateViewStatement extends Statement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-
-        return null;
+        return queryStatement.build(context);
     }
 }

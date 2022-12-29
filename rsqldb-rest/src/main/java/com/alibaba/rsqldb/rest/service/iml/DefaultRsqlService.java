@@ -17,33 +17,35 @@
 package com.alibaba.rsqldb.rest.service.iml;
 
 import com.alibaba.rsqldb.parser.DefaultParser;
-import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.service.RsqlService;
-import com.alibaba.rsqldb.rest.store.CommandQueue;
-import com.alibaba.rsqldb.rest.store.CommandStore;
+import com.alibaba.rsqldb.rest.store.CommandResult;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.common.Constant;
+import org.apache.rocketmq.streams.core.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DefaultRsqlService implements RsqlService {
     private static final Logger logger = LoggerFactory.getLogger(DefaultRsqlService.class);
 
-    @Resource
     private RSQLConfig rsqlConfig;
-    private DefaultParser defaultParser;
-    private CommandQueue commandQueue;
 
-    public DefaultRsqlService() {
+    private RSQLEngin rsqlEngin;
+
+    private DefaultParser defaultParser;
+
+
+    public DefaultRsqlService(RSQLConfig rsqlConfig, RSQLEngin rsqlEngin) {
+        this.rsqlConfig = rsqlConfig;
+        this.rsqlEngin = rsqlEngin;
         this.defaultParser = new DefaultParser();
-        this.commandQueue = new CommandStore(rsqlConfig);
-        this.commandQueue.start();
     }
 
     /**
@@ -51,36 +53,52 @@ public class DefaultRsqlService implements RsqlService {
      * 将sql持久化
      * 获取一个sql
      * 提交给线程池执行
+     *
      * @param sql
      */
     @Override
-    public void executeSql(String sql) {
+    public void executeSql(String sql, String jobId) {
         if (StringUtils.isEmpty(sql)) {
             return;
         }
         //解析
         List<Statement> temp = defaultParser.parseStatement(sql);
 
+        int count = 0;
         for (Statement statement : temp) {
             //写入RocketMQ,放入后保证是能执行的，不然不要放入
-            this.commandQueue.putCommand(statement);
+            if (StringUtils.isEmpty(jobId)) {
+                String tempJobId = Utils.toHexString(statement.getContent());
+                tempJobId = String.join("@", tempJobId, String.valueOf(count++));
+
+                logger.info("create jobId from sql. jobId=[{}], sql=[{}]", tempJobId, statement.getContent());
+
+                this.rsqlEngin.putCommand(tempJobId, statement);
+            } else {
+                String tempJobId = String.join("@", jobId, String.valueOf(count++));
+                this.rsqlEngin.putCommand(tempJobId, statement);
+            }
         }
 
-
-        //异步执行
-
-
-
-        //返回执行结果
-
-
+        //todo 需要等待这个流处理任务在本地节点执行成功，才能为CLI交互式查询做准备
     }
-    //执行流处理任务
 
+    @Override
+    public void queryTask() {
+        Map<String, CommandResult> all = this.rsqlEngin.queryAll();
+    }
 
-    //执行属性设置
+    @Override
+    public void queryTaskByJobId(String jobId) {
+        Map<String, CommandResult> allMap = this.rsqlEngin.queryAll();
+        CommandResult result = allMap.get(jobId);
+    }
 
+    @Override
+    public void terminate(String jobId) {
+        //终止本地任务
+        this.rsqlEngin.terminate(jobId);
+    }
 
-    //执行select语句并返回结果，在目录上实时显示
 
 }

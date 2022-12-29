@@ -189,7 +189,6 @@ public class CreateTableStatement extends Statement {
             RStream<? extends JsonNode> stream = context.getrStreamResult();
             WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
             GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
-            //todo join
 
             if (windowStream != null) {
                 windowStream.sink(topicName, new JsonStringKVSer<>());
@@ -198,9 +197,6 @@ public class CreateTableStatement extends Statement {
             } else {
                 stream.sink(topicName, new JsonObjectKVSer<>());
             }
-
-
-
         }
 
 

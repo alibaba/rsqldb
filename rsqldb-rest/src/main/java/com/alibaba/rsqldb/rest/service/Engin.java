@@ -14,45 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.store;
+package com.alibaba.rsqldb.rest.service;
 
-public class CacheCommand implements Comparable<CacheCommand> {
-    private long timestamp;
-    private byte[] body;
+import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.rest.store.CommandResult;
 
-    public CacheCommand(long timestamp, byte[] body) {
-        this.timestamp = timestamp;
-        this.body = body;
-    }
+import java.util.Map;
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+public interface Engin {
+    void start();
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+    CommandResult putCommand(String jobId, Node node);
 
-    public byte[] getBody() {
-        return body;
-    }
+    Map<String, CommandResult> queryAll();
 
-    public void setBody(byte[] body) {
-        this.body = body;
-    }
-
-    @Override
-    public int compareTo(CacheCommand o) {
-        long diff = this.timestamp - o.timestamp;
-
-        if (diff > 0) {
-            return 1;
-        }
-
-        if (diff < 0) {
-            return -1;
-        }
-
-        return 0;
-    }
+    void terminate(String jobId);
 }

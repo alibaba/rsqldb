@@ -30,58 +30,69 @@ import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.join.JointStatement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
-import com.alibaba.rsqldb.rest.store.CommandStore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
 
+import java.io.SyncFailedException;
 import java.util.function.Function;
 
 @Service
 public class TaskFactory {
     private RSQLConfig rsqlConfig;
-    private Function<String, CreateTableStatement> function;
+    private Function<String, Statement> function;
 
     public TaskFactory(RSQLConfig rsqlConfig) {
         this.rsqlConfig = rsqlConfig;
     }
 
-    public void init(Function<String, CreateTableStatement> function) {
+    public void init(Function<String, Statement> function) {
         this.function = function;
     }
 
-    public void dispatch(Statement statement, BuildContext context) throws Throwable {
+    public BuildContext dispatch(Statement statement, BuildContext context) throws Throwable {
+        if (statement instanceof CreateTableStatement || statement instanceof CreateViewStatement) {
+            //no-op
+            // 不执行，由其他sql语句触发，比如insert into ... from viewTable.
+            return null;
+        }
+
         String tableName = statement.getTableName();
 
         if (statement instanceof InsertValueStatement) {
             //查询insert表是否存在
-            CreateTableStatement createTableStatement = function.apply(tableName);
+            Statement temp = function.apply(tableName);
+            if (!(temp instanceof CreateTableStatement)) {
+                throw new SyncFailedException("insert table not exist.");
+            }
+
+            CreateTableStatement createTableStatement = (CreateTableStatement) temp;
+
             context.setCreateTableStatement(createTableStatement);
             //没有source表，只有sink，不能使用streams插入，直接使用producer写入数据
             this.build((InsertValueStatement) statement, context, createTableStatement.getTopicName());
+
+            return null;
         } else if (statement instanceof InsertQueryStatement) {
             InsertQueryStatement insertQueryStatement = (InsertQueryStatement) statement;
             QueryStatement queryStatement = insertQueryStatement.getQueryStatement();
-            tableName = queryStatement.getTableName();
-            context = prepare(tableName, context, RSQLConstant.TableType.SOURCE);
+            String sourceTableName = queryStatement.getTableName();
+            context = prepare(sourceTableName, context, RSQLConstant.TableType.SOURCE);
 
-            context = this.build(insertQueryStatement, context);
+            context = this.build((InsertQueryStatement) statement, context);
 
             context = prepare(tableName, context, RSQLConstant.TableType.SINK);
         } else if (statement instanceof QueryStatement) {
             context = prepare(tableName, context, RSQLConstant.TableType.SOURCE);
+
             context = build((QueryStatement) statement, context);
 
-
+            //todo 没有输出目的地的select（来自CLI命令行，输出到返回中），如果即没有response也米有其他返回，不能直接执行。
+            context = prepare(tableName, context, RSQLConstant.TableType.SINK);
+        } else {
+            throw new RSQLServerException("unknown statement type=" + statement.getClass() + ".sql=" + statement.getContent());
         }
 
-
-    }
-
-    public void build(CreateTableStatement createTableStatement, BuildContext context) throws Exception {
-    }
-
-    public void build(CreateViewStatement createViewStatement, BuildContext context) throws Exception {
+        return context;
     }
 
     private BuildContext build(InsertQueryStatement insertQueryStatement, BuildContext context) throws Throwable {
@@ -108,12 +119,11 @@ public class TaskFactory {
         } else if (queryStatement instanceof WindowQueryStatement) {
             WindowQueryStatement windowQueryStatement = (WindowQueryStatement) queryStatement;
             windowQueryStatement.build(context);
-        } else if (queryStatement.getClass().getName().equals(JointStatement.class.getName())) {
+        } else if (queryStatement instanceof JointStatement ) {
             JointStatement jointStatement = (JointStatement) queryStatement;
 
             String joinTableName = jointStatement.getJoinTableName();
             prepare(joinTableName, context, RSQLConstant.TableType.SOURCE);
-
 
             jointStatement.build(context);
         }
@@ -122,13 +132,10 @@ public class TaskFactory {
     }
 
     private BuildContext prepare(String tableName, BuildContext context, RSQLConstant.TableType type) throws Throwable {
-        CreateTableStatement createTableStatement = function.apply(tableName);
-        if (createTableStatement == null) {
-            throw new RSQLServerException("createTableStatement is null query by table name:[" + tableName + "]");
-        }
+        Statement statement = function.apply(tableName);
 
         context.putHeader(RSQLConstant.TABLE_TYPE, type);
-        return createTableStatement.build(context);
+        return statement.build(context);
     }
 
 

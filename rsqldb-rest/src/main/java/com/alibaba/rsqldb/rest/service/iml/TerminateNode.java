@@ -14,8 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.runtime;
+package com.alibaba.rsqldb.rest.service.iml;
 
-public class Task {
+import com.alibaba.rsqldb.parser.model.Node;
 
+public class TerminateNode extends Node {
+    private String jobId;
+
+    public TerminateNode(String jobId, String content) {
+        super(content);
+        this.jobId = jobId;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
 }

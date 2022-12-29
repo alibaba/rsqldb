@@ -20,11 +20,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class RSQLConfig {
-    public static String SQL_TOPIC_NAME = System.getProperty("sqlTopicName","RSQLDB-SQL-TOPIC");
-    public static String SQL_GROUP_NAME = System.getProperty("sqlGroupName","RSQLDB-SQL-GROUP");
-    public static int SQL_QUEUE_NUM = Integer.parseInt(System.getProperty("queueNum","8"));
+    public static String SQL_TOPIC_NAME = System.getProperty("sqlTopicName","RSQLDB-COMMAND-TOPIC");
+    public static String SQL_GROUP_NAME = System.getProperty("sqlGroupName","RSQLDB-COMMAND-GROUP");
 
-    public String namesrvAddr;
+    public String namesrvAddr= "127.0.0.1:9876";
     public int threadNum;
 
 

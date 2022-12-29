@@ -18,8 +18,10 @@ package com.alibaba.rsqldb.parser;
 
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import org.apache.rocketmq.streams.core.util.Utils;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class TestQuery {
@@ -219,7 +221,8 @@ public class TestQuery {
                 "GROUP BY SESSION(ts, INTERVAL '30' SECOND), username;";
 
         DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
     @Test
@@ -267,6 +270,10 @@ public class TestQuery {
         List<Statement> statements = parser.parseStatement(sql);
 
         System.out.println(statements);
+
+        byte[] bytes = sql.getBytes(StandardCharsets.UTF_8);
+        String str = Utils.toHexString(bytes);
+        System.out.println(str);
     }
 
 }

@@ -24,6 +24,7 @@ import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.common.serialization.Serializer;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
@@ -35,6 +36,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.running.RocketMQClient;
 import org.apache.rocketmq.streams.core.util.RocketMQUtil;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
@@ -42,9 +44,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -56,18 +66,19 @@ public class CommandStore implements CommandQueue {
     private final DefaultLitePullConsumer pullConsumer;
     private final DefaultMQProducer producer;
     private final DefaultMQAdminExt mqAdmin;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private Collection<MessageQueue> mqSet;
-    private final ConcurrentHashMap<String, CreateTableStatement> cache = new ConcurrentHashMap<>();
+    private Collection<MessageQueue> commandMessageQueue;
+    private final ConcurrentHashMap<String/*tableName*/, Statement> cache = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<String/*jobId*/, CommandResult> putCommandMap = new ConcurrentHashMap<>();
 
 
     public CommandStore(RSQLConfig rsqlConfig) {
         rocketMQClient = new RocketMQClient(rsqlConfig.getNamesrvAddr());
 
         pullConsumer = new DefaultLitePullConsumer(RSQLConfig.SQL_GROUP_NAME);
-        pullConsumer.setPullBatchSize(1);
         pullConsumer.setNamesrvAddr(rsqlConfig.getNamesrvAddr());
-        pullConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
         pullConsumer.setMessageModel(MessageModel.BROADCASTING);
         pullConsumer.setAutoCommit(false);
 
@@ -88,87 +99,84 @@ public class CommandStore implements CommandQueue {
 
             pullConsumer.start();
             producer.start();
-            mqSet = pullConsumer.fetchMessageQueues(RSQLConfig.SQL_GROUP_NAME);
 
-
+            Collection<MessageQueue> messageQueues = pullConsumer.fetchMessageQueues(RSQLConfig.SQL_TOPIC_NAME);
+            if (messageQueues == null || messageQueues.size() != 1) {
+                throw new RSQLServerException("command topic queue not equals 1. messageQueue=" + messageQueues);
+            }
+            commandMessageQueue = messageQueues;
         } catch (Exception e) {
             throw new RSQLServerException("start localStore error.", e);
         }
     }
 
-//    /**
-//     * 相同的key取queueOffset最大的一条
-//     * kev-value对需要按照写入顺序排列好
-//     */
-//    @Override
-//    public void restore() {
-//        List<MessageExt> holder = new ArrayList<>();
-//        List<MessageExt> result = pullConsumer.poll(50);
-//        while (result != null && result.size() != 0) {
-//            holder.addAll(result);
-//            if (holder.size() <= 1000) {
-//                result = pullConsumer.poll(50);
-//                continue;
-//            }
-//
-//            replayState(holder);
-//            holder.clear();
-//
-//            result = pullConsumer.poll(50);
-//        }
-//        if (holder.size() != 0) {
-//            replayState(holder);
-//        }
-//    }
+    @Override
+    public CompletableFuture<Boolean> restore() throws Exception {
+        //恢复command topic中所有的命令到本地，存储建表语句
+        pullConsumer.setPullBatchSize(1000);
+        pullConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+        pullConsumer.assign(commandMessageQueue);
+        pullConsumer.seekToBegin((MessageQueue) commandMessageQueue.toArray()[0]);
 
+        CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
 
-//    @Override
-//    public void put(Node node) {
-//        if (node == null) {
-//            return;
-//        }
-//
-//        Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
-//        byte[] bytes = serializer.serialize(node);
-//
-////        Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
-////        Node deserialize = deserializer.deserialize(bytes, CreateTableStatement.class);
-////        System.out.println(deserialize);
-//
-//        try {
-//            Message message = new Message(RsqlConfig.SQL_TOPIC_NAME, bytes);
-//            producer.send(message);
-//        } catch (Throwable e) {
-//            throw new RSQLServerException("put sql to sql topic error.", e);
-//        }
-//    }
+        this.executor.submit(() -> {
+            try {
+                pullToLast();
+                commit();
+                pullConsumer.setPullBatchSize(1);
+
+                completableFuture.complete(true);
+            } catch (Throwable t) {
+                completableFuture.complete(false);
+                logger.error("pull to last error.", t);
+                throw t;
+            }
+        });
+
+        return completableFuture;
+    }
 
     //todo compact topic 在static topic下行为表现
     @Override
-    public void putCommand(Statement node) {
+    public CommandResult putCommand(String jobId, Node node) {
         if (node == null) {
             throw new IllegalArgumentException("table name or statement is null.");
         }
+
+        if (putCommandMap.containsKey(jobId)) {
+            throw new IllegalArgumentException("jobId exist.");
+        }
+
         Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
         byte[] bytes = serializer.serialize(node);
 
         try {
             Message message = new Message(RSQLConfig.SQL_TOPIC_NAME, bytes);
-            /**
-             * 一个tableName只能对应一个statement，使用compact topic压缩，相同的key在一个queue里面
-             */
-            message.setKeys(node.getTableName());
+
+            message.setKeys(jobId);
             message.putUserProperty(RSQLConstant.BODY_TYPE, node.getClass().getName());
-            producer.send(message, new SelectMessageQueueByHash(), node.getTableName());
+            producer.send(message, new SelectMessageQueueByHash(), jobId);
+
+            logger.info("put command into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, node.getContent());
         } catch (Throwable e) {
             throw new RSQLServerException("put sql to sql topic error.", e);
         }
+
+        CompletableFuture<Boolean> result = new CompletableFuture<>();
+        CommandResult commandResult = new CommandResult(jobId, CommandStatus.STORE, node, result);
+        putCommandMap.put(jobId, commandResult);
+
+        return commandResult;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Node getNextCommand() {
+    public CommandResult getNextCommand() throws Exception {
         List<MessageExt> messageExts = pullConsumer.poll();
+
+        if (messageExts == null || messageExts.size() == 0) {
+            return null;
+        }
 
         if (messageExts.size() > 1) {
             throw new RSQLServerException("unexpected error, command num more than 1.");
@@ -180,6 +188,84 @@ public class CommandStore implements CommandQueue {
             return null;
         }
 
+        Node node = deserializeAndSave(command);
+
+        String jobId = command.getKeys();
+
+        CommandResult putCommandResult = this.putCommandMap.get(jobId);
+
+        if (putCommandResult != null) {
+            putCommandResult.setStatus(CommandStatus.CONSUMED);
+            putCommandResult.complete();
+        } else {
+            putCommandResult = new CommandResult(jobId, CommandStatus.CONSUMED, node);
+            this.putCommandMap.put(jobId, putCommandResult);
+        }
+
+
+        return putCommandResult;
+    }
+
+    @Override
+    public Statement findTable(String tableName) {
+        if (cache.containsKey(tableName)) {
+            return cache.get(tableName);
+        }
+
+        throw new RSQLServerException("Statement with tableName=" + tableName + " not exist.");
+    }
+
+    @Override
+    public Map<String, CommandResult> queryAll() {
+        return Collections.unmodifiableMap(this.putCommandMap);
+    }
+
+    private void pullToLast() {
+        List<MessageExt> holder = new ArrayList<>();
+        //recover
+        List<MessageExt> result = pullConsumer.poll(100);
+        while (result != null && result.size() != 0) {
+            holder.addAll(result);
+            if (holder.size() <= 1000) {
+                result = pullConsumer.poll(100);
+                continue;
+            }
+
+            replayState(holder);
+            holder.clear();
+
+            result = pullConsumer.poll(100);
+        }
+
+        if (holder.size() != 0) {
+            replayState(holder);
+        }
+    }
+
+    private void replayState(List<MessageExt> msgs) {
+        if (msgs == null || msgs.size() == 0) {
+            return;
+        }
+
+        Map<String, List<MessageExt>> collect = msgs.stream().parallel().collect(Collectors.groupingBy(MessageExt::getKeys));
+        for (String key : collect.keySet()) {
+            List<MessageExt> messageExts = collect.get(key);
+
+            List<MessageExt> sortedMessages = sortByQueueOffset(messageExts);
+
+            //最后的消息
+            MessageExt result = sortedMessages.get(sortedMessages.size() - 1);
+
+            String emptyBody = result.getUserProperty(Constant.EMPTY_BODY);
+            if (Constant.TRUE.equals(emptyBody)) {
+                continue;
+            }
+            deserializeAndSave(result);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Node deserializeAndSave(MessageExt command) {
         String clazzName = command.getUserProperty(RSQLConstant.BODY_TYPE);
         Class<Node> clazz = null;
         try {
@@ -191,72 +277,60 @@ public class CommandStore implements CommandQueue {
         Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
 
         Node node = deserializer.deserialize(command.getBody(), clazz);
+
         //保存到本地内存
         if (node instanceof CreateTableStatement) {
             CreateTableStatement statement = (CreateTableStatement) node;
             cache.put(statement.getTableName(), statement);
         }
 
+        if (node instanceof CreateViewStatement) {
+            CreateViewStatement statement = (CreateViewStatement) node;
+            cache.put(statement.getTableName(), statement);
+        }
         return node;
     }
 
     @Override
-    public CreateTableStatement findTable(String tableName) {
-        if (cache.containsKey(tableName)) {
-            return cache.get(tableName);
+    public void changeCommandStatus(String jobId, CommandStatus status) {
+        CommandResult result = this.putCommandMap.get(jobId);
+        if (result != null) {
+            result.setStatus(status);
         }
-
-        return null;
     }
 
+    @Override
+    public void changeCommandStatus(String jobId, CommandStatus status, Object attachment) {
+        CommandResult result = this.putCommandMap.get(jobId);
+        if (result != null) {
+            result.setStatus(status);
+            result.setAttachment(attachment);
+        }
+    }
 
-//    private void replayState(List<MessageExt> msgs) {
-//        if (msgs == null || msgs.size() == 0) {
-//            return;
-//        }
-//
-//        Map<String/*key*/, List<MessageExt>> groupByKey = msgs.stream().parallel().collect(Collectors.groupingBy(MessageExt::getKeys));
-//        for (String key : groupByKey.keySet()) {
-//            List<MessageExt> messageExts = groupByKey.get(key);
-//            List<MessageExt> sortedMessages = sortByQueueOffset(messageExts);
-//
-//            //最后的消息
-//            MessageExt result = sortedMessages.get(sortedMessages.size() - 1);
-//
-//            String emptyBody = result.getUserProperty(Constant.EMPTY_BODY);
-//            if (Constant.TRUE.equals(emptyBody)) {
-//                continue;
-//            }
-//
-//            long bornTimestamp = result.getBornTimestamp();
-//            byte[] body = result.getBody();
-//
-//            CacheCommand command = new CacheCommand(bornTimestamp, body);
-//            this.cache.add(command);
-//        }
-//
-//
-//    }
+    public void commit() {
+        HashSet<MessageQueue> set = new HashSet<>(commandMessageQueue);
+        pullConsumer.commit(set, true);
+    }
 
+    private List<MessageExt> sortByQueueOffset(List<MessageExt> target) {
+        if (target == null || target.size() == 0) {
+            return new ArrayList<>();
+        }
 
-//    private List<MessageExt> sortByQueueOffset(List<MessageExt> target) {
-//        if (target == null || target.size() == 0) {
-//            return new ArrayList<>();
-//        }
-//
-//        target.sort((o1, o2) -> {
-//            long diff = o1.getQueueOffset() - o2.getQueueOffset();
-//
-//            if (diff > 0) {
-//                return 1;
-//            }
-//
-//            if (diff < 0) {
-//                return -1;
-//            }
-//            return 0;
-//        });
-//
-//        return target;
-//    }
+        target.sort((o1, o2) -> {
+            long diff = o1.getQueueOffset() - o2.getQueueOffset();
+
+            if (diff > 0) {
+                return 1;
+            }
+
+            if (diff < 0) {
+                return -1;
+            }
+            return 0;
+        });
+
+        return target;
+    }
 }

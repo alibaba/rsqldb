@@ -31,10 +31,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BuildContext {
-    private DefaultMQProducer producer;
-    private StreamBuilder streamBuilder;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private Map<String, Object> header = new HashMap<>();
+    private final DefaultMQProducer producer;
+    private final StreamBuilder streamBuilder;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, Object> header = new HashMap<>();
 
     //------------------------------source------------------------------
     private final Map<String/*tableName*/, RStream<JsonNode>> rStreamSource = new HashMap<>();
@@ -54,17 +54,13 @@ public class BuildContext {
     private byte[] insertValueData;
 
 
-    public BuildContext(DefaultMQProducer producer, StreamBuilder streamBuilder) {
+    public BuildContext(DefaultMQProducer producer, String jobId) {
         this.producer = producer;
-        this.streamBuilder = streamBuilder;
+        this.streamBuilder = new StreamBuilder(jobId);
     }
 
     public StreamBuilder getStreamBuilder() {
         return streamBuilder;
-    }
-
-    public void setStreamBuilder(StreamBuilder streamBuilder) {
-        this.streamBuilder = streamBuilder;
     }
 
     public RStream<? extends JsonNode> getrStreamResult() {
@@ -119,9 +115,6 @@ public class BuildContext {
         return producer;
     }
 
-    public void setProducer(DefaultMQProducer producer) {
-        this.producer = producer;
-    }
 
     public ObjectMapper getObjectMapper() {
         return objectMapper;

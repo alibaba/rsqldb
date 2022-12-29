@@ -18,8 +18,10 @@ package com.alibaba.rsqldb.rest.store;
 
 
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public interface CommandQueue {
     void start();
@@ -27,11 +29,21 @@ public interface CommandQueue {
     /**
      * 从头恢复消费，直到最后一条命令。恢复所有的命令到本地，供后续查找
      */
-//    void restore();
-    void putCommand(Statement node);
+    CompletableFuture<Boolean> restore() throws Exception;
 
-    Node getNextCommand();
+    CommandResult putCommand(String jobId, Node node);
 
-    CreateTableStatement findTable(String tableName);
+    CommandResult getNextCommand() throws Exception;
+
+    //可能返回CreateTableStatement，也可能返回CreateViewStatement
+    Statement findTable(String tableName);
+
+    Map<String, CommandResult> queryAll();
+
+    void commit();
+
+    void changeCommandStatus(String jobId, CommandStatus status);
+
+    void changeCommandStatus(String jobId, CommandStatus status, Object attachment);
 
 }

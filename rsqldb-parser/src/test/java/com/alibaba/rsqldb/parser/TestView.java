@@ -16,15 +16,25 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.parser.model.statement.Statement;
 import org.junit.Test;
 
+import java.util.List;
+
 public class TestView {
-    private static final String sql = "create table odeum(`id` INT,`name` VARCHAR, `gmt_modified` TIMESTAMP) WITH (type = 'rocketmq', topic = 'rsqldb-odeum');";
+    private static final String sql = "CREATE VIEW result_view AS\n" +
+            "SELECT\n" +
+            "    a.ticket_id     AS ticket_id,\n" +
+            "    a.`position`    AS `position`,\n" +
+            "    b.name          AS odeum_name,\n" +
+            "    a.perform_name  AS perform_name\n" +
+            "FROM test_view as a JOIN odeum AS b ON a.odeum_id = b.id;\n";
 
     @Test
     public void test1() throws Throwable {
         DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+        System.out.println(statements);
     }
 
 }

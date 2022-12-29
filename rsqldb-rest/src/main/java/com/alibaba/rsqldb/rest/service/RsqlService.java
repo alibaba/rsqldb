@@ -18,7 +18,11 @@ package com.alibaba.rsqldb.rest.service;
 
 
 public interface RsqlService {
-    void executeSql(String sql);
+    void executeSql(String sql, String jobId);
 
+    void queryTask();
 
+    void queryTaskByJobId(String jobId);
+
+    void terminate(String jobId);
 }

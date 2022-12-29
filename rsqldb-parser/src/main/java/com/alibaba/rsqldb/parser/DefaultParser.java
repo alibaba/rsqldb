@@ -17,25 +17,16 @@
 package com.alibaba.rsqldb.parser;
 
 
-import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
-import com.alibaba.rsqldb.common.serialization.Deserializer;
-import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.common.serialization.Serializer;
 import com.alibaba.rsqldb.parser.impl.DefaultErrorListener;
 import com.alibaba.rsqldb.parser.impl.DefaultVisitor;
 import com.alibaba.rsqldb.parser.model.ListNode;
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.lang3.StringUtils;
-
 
 import java.util.ArrayList;
 import java.util.List;
