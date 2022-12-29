@@ -20,13 +20,21 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 //一定会和groupby一起使用
 // HAVING aggregate_function(column_name) operator value;
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SingleValueCalcuExpression extends SingleValueExpression {
-     private Calculator calculator;
+    private Calculator calculator;
 
-    public SingleValueCalcuExpression(String content, Field field, Operator operator, Literal<?> value, Calculator calculator) {
+    @JsonCreator
+    public SingleValueCalcuExpression(@JsonProperty("content") String content, @JsonProperty("field") Field field,
+                                      @JsonProperty("operator") Operator operator, @JsonProperty("value") Literal<?> value,
+                                      @JsonProperty("calculator") Calculator calculator) {
         super(content, field, operator, value);
         this.calculator = calculator;
     }

@@ -21,6 +21,9 @@ import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.slf4j.Logger;
@@ -28,13 +31,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FilterQueryStatement extends QueryStatement {
     private static final Logger logger = LoggerFactory.getLogger(FilterQueryStatement.class);
     private Expression filter;
 
-    public FilterQueryStatement(String content, String sourceTableName, Map<Field, Calculator> outputFieldAndCalculator, Expression filter) {
-        super(content, sourceTableName, outputFieldAndCalculator);
-        for (Calculator value : outputFieldAndCalculator.values()) {
+    @JsonCreator
+    public FilterQueryStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
+                                @JsonProperty("filter") Expression filter) {
+        super(content, tableName, selectFieldAndCalculator);
+        for (Calculator value : selectFieldAndCalculator.values()) {
             if (value != null) {
                 throw new SyntaxErrorException("has function in sql. function=" + value + ", sql=" + content);
             }

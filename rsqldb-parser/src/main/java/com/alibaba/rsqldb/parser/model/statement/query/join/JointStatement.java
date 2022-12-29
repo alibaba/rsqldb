@@ -25,6 +25,9 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -38,6 +41,7 @@ import org.apache.rocketmq.streams.core.util.Pair;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JointStatement extends QueryStatement {
     private JoinType joinType;
     private String asSourceTableName;
@@ -46,10 +50,13 @@ public class JointStatement extends QueryStatement {
 
     private JoinCondition joinCondition;
 
-    public JointStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
-                          JoinType joinType, String asSourceTableName,
-                          String joinTableName, String asJoinTableName, JoinCondition joinCondition) {
-        super(content, sourceTableName, selectFieldAndCalculator);
+    @JsonCreator
+    public JointStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                          @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
+                          @JsonProperty("joinType") JoinType joinType, @JsonProperty("asSourceTableName") String asSourceTableName,
+                          @JsonProperty("joinTableName") String joinTableName, @JsonProperty("asJoinTableName") String asJoinTableName,
+                          @JsonProperty("joinCondition") JoinCondition joinCondition) {
+        super(content, tableName, selectFieldAndCalculator);
         this.joinType = joinType;
         this.asSourceTableName = asSourceTableName;
         this.joinTableName = joinTableName;

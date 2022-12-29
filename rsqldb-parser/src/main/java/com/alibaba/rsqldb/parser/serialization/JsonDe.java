@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.common.serialization;
+package com.alibaba.rsqldb.parser.serialization;
 
 import com.alibaba.rsqldb.common.exception.DeserializeException;
+import com.alibaba.rsqldb.parser.model.Field;
+import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
 
 
@@ -29,6 +29,10 @@ public class JsonDe implements Deserializer {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public JsonDe() {
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addKeyDeserializer(Field.class, new FieldKeyDeserializer());
+//        simpleModule.addDeserializer(Expression.class, new ExpressionDeserializer());
+        objectMapper.registerModule(simpleModule);
     }
 
     public JsonNode deserialize(byte[] source) throws DeserializeException {

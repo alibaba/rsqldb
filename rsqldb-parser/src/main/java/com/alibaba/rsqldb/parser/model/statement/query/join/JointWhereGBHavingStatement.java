@@ -24,6 +24,9 @@ import com.alibaba.rsqldb.parser.model.statement.SQLType;
 import com.alibaba.rsqldb.parser.model.statement.query.GroupByQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.rocketmq.streams.core.function.FilterAction;
@@ -34,26 +37,32 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JointWhereGBHavingStatement extends JointWhereGroupByStatement {
     private static final Logger logger = LoggerFactory.getLogger(JointWhereGBHavingStatement.class);
     private Expression havingExpression;
 
-    public JointWhereGBHavingStatement(String content, String sourceTableName,
+    public JointWhereGBHavingStatement(String content, String tableName,
                                        Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
                                        String asSourceTableName, String joinTableName, String asJoinTableName,
                                        JoinCondition joinCondition, Expression expression, boolean before,
                                        List<Field> groupByField, Expression havingExpression) {
-        super(content, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName,
+        super(content, tableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName,
                 joinCondition, expression, before, groupByField);
         this.havingExpression = havingExpression;
     }
 
-    public JointWhereGBHavingStatement(String content,String sourceTableName,
-                                       Map<Field, Calculator> selectFieldAndCalculator, JoinType joinType,
-                                       String asSourceTableName, String joinTableName, String asJoinTableName,
-                                       JoinCondition joinCondition, Expression beforeJoinWhereExpression, Expression afterJoinWhereExpression,
-                                       List<Field> groupByField, Expression havingExpression) {
-        super(content, sourceTableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName,
+    @JsonCreator
+    public JointWhereGBHavingStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                       @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
+                                       @JsonProperty("joinType") JoinType joinType,
+                                       @JsonProperty("asSourceTableName") String asSourceTableName,
+                                       @JsonProperty("joinTableName") String joinTableName, @JsonProperty("asJoinTableName") String asJoinTableName,
+                                       @JsonProperty("joinCondition") JoinCondition joinCondition,
+                                       @JsonProperty("beforeJoinWhereExpression") Expression beforeJoinWhereExpression,
+                                       @JsonProperty("afterJoinWhereExpression") Expression afterJoinWhereExpression,
+                                       @JsonProperty("groupByField") List<Field> groupByField, @JsonProperty("havingExpression") Expression havingExpression) {
+        super(content, tableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName,
                 joinCondition, beforeJoinWhereExpression, afterJoinWhereExpression, groupByField);
         this.havingExpression = havingExpression;
     }

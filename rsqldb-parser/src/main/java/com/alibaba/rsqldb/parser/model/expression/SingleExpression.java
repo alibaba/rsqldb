@@ -18,25 +18,23 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 public abstract class SingleExpression extends Expression {
-    private Field fieldName;
+    private Field field;
     private Operator operator;
 
-    public SingleExpression(String content, Field fieldName, Operator operator) {
+    public SingleExpression(String content, Field field, Operator operator) {
         super(content);
-        this.fieldName = fieldName;
+        this.field = field;
         this.operator = operator;
     }
 
-    public Field getFieldName() {
-        return fieldName;
+    public Field getField() {
+        return field;
     }
 
-    public void setFieldName(Field fieldName) {
-        this.fieldName = fieldName;
+    public void setField(Field field) {
+        this.field = field;
     }
 
     @Override

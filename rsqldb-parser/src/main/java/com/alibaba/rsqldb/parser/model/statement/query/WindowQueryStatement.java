@@ -22,6 +22,9 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.ExpressionType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
@@ -37,31 +40,35 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WindowQueryStatement extends GroupByQueryStatement {
     private static final Logger logger = LoggerFactory.getLogger(WindowQueryStatement.class);
 
     private WindowInfoInSQL groupByWindow;
 
-    public WindowQueryStatement(String content, String sourceTableName,
+    public WindowQueryStatement(String content, String tableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
                                 WindowInfoInSQL groupByWindow) {
-        super(content, sourceTableName, selectFieldAndCalculator, groupByField);
+        super(content, tableName, selectFieldAndCalculator, groupByField);
         this.groupByWindow = groupByWindow;
         validator();
     }
 
-    public WindowQueryStatement(String content, String sourceTableName,
+    public WindowQueryStatement(String content, String tableName,
                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
                                 WindowInfoInSQL groupByWindow, Expression filter, ExpressionType expressionType) {
-        super(content, sourceTableName, selectFieldAndCalculator, groupByField, filter, expressionType);
+        super(content, tableName, selectFieldAndCalculator, groupByField, filter, expressionType);
         this.groupByWindow = groupByWindow;
         validator();
     }
 
-    public WindowQueryStatement(String content, String sourceTableName,
-                                Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField,
-                                WindowInfoInSQL groupByWindow, Expression whereExpression, Expression havingExpression) {
-        super(content, sourceTableName, selectFieldAndCalculator, groupByField, whereExpression, havingExpression);
+    @JsonCreator
+    public WindowQueryStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
+                                @JsonProperty("groupByField") List<Field> groupByField,
+                                @JsonProperty("groupByWindow") WindowInfoInSQL groupByWindow,
+                                @JsonProperty("whereExpression") Expression whereExpression, @JsonProperty("havingExpression") Expression havingExpression) {
+        super(content, tableName, selectFieldAndCalculator, groupByField, whereExpression, havingExpression);
         this.groupByWindow = groupByWindow;
         validator();
     }

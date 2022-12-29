@@ -20,13 +20,19 @@ import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SingleValueExpression extends SingleExpression {
     private Literal<?> value;
 
-    public SingleValueExpression(String content, Field field, Operator operator, Literal<?> value) {
+    @JsonCreator
+    public SingleValueExpression(@JsonProperty("content") String content, @JsonProperty("field") Field field,
+                                 @JsonProperty("operator") Operator operator, @JsonProperty("value") Literal<?> value) {
         super(content, field, operator);
         this.value = value;
     }
@@ -41,7 +47,7 @@ public class SingleValueExpression extends SingleExpression {
 
     @Override
     public boolean isTrue(JsonNode jsonNode) {
-        String fieldName = this.getFieldName().getFieldName();
+        String fieldName = this.getField().getFieldName();
 
         switch (this.getOperator()) {
             case EQUAL: {

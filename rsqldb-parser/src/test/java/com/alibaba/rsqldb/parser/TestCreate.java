@@ -18,12 +18,12 @@ package com.alibaba.rsqldb.parser;
 
 
 import com.alibaba.rsqldb.common.SerializeType;
-import com.alibaba.rsqldb.common.serialization.Deserializer;
-import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.common.serialization.Serializer;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import org.junit.Test;
 
 import java.util.List;
@@ -50,6 +50,7 @@ public class TestCreate {
             System.out.println(deserialize);
         }
     }
+
 
     @Test
     public void create2() throws Throwable {

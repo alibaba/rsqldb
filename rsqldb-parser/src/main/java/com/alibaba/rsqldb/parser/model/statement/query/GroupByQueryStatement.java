@@ -22,6 +22,9 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.ExpressionType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 //聚合查询
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GroupByQueryStatement extends QueryStatement {
     private static final Logger logger = LoggerFactory.getLogger(GroupByQueryStatement.class);
 
@@ -44,16 +48,18 @@ public class GroupByQueryStatement extends QueryStatement {
     //groupBy 后跟的字段
     private List<Field> groupByField;
 
-    public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField) {
-        super(content, sourceTableName, selectFieldAndCalculator);
+    public GroupByQueryStatement(String content, String tableName,
+                                 Map<Field, Calculator> selectFieldAndCalculator, List<Field> groupByField) {
+        super(content, tableName, selectFieldAndCalculator);
 
         this.groupByField = groupByField;
         validate();
     }
 
-    public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
+    public GroupByQueryStatement(String content, String tableName,
+                                 Map<Field, Calculator> selectFieldAndCalculator,
                                  List<Field> groupByField, Expression expression, ExpressionType expressionType) {
-        super(content, sourceTableName, selectFieldAndCalculator);
+        super(content, tableName, selectFieldAndCalculator);
 
         if (expressionType == ExpressionType.HAVING) {
             this.havingExpression = expression;
@@ -67,9 +73,13 @@ public class GroupByQueryStatement extends QueryStatement {
         super.validate(havingExpression);
     }
 
-    public GroupByQueryStatement(String content, String sourceTableName, Map<Field, Calculator> selectFieldAndCalculator,
-                                 List<Field> groupByField, Expression whereExpression, Expression havingExpression) {
-        super(content, sourceTableName, selectFieldAndCalculator);
+    @JsonCreator
+    public GroupByQueryStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                 @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
+                                 @JsonProperty("groupByField") List<Field> groupByField,
+                                 @JsonProperty("whereExpression") Expression whereExpression,
+                                 @JsonProperty("havingExpression") Expression havingExpression) {
+        super(content, tableName, selectFieldAndCalculator);
 
         this.whereExpression = whereExpression;
         this.havingExpression = havingExpression;

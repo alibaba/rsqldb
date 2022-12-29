@@ -14,15 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.common.serialization;
+package com.alibaba.rsqldb.parser.serialization;
 
+import com.alibaba.rsqldb.common.exception.SerializeException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
+public class JsonSer implements Serializer {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-public class JsonStringKVSer<V> implements KeyValueSerializer<String, V> {
-
-    @Override
-    public byte[] serialize(String s, V data) throws Throwable {
-        return new byte[0];
+    public byte[] serialize(Object obj) {
+        if (obj == null) {
+            return new byte[0];
+        }
+        try {
+            return objectMapper.writeValueAsBytes(obj);
+        } catch (JsonProcessingException e) {
+            throw new SerializeException(e);
+        }
     }
 }

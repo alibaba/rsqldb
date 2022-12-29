@@ -19,15 +19,16 @@ package com.alibaba.rsqldb.parser.model.statement;
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
-import com.alibaba.rsqldb.common.serialization.Deserializer;
-import com.alibaba.rsqldb.common.serialization.JsonObjectKVSer;
-import com.alibaba.rsqldb.common.serialization.JsonStringKVSer;
-import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.JsonObjectKVSer;
+import com.alibaba.rsqldb.parser.serialization.JsonStringKVSer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +47,7 @@ import java.util.Set;
  * 主要确定 表与topic的关系
  * topic中数据如何解析成 表中的字段
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateTableStatement extends Statement {
     private Columns columns;
     private List<Pair<String, Literal<?>>> properties;

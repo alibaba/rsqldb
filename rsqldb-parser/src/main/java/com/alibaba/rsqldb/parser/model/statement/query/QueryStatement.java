@@ -37,6 +37,9 @@ import com.alibaba.rsqldb.parser.model.expression.OrExpression;
 import com.alibaba.rsqldb.parser.model.expression.SingleExpression;
 import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
@@ -57,6 +60,7 @@ import java.util.Set;
 /**
  * 单纯的select * from 语句map中的value都是null，不会存在计算。
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QueryStatement extends Statement {
     private static final Logger logger = LoggerFactory.getLogger(QueryStatement.class);
 
@@ -64,7 +68,9 @@ public class QueryStatement extends Statement {
 
     private List<SQLFunction> sqlFunctions;
 
-    public QueryStatement(String content, String tableName, Map<Field, Calculator> selectFieldAndCalculator) {
+    @JsonCreator
+    public QueryStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                          @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator) {
         super(content, tableName);
         if (selectFieldAndCalculator == null || selectFieldAndCalculator.size() == 0) {
             throw new SyntaxErrorException("select field is null. sql=" + this.getContent());
@@ -174,7 +180,7 @@ public class QueryStatement extends Statement {
             collect(orExpression.getRightExpression(), fields);
         } else if (havingExpression instanceof SingleExpression) {
             SingleExpression expression = (SingleExpression) havingExpression;
-            Field fieldName = expression.getFieldName();
+            Field fieldName = expression.getField();
             Calculator calculator = null;
             if (havingExpression instanceof SingleValueCalcuExpression) {
                 SingleValueCalcuExpression valueCalcuExpression = (SingleValueCalcuExpression) havingExpression;
@@ -271,7 +277,7 @@ public class QueryStatement extends Statement {
 
         HashMap<String, String> result = new HashMap<>();
         for (Field field : fields) {
-            String asName = !StringUtils.isEmpty(field.getAsFieldName()) ?  field.getAsFieldName() : field.getFieldName();
+            String asName = !StringUtils.isEmpty(field.getAsFieldName()) ? field.getAsFieldName() : field.getFieldName();
             result.put(field.getFieldName(), asName);
         }
 

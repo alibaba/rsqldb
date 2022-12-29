@@ -19,10 +19,27 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
+import com.alibaba.rsqldb.parser.model.baseType.NumberType;
+import com.alibaba.rsqldb.parser.model.baseType.StringType;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 // fieldName > 10 and AVG(fieldName) < 12 ...
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SingleValueExpression.class, name = "singleValueExpression"),
+        @JsonSubTypes.Type(value = SingleValueCalcuExpression.class, name = "singleValueCalcuExpression"),
+        @JsonSubTypes.Type(value = RangeValueExpression.class, name = "rangeValueExpression"),
+        @JsonSubTypes.Type(value = MultiValueExpression.class, name = "multiValueExpression"),
+        @JsonSubTypes.Type(value = OrExpression.class, name = "orExpression"),
+        @JsonSubTypes.Type(value = AndExpression.class, name = "andExpression")
+})
 public abstract class Expression extends Node {
     public Expression(String content) {
         super(content);

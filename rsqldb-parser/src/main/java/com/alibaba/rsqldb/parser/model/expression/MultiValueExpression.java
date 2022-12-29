@@ -20,18 +20,23 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
 //in("123", "1122", "221")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MultiValueExpression extends SingleExpression {
     private MultiLiteral values;
 
-
-    public MultiValueExpression(String content, Field field, MultiLiteral values) {
+    @JsonCreator
+    public MultiValueExpression(@JsonProperty("content") String content,
+                                @JsonProperty("fieldName") Field field,
+                                @JsonProperty("values") MultiLiteral values) {
         super(content, field, Operator.IN);
         this.values = values;
     }
@@ -51,7 +56,7 @@ public class MultiValueExpression extends SingleExpression {
 
     @Override
     public boolean isTrue(JsonNode jsonNode) {
-        String fieldName = this.getFieldName().getFieldName();
+        String fieldName = this.getField().getFieldName();
         JsonNode node = jsonNode.get(fieldName);
 
         String value = node.asText();

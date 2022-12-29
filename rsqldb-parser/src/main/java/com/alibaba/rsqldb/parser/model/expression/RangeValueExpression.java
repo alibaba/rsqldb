@@ -18,14 +18,19 @@ package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RangeValueExpression extends SingleExpression {
     private long low;
     private long high;
 
-    public RangeValueExpression(String content, Field field, long low, long high) {
+    @JsonCreator
+    public RangeValueExpression(@JsonProperty("content") String content, @JsonProperty("fieldName") Field field,
+                                @JsonProperty("low") long low, @JsonProperty("high") long high) {
         super(content, field, Operator.BETWEEN_AND);
         this.low = low;
         this.high = high;
@@ -54,7 +59,7 @@ public class RangeValueExpression extends SingleExpression {
 
     @Override
     public boolean isTrue(JsonNode jsonNode) {
-        String fieldName = this.getFieldName().getFieldName();
+        String fieldName = this.getField().getFieldName();
         JsonNode node = jsonNode.get(fieldName);
         if (node == null) {
             return false;

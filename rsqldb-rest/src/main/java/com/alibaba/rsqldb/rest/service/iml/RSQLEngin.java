@@ -173,10 +173,8 @@ public class RSQLEngin implements Engin {
                 this.commandQueue.commit();
                 this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.RUNNING);
             } catch (Throwable t) {
-                if (commandResult != null) {
-                    logger.error("execute command failed, this command will be skipped. content in command: [{}]", commandResult, t);
-                    this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.SKIPPED, t);
-                }
+                logger.error("execute command failed, this command will be skipped. content in command: [{}]", commandResult, t);
+//                this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.SKIPPED, t);
             }
         }
     }

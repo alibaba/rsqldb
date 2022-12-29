@@ -14,23 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.common.serialization;
+package com.alibaba.rsqldb.parser.serialization;
 
-import com.alibaba.rsqldb.common.exception.SerializeException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.rsqldb.parser.model.expression.Expression;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 
-public class JsonSer implements Serializer {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+import java.io.IOException;
 
-    public byte[] serialize(Object obj) {
-        if (obj == null) {
-            return new byte[0];
-        }
-        try {
-            return objectMapper.writeValueAsBytes(obj);
-        } catch (JsonProcessingException e) {
-            throw new SerializeException(e);
-        }
+public class ExpressionDeserializer extends JsonDeserializer<Expression> {
+    @Override
+    public Expression deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        System.out.println(p);
+        return null;
     }
 }

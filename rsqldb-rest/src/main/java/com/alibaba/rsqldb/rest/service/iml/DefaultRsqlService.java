@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -57,12 +58,14 @@ public class DefaultRsqlService implements RsqlService {
      * @param sql
      */
     @Override
-    public void executeSql(String sql, String jobId) {
+    public List<String>  executeSql(String sql, String jobId) {
         if (StringUtils.isEmpty(sql)) {
-            return;
+            return null;
         }
         //解析
         List<Statement> temp = defaultParser.parseStatement(sql);
+
+        ArrayList<String> result = new ArrayList<>();
 
         int count = 0;
         for (Statement statement : temp) {
@@ -74,13 +77,18 @@ public class DefaultRsqlService implements RsqlService {
                 logger.info("create jobId from sql. jobId=[{}], sql=[{}]", tempJobId, statement.getContent());
 
                 this.rsqlEngin.putCommand(tempJobId, statement);
+
+                result.add(tempJobId);
             } else {
                 String tempJobId = String.join("@", jobId, String.valueOf(count++));
                 this.rsqlEngin.putCommand(tempJobId, statement);
+
+                result.add(tempJobId);
             }
         }
 
         //todo 需要等待这个流处理任务在本地节点执行成功，才能为CLI交互式查询做准备
+        return result;
     }
 
     @Override
@@ -89,9 +97,9 @@ public class DefaultRsqlService implements RsqlService {
     }
 
     @Override
-    public void queryTaskByJobId(String jobId) {
+    public CommandResult queryTaskByJobId(String jobId) {
         Map<String, CommandResult> allMap = this.rsqlEngin.queryAll();
-        CommandResult result = allMap.get(jobId);
+        return allMap.get(jobId);
     }
 
     @Override

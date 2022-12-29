@@ -14,14 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.common.serialization;
+package com.alibaba.rsqldb.parser.serialization;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public interface Deserializer {
-    JsonNode deserialize(byte[] source);
-
-    default <T> T deserialize(byte[] source, Class<T> clazz) {
-        return null;
-    }
+public interface Serializer {
+    byte[] serialize(Object obj);
 }

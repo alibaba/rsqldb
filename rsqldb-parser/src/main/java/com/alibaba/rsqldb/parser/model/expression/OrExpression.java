@@ -17,14 +17,21 @@
 package com.alibaba.rsqldb.parser.model.expression;
 
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OrExpression extends Expression {
     private Expression leftExpression;
     private Expression rightExpression;
 
-    public OrExpression(String content, Expression leftExpression, Expression rightExpression) {
+    @JsonCreator
+    public OrExpression(@JsonProperty("content") String content,
+                        @JsonProperty("leftExpression") Expression leftExpression,
+                        @JsonProperty("rightExpression") Expression rightExpression) {
         super(content);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;

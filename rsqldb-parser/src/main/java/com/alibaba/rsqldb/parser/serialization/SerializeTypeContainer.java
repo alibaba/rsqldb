@@ -14,13 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.common.serialization;
+package com.alibaba.rsqldb.parser.serialization;
 
-import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
+import com.alibaba.rsqldb.common.SerializeType;
 
-public class JsonObjectKVSer<V> implements KeyValueSerializer<Object, V> {
-    @Override
-    public byte[] serialize(Object o, V data) throws Throwable {
-        return new byte[0];
+import java.util.HashMap;
+
+public class SerializeTypeContainer {
+    private static final HashMap<SerializeType, Deserializer> deserializerHolder = new HashMap<>();
+    private static final HashMap<SerializeType, Serializer> serializerHolder = new HashMap<>();
+    static {
+        deserializerHolder.put(SerializeType.JSON, new JsonDe());
+        serializerHolder.put(SerializeType.JSON, new JsonSer());
+    }
+
+
+    public static Deserializer getDeserializer(SerializeType type) {
+        return deserializerHolder.get(type);
+    }
+
+    public static Serializer getSerializer(SerializeType type) {
+        return serializerHolder.get(type);
     }
 }

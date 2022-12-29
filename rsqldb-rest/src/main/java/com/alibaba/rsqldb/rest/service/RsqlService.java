@@ -17,12 +17,16 @@
 package com.alibaba.rsqldb.rest.service;
 
 
+import com.alibaba.rsqldb.rest.store.CommandResult;
+
+import java.util.List;
+
 public interface RsqlService {
-    void executeSql(String sql, String jobId);
+    List<String> executeSql(String sql, String jobId);
 
     void queryTask();
 
-    void queryTaskByJobId(String jobId);
+    CommandResult queryTaskByJobId(String jobId);
 
     void terminate(String jobId);
 }

@@ -18,8 +18,8 @@ package com.alibaba.rsqldb.parser.model.statement;
 
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
-import com.alibaba.rsqldb.common.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.common.serialization.Serializer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.ColumnValue;
 import com.alibaba.rsqldb.parser.model.FieldType;
@@ -27,9 +27,7 @@ import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.NumberType;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.ArrayList;

@@ -17,11 +17,14 @@
 package com.alibaba.rsqldb.rest.controller;
 
 import com.alibaba.rsqldb.rest.service.RsqlService;
+import com.alibaba.rsqldb.rest.store.CommandResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 
 @RestController
@@ -34,22 +37,26 @@ public class RsqlController {
     }
 
     @PostMapping("/task/submit")
-    public void executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
-        this.rsqlService.executeSql(sql, jobId);
+    public List<String> executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
+        return this.rsqlService.executeSql(sql, jobId);
     }
 
     //查询任务，以及运行状态
+    @PostMapping("/task/queryAll")
     public void queryTask() {
-
+        this.rsqlService.queryTask();
     }
 
-    public void queryTaskByJobId(String jobId) {
-
+    @PostMapping("/task/queryById")
+    public CommandResult queryTaskByJobId(String jobId) {
+        return this.rsqlService.queryTaskByJobId(jobId);
     }
 
     //停止任务
-    public void terminate(String jobId) {
-
+    @PostMapping("/task/terminate")
+    public Boolean terminate(String jobId) {
+        this.rsqlService.terminate(jobId);
+        return true;
     }
 
 

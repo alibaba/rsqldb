@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.rocketmq.streams.core.util.Pair;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Columns extends Node {
     //pair 的顺序就是create table中field顺序
     //create table odeum(`id` INT,`name` VARCHAR, `gmt_modified` TIMESTAMP) WITH (type = null, topic = 'rsqldb-odeum', data_format='JSON');

@@ -17,20 +17,27 @@
 package com.alibaba.rsqldb.parser.model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.streams.core.common.Constant;
 
 import java.util.Objects;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Field extends Node {
     //可能为null
     private String tableName;
     private String fieldName;
     private String asFieldName;
 
+
     public Field(String content, String fieldName) {
         super(content);
         this.fieldName = fieldName;
     }
+
 
     public Field(String content, String tableName, String fieldName) {
         super(content);
@@ -38,7 +45,9 @@ public class Field extends Node {
         this.fieldName = fieldName;
     }
 
-    public Field(String content, String tableName, String fieldName, String asFieldName) {
+    @JsonCreator
+    public Field(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                 @JsonProperty("fieldName") String fieldName, @JsonProperty("asFieldName") String asFieldName) {
         super(content);
         this.tableName = tableName;
         this.fieldName = fieldName;
@@ -102,10 +111,12 @@ public class Field extends Node {
 
     @Override
     public String toString() {
-        return "Field{" +
-                "tableName='" + tableName + '\'' +
-                ", fieldName='" + fieldName + '\'' +
-                ", asFieldName='" + asFieldName + '\'' +
-                '}';
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("content").append("=").append(this.getContent()).append(Constant.SPLIT)
+                .append("tableName").append("=").append(tableName).append(Constant.SPLIT)
+                .append("fieldName").append("=").append(fieldName).append(Constant.SPLIT)
+                .append("asFieldName").append("=").append(asFieldName);
+
+        return buffer.toString();
     }
 }

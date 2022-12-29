@@ -16,12 +16,18 @@
  */
 package com.alibaba.rsqldb.parser.model.baseType;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MultiLiteral extends Literal<List<Literal<?>>> {
     private List<Literal<?>> literals;
 
-    public MultiLiteral(String content, List<Literal<?>> literals) {
+    @JsonCreator
+    public MultiLiteral(@JsonProperty("content") String content, @JsonProperty("literals") List<Literal<?>> literals) {
         super(content);
         this.literals = literals;
     }
