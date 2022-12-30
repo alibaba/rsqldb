@@ -93,8 +93,6 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         List<Node> result = sqlStatementContexts.stream().map(this::visit).collect(Collectors.toList());
 
-        System.out.println("all over");
-
         return new ListNode<>(ParserUtil.getText(ctx), result);
     }
 
@@ -528,7 +526,6 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitColumnDescriptor(SqlParser.ColumnDescriptorContext ctx) {
-        System.out.println("visitColumnDescriptor");
 
         Columns columns = new Columns(ParserUtil.getText(ctx));
 

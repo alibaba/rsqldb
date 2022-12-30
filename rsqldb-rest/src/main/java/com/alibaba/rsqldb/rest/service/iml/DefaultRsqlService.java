@@ -67,28 +67,39 @@ public class DefaultRsqlService implements RsqlService {
 
         ArrayList<String> result = new ArrayList<>();
 
-        int count = 0;
-        for (Statement statement : temp) {
-            //写入RocketMQ,放入后保证是能执行的，不然不要放入
-            if (StringUtils.isEmpty(jobId)) {
-                String tempJobId = Utils.toHexString(statement.getContent());
-                tempJobId = String.join("@", tempJobId, String.valueOf(count++));
+        for (int i = 0; i < temp.size(); i++) {
+            Statement statement = temp.get(i);
+            String tempJobId = makeJobId(jobId, i, statement);
 
-                logger.info("create jobId from sql. jobId=[{}], sql=[{}]", tempJobId, statement.getContent());
+            this.rsqlEngin.putCommand(tempJobId, statement);
 
-                this.rsqlEngin.putCommand(tempJobId, statement);
-
-                result.add(tempJobId);
-            } else {
-                String tempJobId = String.join("@", jobId, String.valueOf(count++));
-                this.rsqlEngin.putCommand(tempJobId, statement);
-
-                result.add(tempJobId);
-            }
+            result.add(tempJobId);
         }
 
         //todo 需要等待这个流处理任务在本地节点执行成功，才能为CLI交互式查询做准备
         return result;
+    }
+
+    private String makeJobId(String jobId, int count, Statement statement) {
+        if (!StringUtils.isEmpty(jobId) && count == 0) {
+            return jobId;
+        }
+
+        String tempJobId;
+
+        if (StringUtils.isEmpty(jobId)) {
+            tempJobId = Utils.toHexString(statement.getContent());
+        } else {
+            tempJobId = jobId;
+        }
+
+        if (count != 0) {
+            tempJobId = String.join("@", tempJobId, String.valueOf(count));
+        }
+
+        logger.info("create jobId from sql. jobId=[{}], sql=[{}]", tempJobId, statement.getContent());
+
+        return tempJobId;
     }
 
     @Override
@@ -106,6 +117,21 @@ public class DefaultRsqlService implements RsqlService {
     public void terminate(String jobId) {
         //终止本地任务
         this.rsqlEngin.terminate(jobId);
+    }
+
+    @Override
+    public void restart(String jobId) {
+
+    }
+
+    @Override
+    public void remove(String jobId) {
+
+    }
+
+    @Override
+    public void removeAll() {
+
     }
 
 

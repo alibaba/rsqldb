@@ -68,7 +68,9 @@ public class CommandResult {
     }
 
     public void complete() {
-        this.putCommandFuture.complete(true);
+        if (this.putCommandFuture != null) {
+            this.putCommandFuture.complete(true);
+        }
     }
 
     public CompletableFuture<Boolean> getPutCommandFuture() {

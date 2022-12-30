@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -97,13 +98,10 @@ public class RSQLEngin implements Engin {
             throw new RSQLServerException(e);
         }
 
-        System.out.println("over!");
     }
 
 
     public void start() {
-        System.out.println("engin start");
-
         this.taskFactory.init(commandQueue::findTable);
 
         try {
@@ -113,6 +111,8 @@ public class RSQLEngin implements Engin {
         }
 
         this.executor.submit(this::runInLoop);
+
+        logger.info("start engin success!");
     }
 
     private void validate() {
@@ -164,6 +164,8 @@ public class RSQLEngin implements Engin {
 
                         logger.info("start a stream task, with jobId:[{}] and sql content=[{}]", jobId, nextCommand.getContent());
                     }
+
+                    this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.RUNNING);
                 } else if (nextCommand instanceof TerminateNode) {
                     TerminateNode command = (TerminateNode) nextCommand;
                     String jobId = command.getJobId();
@@ -171,10 +173,12 @@ public class RSQLEngin implements Engin {
                 }
 
                 this.commandQueue.commit();
-                this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.RUNNING);
+
             } catch (Throwable t) {
                 logger.error("execute command failed, this command will be skipped. content in command: [{}]", commandResult, t);
-//                this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.SKIPPED, t);
+                if (commandResult != null) {
+                    this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.SKIPPED, t);
+                }
             }
         }
     }
@@ -199,10 +203,13 @@ public class RSQLEngin implements Engin {
 
     public void terminate(String jobId) {
         //发送任务终止命令到rocketmq
-        this.putCommand(jobId, new TerminateNode(jobId, Constant.EMPTY_BODY));
+        CommandResult commandResult = this.commandQueue.putCommand(jobId, new TerminateNode(jobId, Constant.EMPTY_BODY));
 
-        //终止本地任务
-        terminateLocal(jobId);
+        try {
+            commandResult.getPutCommandFuture().get(10, TimeUnit.SECONDS);
+        } catch (Throwable e) {
+            throw new RSQLServerException(e);
+        }
     }
 
     private void terminateLocal(String jobId) {
@@ -211,5 +218,28 @@ public class RSQLEngin implements Engin {
             stream.stop();
             this.commandQueue.changeCommandStatus(jobId, CommandStatus.TERMINATED);
         }
+    }
+
+    @Override
+    public void restart(String jobId) {
+
+    }
+
+    @Override
+    public void remove(String jobId) {
+        this.commandQueue.putCommand(jobId, new TerminateNode(jobId, Constant.EMPTY_BODY));
+    }
+
+    @Override
+    public void removeAll() {
+
+    }
+
+    private void removeLocal(String jobId) {
+//        RocketMQStream stream = this.rStreams.remove(jobId);
+//        if (stream != null) {
+//            stream.stop();
+//            this.commandQueue.
+//        }
     }
 }

@@ -48,16 +48,34 @@ public class RsqlController {
     }
 
     @PostMapping("/task/queryById")
-    public CommandResult queryTaskByJobId(String jobId) {
+    public CommandResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
         return this.rsqlService.queryTaskByJobId(jobId);
     }
 
     //停止任务
     @PostMapping("/task/terminate")
-    public Boolean terminate(String jobId) {
+    public Boolean terminate(@RequestParam(value = "jobId") String jobId) {
         this.rsqlService.terminate(jobId);
         return true;
     }
 
+    @PostMapping("/task/restart")
+    public Boolean restart(@RequestParam(value = "jobId") String jobId) {
+        this.rsqlService.restart(jobId);
+        return true;
+    }
 
+
+    //移除任务
+    @PostMapping("/task/remove")
+    public Boolean remove(@RequestParam(value = "jobId") String jobId) {
+        this.rsqlService.remove(jobId);
+        return true;
+    }
+
+    @PostMapping("/task/removeAll")
+    public Boolean removeAll() {
+        this.rsqlService.removeAll();
+        return true;
+    }
 }

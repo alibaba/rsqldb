@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -144,9 +145,10 @@ public class CommandStore implements CommandQueue {
             throw new IllegalArgumentException("table name or statement is null.");
         }
 
-        if (putCommandMap.containsKey(jobId)) {
-            throw new IllegalArgumentException("jobId exist.");
-        }
+//        if (putCommandMap.containsKey(jobId)) {
+//            throw new IllegalArgumentException("jobId exist.");
+//        }
+        //todo 如果保证任务不覆盖
 
         Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
         byte[] bytes = serializer.serialize(node);
@@ -202,7 +204,6 @@ public class CommandStore implements CommandQueue {
             this.putCommandMap.put(jobId, putCommandResult);
         }
 
-
         return putCommandResult;
     }
 
@@ -218,6 +219,23 @@ public class CommandStore implements CommandQueue {
     @Override
     public Map<String, CommandResult> queryAll() {
         return Collections.unmodifiableMap(this.putCommandMap);
+    }
+
+    @Override
+    public void remove(Set<String> jobIds) {
+        for (String jobId : jobIds) {
+            CommandResult result = this.putCommandMap.remove(jobId);
+            if (result != null) {
+                Node node = result.getNode();
+                if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
+                    Statement statement = (Statement) node;
+                    String tableName = statement.getTableName();
+                    this.cache.remove(tableName);
+                }
+            }
+        }
+
+
     }
 
     private void pullToLast() {

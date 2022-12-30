@@ -29,4 +29,10 @@ public interface Engin {
     Map<String, CommandResult> queryAll();
 
     void terminate(String jobId);
+
+    void restart(String jobId);
+
+    void remove(String jobId);
+
+    void removeAll();
 }

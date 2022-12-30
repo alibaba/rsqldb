@@ -21,6 +21,7 @@ import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface CommandQueue {
@@ -39,6 +40,8 @@ public interface CommandQueue {
     Statement findTable(String tableName);
 
     Map<String, CommandResult> queryAll();
+
+    void remove(Set<String> jobIds);
 
     void commit();
 
