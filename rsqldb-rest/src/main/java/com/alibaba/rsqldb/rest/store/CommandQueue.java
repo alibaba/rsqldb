@@ -19,7 +19,11 @@ package com.alibaba.rsqldb.rest.store;
 
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.rest.service.iml.CommandNode;
+import com.alibaba.rsqldb.rest.service.iml.CommandOperator;
+import org.apache.rocketmq.streams.core.util.Pair;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -32,21 +36,23 @@ public interface CommandQueue {
      */
     CompletableFuture<Boolean> restore() throws Exception;
 
-    CommandResult putCommand(String jobId, Node node);
+    CompletableFuture<Throwable> putStatement(String jobId, Statement statement);
 
-    CommandResult getNextCommand() throws Exception;
+    CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator);
+
+    Pair<String/*jobId*/, Node> getNextCommand() throws Exception;
 
     //可能返回CreateTableStatement，也可能返回CreateViewStatement
     Statement findTable(String tableName);
 
-    Map<String, CommandResult> queryAll();
+    CommandStatus queryStatus(String jobId);
 
-    void remove(Set<String> jobIds);
+    Map<String, CommandStatus> queryStatus();
 
-    void commit();
+    void remove(String jobId);
 
-    void changeCommandStatus(String jobId, CommandStatus status);
+    void onCompleted(String jobId, CommandStatus status);
 
-    void changeCommandStatus(String jobId, CommandStatus status, Object attachment);
+    void onError(String jobId, CommandStatus status, Throwable attachment);
 
 }

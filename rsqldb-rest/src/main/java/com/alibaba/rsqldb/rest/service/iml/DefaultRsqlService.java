@@ -21,8 +21,10 @@ import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.service.RsqlService;
 import com.alibaba.rsqldb.rest.store.CommandResult;
+import com.alibaba.rsqldb.rest.store.CommandStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.common.Constant;
+import org.apache.rocketmq.streams.core.util.Pair;
 import org.apache.rocketmq.streams.core.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +73,7 @@ public class DefaultRsqlService implements RsqlService {
             Statement statement = temp.get(i);
             String tempJobId = makeJobId(jobId, i, statement);
 
-            this.rsqlEngin.putCommand(tempJobId, statement);
+            this.rsqlEngin.putStatement(tempJobId, statement);
 
             result.add(tempJobId);
         }
@@ -104,13 +106,12 @@ public class DefaultRsqlService implements RsqlService {
 
     @Override
     public void queryTask() {
-        Map<String, CommandResult> all = this.rsqlEngin.queryAll();
+        Map<String, CommandStatus> pairs = this.rsqlEngin.queryAll();
     }
 
     @Override
-    public CommandResult queryTaskByJobId(String jobId) {
-        Map<String, CommandResult> allMap = this.rsqlEngin.queryAll();
-        return allMap.get(jobId);
+    public CommandStatus queryTaskByJobId(String jobId) {
+        return this.rsqlEngin.queryByJobId(jobId);
     }
 
     @Override

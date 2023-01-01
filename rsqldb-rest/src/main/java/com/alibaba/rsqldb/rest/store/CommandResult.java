@@ -25,11 +25,9 @@ public class CommandResult {
     private CommandStatus status;
     private Node node;
 
-    private CompletableFuture<Boolean> putCommandFuture;
-    private Object attachment;
+    private CompletableFuture<Throwable> putCommandFuture;
 
-
-    public CommandResult(String jobId, CommandStatus status, Node node, CompletableFuture<Boolean> putCommandFuture) {
+    public CommandResult(String jobId, CommandStatus status, Node node, CompletableFuture<Throwable> putCommandFuture) {
         this.jobId = jobId;
         this.status = status;
         this.node = node;
@@ -67,23 +65,24 @@ public class CommandResult {
         this.node = node;
     }
 
-    public void complete() {
+    public void onCompleted() {
         if (this.putCommandFuture != null) {
-            this.putCommandFuture.complete(true);
+            this.putCommandFuture.complete(null);
         }
     }
 
-    public CompletableFuture<Boolean> getPutCommandFuture() {
+    public void onError(Throwable attachment) {
+        if (this.putCommandFuture != null) {
+            this.putCommandFuture.complete(attachment);
+        }
+    }
+
+    public CompletableFuture<Throwable> getPutCommandFuture() {
         return putCommandFuture;
     }
 
-
-    public Object getAttachment() {
-        return attachment;
-    }
-
-    public void setAttachment(Object attachment) {
-        this.attachment = attachment;
+    public void setPutCommandFuture(CompletableFuture<Throwable> putCommandFuture) {
+        this.putCommandFuture = putCommandFuture;
     }
 
     @Override

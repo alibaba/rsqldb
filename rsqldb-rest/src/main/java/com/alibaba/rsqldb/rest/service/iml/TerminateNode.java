@@ -16,21 +16,9 @@
  */
 package com.alibaba.rsqldb.rest.service.iml;
 
-import com.alibaba.rsqldb.parser.model.Node;
 
-public class TerminateNode extends Node {
-    private String jobId;
-
+public class TerminateNode extends CommandNode {
     public TerminateNode(String jobId, String content) {
-        super(content);
-        this.jobId = jobId;
-    }
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
+        super(content, jobId);
     }
 }

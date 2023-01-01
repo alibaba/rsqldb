@@ -14,8 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.store;
+package com.alibaba.rsqldb.rest.service.iml;
 
-public enum CommandStatus {
-    STORE, RESTORE, CONSUMED, SKIPPED, RUNNING, TERMINATED;
+
+
+public class RestartNode extends CommandNode {
+    public RestartNode(String content, String jobId) {
+        super(content, jobId);
+    }
+
+
 }

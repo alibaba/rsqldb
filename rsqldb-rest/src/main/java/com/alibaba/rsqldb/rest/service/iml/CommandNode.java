@@ -14,8 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.store;
+package com.alibaba.rsqldb.rest.service.iml;
 
-public enum CommandStatus {
-    STORE, RESTORE, CONSUMED, SKIPPED, RUNNING, TERMINATED;
+import com.alibaba.rsqldb.parser.model.Node;
+
+public abstract class CommandNode extends Node {
+    private String jobId;
+
+    public CommandNode(String content, String jobId) {
+        super(content);
+        this.jobId = jobId;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
 }

@@ -23,7 +23,6 @@ import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.service.Engin;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.store.CommandQueue;
-import com.alibaba.rsqldb.rest.store.CommandResult;
 import com.alibaba.rsqldb.rest.store.CommandStatus;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -32,6 +31,7 @@ import org.apache.rocketmq.common.ThreadFactoryImpl;
 import org.apache.rocketmq.streams.core.RocketMQStream;
 import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.topology.TopologyBuilder;
+import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -121,31 +120,19 @@ public class RSQLEngin implements Engin {
         }
     }
 
-    @Override
-    public CommandResult putCommand(String jobId, Node node) {
-        validate();
-        return this.commandQueue.putCommand(jobId, node);
-    }
-
-    @Override
-    public Map<String, CommandResult> queryAll() {
-        validate();
-        return this.commandQueue.queryAll();
-    }
-
     private void runInLoop() {
         while (!stop) {
-            CommandResult commandResult = null;
+            Pair<String/*jobId*/, Node> commandResult = null;
             try {
                 commandResult = this.commandQueue.getNextCommand();
                 if (commandResult == null) {
                     continue;
                 }
                 //任务开始后才能提交消费位点；
-                Node nextCommand = commandResult.getNode();
+                Node nextCommand = commandResult.getValue();
 
                 if (nextCommand instanceof Statement) {
-                    String jobId = commandResult.getJobId();
+                    String jobId = commandResult.getKey();
                     BuildContext context = new BuildContext(producer, jobId);
 
                     logger.info("start construct stream task, with jobId={}, command={}", jobId, nextCommand.getContent());
@@ -159,29 +146,101 @@ public class RSQLEngin implements Engin {
                         properties.put(MixAll.NAMESRV_ADDR_PROPERTY, rsqlConfig.getNamesrvAddr());
 
                         RocketMQStream rocketMQStream = new RocketMQStream(topologyBuilder, properties);
-                        rStreams.put(jobId, rocketMQStream);
+                        RocketMQStream previous = rStreams.put(jobId, rocketMQStream);
+                        if (previous != null) {
+                            logger.warn("jobId replaced, jobId=[{}], new sql content=[{}]", jobId, nextCommand.getContent());
+                            previous.stop();
+                        }
+
                         rocketMQStream.start();
 
                         logger.info("start a stream task, with jobId:[{}] and sql content=[{}]", jobId, nextCommand.getContent());
                     }
 
-                    this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.RUNNING);
+                    this.commandQueue.onCompleted(commandResult.getKey(), CommandStatus.RUNNING);
                 } else if (nextCommand instanceof TerminateNode) {
                     TerminateNode command = (TerminateNode) nextCommand;
                     String jobId = command.getJobId();
-                    this.terminateLocal(jobId);
+
+                    RocketMQStream stream = this.rStreams.get(jobId);
+                    if (stream != null) {
+                        stream.stop();
+                    }
+
+                    this.commandQueue.onCompleted(jobId, CommandStatus.TERMINATED);
+                } else if (nextCommand instanceof RestartNode) {
+                    RestartNode node = (RestartNode) nextCommand;
+                    String jobId = node.getJobId();
+
+                    RocketMQStream stream = this.rStreams.get(jobId);
+
+                    CommandStatus status = this.commandQueue.queryStatus(jobId);
+                    if (stream != null && status == CommandStatus.TERMINATED) {
+                        stream.start();
+                        this.commandQueue.onCompleted(jobId, CommandStatus.RUNNING);
+                    }
+                } else if (nextCommand instanceof RemoveNode) {
+                    RemoveNode node = (RemoveNode) nextCommand;
+                    String jobId = node.getJobId();
+
+                    RocketMQStream stream = this.rStreams.remove(jobId);
+                    if (stream != null) {
+                        stream.stop();
+                    }
+                    this.commandQueue.remove(jobId);
+
+                    this.commandQueue.onCompleted(jobId, null);
                 }
-
-                this.commandQueue.commit();
-
             } catch (Throwable t) {
                 logger.error("execute command failed, this command will be skipped. content in command: [{}]", commandResult, t);
                 if (commandResult != null) {
-                    this.commandQueue.changeCommandStatus(commandResult.getJobId(), CommandStatus.SKIPPED, t);
+                    this.commandQueue.onError(commandResult.getKey(), CommandStatus.SKIPPED, t);
                 }
             }
         }
     }
+
+    @Override
+    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) {
+        validate();
+        return this.commandQueue.putStatement(jobId, statement);
+    }
+
+    @Override
+    public Map<String, CommandStatus> queryAll() {
+        validate();
+        return this.commandQueue.queryStatus();
+    }
+
+    @Override
+    public CommandStatus queryByJobId(String jobId) {
+        validate();
+        return this.commandQueue.queryStatus(jobId);
+    }
+
+    @Override
+    public void terminate(String jobId) {
+        //发送任务终止命令到rocketmq
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId,  CommandOperator.STOP);
+
+        wait4Finish(future);
+    }
+
+    @Override
+    public void restart(String jobId) {
+        validate();
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.RESTART);
+
+        wait4Finish(future);
+    }
+
+    @Override
+    public void remove(String jobId) {
+        validate();
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.REMOVE);
+        wait4Finish(future);
+    }
+
 
     @PreDestroy
     public void shutdown() {
@@ -201,45 +260,14 @@ public class RSQLEngin implements Engin {
         return producer;
     }
 
-    public void terminate(String jobId) {
-        //发送任务终止命令到rocketmq
-        CommandResult commandResult = this.commandQueue.putCommand(jobId, new TerminateNode(jobId, Constant.EMPTY_BODY));
-
+    private void wait4Finish(CompletableFuture<Throwable> future) {
         try {
-            commandResult.getPutCommandFuture().get(10, TimeUnit.SECONDS);
+            Throwable error = future.get(10, TimeUnit.SECONDS);
+            if (error != null) {
+                throw error;
+            }
         } catch (Throwable e) {
             throw new RSQLServerException(e);
         }
-    }
-
-    private void terminateLocal(String jobId) {
-        RocketMQStream stream = this.rStreams.get(jobId);
-        if (stream != null) {
-            stream.stop();
-            this.commandQueue.changeCommandStatus(jobId, CommandStatus.TERMINATED);
-        }
-    }
-
-    @Override
-    public void restart(String jobId) {
-
-    }
-
-    @Override
-    public void remove(String jobId) {
-        this.commandQueue.putCommand(jobId, new TerminateNode(jobId, Constant.EMPTY_BODY));
-    }
-
-    @Override
-    public void removeAll() {
-
-    }
-
-    private void removeLocal(String jobId) {
-//        RocketMQStream stream = this.rStreams.remove(jobId);
-//        if (stream != null) {
-//            stream.stop();
-//            this.commandQueue.
-//        }
     }
 }

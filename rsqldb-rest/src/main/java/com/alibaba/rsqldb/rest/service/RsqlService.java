@@ -17,7 +17,7 @@
 package com.alibaba.rsqldb.rest.service;
 
 
-import com.alibaba.rsqldb.rest.store.CommandResult;
+import com.alibaba.rsqldb.rest.store.CommandStatus;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public interface RsqlService {
 
     void queryTask();
 
-    CommandResult queryTaskByJobId(String jobId);
+    CommandStatus queryTaskByJobId(String jobId);
 
     void terminate(String jobId);
 

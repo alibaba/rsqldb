@@ -19,14 +19,20 @@ package com.alibaba.rsqldb.rest.store;
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
-import com.alibaba.rsqldb.parser.serialization.Deserializer;
-import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
+import com.alibaba.rsqldb.rest.service.iml.CommandNode;
+import com.alibaba.rsqldb.rest.service.iml.CommandOperator;
+import com.alibaba.rsqldb.rest.service.iml.RemoveNode;
+import com.alibaba.rsqldb.rest.service.iml.RestartNode;
+import com.alibaba.rsqldb.rest.service.iml.TerminateNode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -38,6 +44,7 @@ import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.running.RocketMQClient;
+import org.apache.rocketmq.streams.core.util.Pair;
 import org.apache.rocketmq.streams.core.util.RocketMQUtil;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.slf4j.Logger;
@@ -46,16 +53,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static com.alibaba.rsqldb.common.RSQLConstant.COMMAND_OPERATOR;
 
 
 @Service
@@ -70,10 +81,11 @@ public class CommandStore implements CommandQueue {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private Collection<MessageQueue> commandMessageQueue;
-    private final ConcurrentHashMap<String/*tableName*/, Statement> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String/*tableName*/, Statement> tableCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String/*jobId*/, CommandResult> commandMap = new ConcurrentHashMap<>();
+    private final LinkedList<CommandResult> restoreCommand = new LinkedList<>();
 
-    private final ConcurrentHashMap<String/*jobId*/, CommandResult> putCommandMap = new ConcurrentHashMap<>();
-
+    private final ConcurrentHashMap<String/*jobId*/, Object> waitPoints = new ConcurrentHashMap<>();
 
     public CommandStore(RSQLConfig rsqlConfig) {
         rocketMQClient = new RocketMQClient(rsqlConfig.getNamesrvAddr());
@@ -138,42 +150,93 @@ public class CommandStore implements CommandQueue {
         return completableFuture;
     }
 
-    //todo compact topic 在static topic下行为表现
     @Override
-    public CommandResult putCommand(String jobId, Node node) {
-        if (node == null) {
-            throw new IllegalArgumentException("table name or statement is null.");
+    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) {
+        if (statement == null || StringUtils.isEmpty(jobId)) {
+            throw new IllegalArgumentException("jobId or statement is null.");
         }
 
-//        if (putCommandMap.containsKey(jobId)) {
-//            throw new IllegalArgumentException("jobId exist.");
-//        }
-        //todo 如果保证任务不覆盖
+        if (commandMap.containsKey(jobId)) {
+            throw new IllegalArgumentException("jobId exist, can not replace.");
+        }
+
+
+        Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
+        byte[] bytes = serializer.serialize(statement);
+
+        try {
+            Message message = new Message(RSQLConfig.SQL_TOPIC_NAME, bytes);
+            message.setKeys(jobId);
+            message.putUserProperty(RSQLConstant.BODY_TYPE, statement.getClass().getName());
+
+            producer.send(message, new SelectMessageQueueByHash(), jobId);
+
+            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, statement.getContent());
+        } catch (Throwable e) {
+            throw new RSQLServerException("put sql to command topic error.", e);
+        }
+
+        CompletableFuture<Throwable> result = new CompletableFuture<>();
+        CommandResult commandResult = new CommandResult(jobId, CommandStatus.STORE, statement, result);
+        commandMap.put(jobId, commandResult);
+
+        return result;
+    }
+
+    //todo compact topic 在static topic下行为表现
+    @Override
+    public CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator) {
+        if (operator == null || StringUtils.isEmpty(jobId)) {
+            throw new IllegalArgumentException("jobId or status is null.");
+        }
+
+        if (!commandMap.containsKey(jobId)) {
+            Object waitPoint = this.waitPoints.computeIfAbsent(jobId, value -> new Object());
+            synchronized (waitPoint) {
+                try {
+                    waitPoint.wait(5_1000, 0);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        Node node = commandMap.get(jobId).getNode();
 
         Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
         byte[] bytes = serializer.serialize(node);
 
         try {
             Message message = new Message(RSQLConfig.SQL_TOPIC_NAME, bytes);
-
-            message.setKeys(jobId);
+            message.setKeys(jobId);//compact topic 根据这个进行compact
             message.putUserProperty(RSQLConstant.BODY_TYPE, node.getClass().getName());
+            message.putUserProperty(COMMAND_OPERATOR, operator.name());
+            if (operator == CommandOperator.REMOVE) {
+                message.putUserProperty(Constant.EMPTY_BODY, Constant.TRUE);
+            }
+
             producer.send(message, new SelectMessageQueueByHash(), jobId);
 
             logger.info("put command into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, node.getContent());
         } catch (Throwable e) {
-            throw new RSQLServerException("put sql to sql topic error.", e);
+            throw new RSQLServerException("put sql to command topic error.", e);
         }
 
-        CompletableFuture<Boolean> result = new CompletableFuture<>();
+        CompletableFuture<Throwable> result = new CompletableFuture<>();
         CommandResult commandResult = new CommandResult(jobId, CommandStatus.STORE, node, result);
-        putCommandMap.put(jobId, commandResult);
+        commandMap.put(jobId, commandResult);
 
-        return commandResult;
+        return result;
     }
 
     @Override
-    public CommandResult getNextCommand() throws Exception {
+    public Pair<String/*jobId*/, Node> getNextCommand() throws Exception {
+        //先从restore恢复中拉去
+        CommandResult result = this.restoreCommand.pop();
+        if (result != null && result.getStatus() != CommandStatus.TERMINATED) {
+            return new Pair<String, Node>(result.getJobId(), result.getNode());
+        }
+
         List<MessageExt> messageExts = pullConsumer.poll();
 
         if (messageExts == null || messageExts.size() == 0) {
@@ -185,57 +248,143 @@ public class CommandStore implements CommandQueue {
         }
 
         MessageExt command = messageExts.get(0);
-
         if (command == null) {
             return null;
         }
 
-        Node node = deserializeAndSave(command);
-
         String jobId = command.getKeys();
+        String tempOperator = command.getUserProperty(COMMAND_OPERATOR);
 
-        CommandResult putCommandResult = this.putCommandMap.get(jobId);
+        Node node = deserializeAndSaveTable(command);
+        save2Local(jobId, node);
+        //notify
+        Object waitPoint = this.waitPoints.remove(jobId);
+        if (waitPoint != null) {
+            synchronized (waitPoint) {
+                waitPoint.notifyAll();
+            }
+        }
+
+        //专供engin使用不会保存
+        node = convert(tempOperator, jobId, node);
+
+        return new Pair<>(jobId, node);
+    }
+
+    private Node convert(String tempOperator, String jobId, Node node) {
+        if (StringUtils.isEmpty(tempOperator)) {
+            return node;
+        }
+        CommandOperator commandOperator = CommandOperator.valueOf(tempOperator);
+        switch (commandOperator) {
+            case STOP: {
+                return new TerminateNode(jobId, node.getContent());
+            }
+            case REMOVE: {
+                return new RemoveNode(jobId, node.getContent());
+            }
+            case RESTART: {
+                return new RestartNode(jobId, node.getContent());
+            }
+        }
+        throw new IllegalArgumentException("unknown commandOperator type=" + commandOperator);
+    }
+
+    private void save2Local(String jobId, Node node) {
+        CommandResult putCommandResult = this.commandMap.remove(jobId);
+
+        CommandResult pollCommandResult;
 
         if (putCommandResult != null) {
             putCommandResult.setStatus(CommandStatus.CONSUMED);
-            putCommandResult.complete();
+            pollCommandResult = new CommandResult(jobId, CommandStatus.CONSUMED, node, putCommandResult.getPutCommandFuture());
         } else {
-            putCommandResult = new CommandResult(jobId, CommandStatus.CONSUMED, node);
-            this.putCommandMap.put(jobId, putCommandResult);
+            pollCommandResult = new CommandResult(jobId, CommandStatus.CONSUMED, node);
         }
 
-        return putCommandResult;
+        this.commandMap.put(jobId, pollCommandResult);
     }
 
     @Override
     public Statement findTable(String tableName) {
-        if (cache.containsKey(tableName)) {
-            return cache.get(tableName);
+        if (tableCache.containsKey(tableName)) {
+            return tableCache.get(tableName);
         }
 
         throw new RSQLServerException("Statement with tableName=" + tableName + " not exist.");
     }
 
     @Override
-    public Map<String, CommandResult> queryAll() {
-        return Collections.unmodifiableMap(this.putCommandMap);
+    public CommandStatus queryStatus(String jobId) {
+        CommandResult result = this.commandMap.get(jobId);
+        if (result != null) {
+            return result.getStatus();
+        }
+
+        return null;
     }
 
     @Override
-    public void remove(Set<String> jobIds) {
-        for (String jobId : jobIds) {
-            CommandResult result = this.putCommandMap.remove(jobId);
-            if (result != null) {
-                Node node = result.getNode();
-                if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
-                    Statement statement = (Statement) node;
-                    String tableName = statement.getTableName();
-                    this.cache.remove(tableName);
-                }
-            }
+    public Map<String, CommandStatus> queryStatus() {
+        Map<String, CommandStatus> result = new HashMap<>();
+
+        for (String jobId : commandMap.keySet()) {
+            CommandResult temp = commandMap.get(jobId);
+            result.put(jobId, temp.getStatus());
         }
 
+        return result;
+    }
 
+    @Override
+    public void remove(String jobId) {
+        CommandResult result = this.commandMap.get(jobId);
+
+        if (result != null) {
+            result.onCompleted();
+            Node node = result.getNode();
+            if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
+                Statement statement = (Statement) node;
+                String tableName = statement.getTableName();
+                this.tableCache.remove(tableName);
+                logger.warn("remove table statement by jobId [{}], statement=[{}]", jobId, node.getContent());
+                //todo 检查是否有依赖
+            }
+            this.commandMap.remove(jobId);
+        }
+    }
+
+    private void commit() {
+        HashSet<MessageQueue> set = new HashSet<>(commandMessageQueue);
+        pullConsumer.commit(set, true);
+    }
+
+    @Override
+    public void onCompleted(String jobId, CommandStatus status) {
+        //提交消费位点
+        commit();
+
+        if (status == null) {
+            return;
+        }
+
+        //改变状态
+        CommandResult result = this.commandMap.get(jobId);
+        if (result != null) {
+            result.setStatus(status);
+            result.onCompleted();
+        }
+    }
+
+    @Override
+    public void onError(String jobId, CommandStatus status, Throwable attachment) {
+        commit();
+
+        CommandResult result = this.commandMap.get(jobId);
+        if (result != null) {
+            result.setStatus(status);
+            result.onError(attachment);
+        }
     }
 
     private void pullToLast() {
@@ -275,16 +424,40 @@ public class CommandStore implements CommandQueue {
             MessageExt result = sortedMessages.get(sortedMessages.size() - 1);
 
             String emptyBody = result.getUserProperty(Constant.EMPTY_BODY);
+            String userProperty = result.getUserProperty(COMMAND_OPERATOR);
+            String jobId = result.getKeys();
+
             if (Constant.TRUE.equals(emptyBody)) {
                 continue;
             }
-            deserializeAndSave(result);
+
+            Node node = deserializeAndSaveTable(result);
+
+            CommandResult commandResult;
+            if (!StringUtils.isEmpty(userProperty)) {
+                CommandOperator operator = CommandOperator.valueOf(userProperty);
+                switch (operator) {
+                    case STOP: {
+                        commandResult = new CommandResult(jobId, CommandStatus.TERMINATED, node);
+                        break;
+                    }
+                    default: {
+                        commandResult = new CommandResult(jobId, CommandStatus.RESTORE, node);
+                        break;
+                    }
+                }
+            }  else {
+                commandResult = new CommandResult(jobId, CommandStatus.RESTORE, node);
+            }
+
+            this.restoreCommand.add(commandResult);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Node deserializeAndSave(MessageExt command) {
+    private Node deserializeAndSaveTable(MessageExt command) {
         String clazzName = command.getUserProperty(RSQLConstant.BODY_TYPE);
+
         Class<Node> clazz = null;
         try {
             clazz = (Class<Node>) Class.forName(clazzName);
@@ -297,38 +470,12 @@ public class CommandStore implements CommandQueue {
         Node node = deserializer.deserialize(command.getBody(), clazz);
 
         //保存到本地内存
-        if (node instanceof CreateTableStatement) {
-            CreateTableStatement statement = (CreateTableStatement) node;
-            cache.put(statement.getTableName(), statement);
+        if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
+            Statement statement = (Statement) node;
+            tableCache.put(statement.getTableName(), statement);
         }
 
-        if (node instanceof CreateViewStatement) {
-            CreateViewStatement statement = (CreateViewStatement) node;
-            cache.put(statement.getTableName(), statement);
-        }
         return node;
-    }
-
-    @Override
-    public void changeCommandStatus(String jobId, CommandStatus status) {
-        CommandResult result = this.putCommandMap.get(jobId);
-        if (result != null) {
-            result.setStatus(status);
-        }
-    }
-
-    @Override
-    public void changeCommandStatus(String jobId, CommandStatus status, Object attachment) {
-        CommandResult result = this.putCommandMap.get(jobId);
-        if (result != null) {
-            result.setStatus(status);
-            result.setAttachment(attachment);
-        }
-    }
-
-    public void commit() {
-        HashSet<MessageQueue> set = new HashSet<>(commandMessageQueue);
-        pullConsumer.commit(set, true);
     }
 
     private List<MessageExt> sortByQueueOffset(List<MessageExt> target) {
