@@ -23,7 +23,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
+        <rocketmq-streams.version>1.1.0-preview-SNAPSHOT</rocketmq-streams.version>
         <antlr.version>4.9.2</antlr.version>
         <logback.version>1.2.10</logback.version>
     </properties>

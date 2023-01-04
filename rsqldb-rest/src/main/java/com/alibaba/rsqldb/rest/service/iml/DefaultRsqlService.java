@@ -17,7 +17,11 @@
 package com.alibaba.rsqldb.rest.service.iml;
 
 import com.alibaba.rsqldb.parser.DefaultParser;
+import com.alibaba.rsqldb.parser.model.Calculator;
+import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.service.RsqlService;
 import com.alibaba.rsqldb.rest.store.CommandResult;
@@ -31,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,18 +65,19 @@ public class DefaultRsqlService implements RsqlService {
      * @param sql
      */
     @Override
-    public List<String>  executeSql(String sql, String jobId) {
+    public List<String> executeSql(String sql, String jobId) {
         if (StringUtils.isEmpty(sql)) {
+            logger.info("sql is null, skip.");
             return null;
         }
-        //解析
+
         List<Statement> temp = defaultParser.parseStatement(sql);
 
         ArrayList<String> result = new ArrayList<>();
 
         for (int i = 0; i < temp.size(); i++) {
             Statement statement = temp.get(i);
-            String tempJobId = makeJobId(jobId, i, statement);
+            String tempJobId = makeJobId(jobId, statement, i, temp.size());
 
             this.rsqlEngin.putStatement(tempJobId, statement);
 
@@ -82,8 +88,8 @@ public class DefaultRsqlService implements RsqlService {
         return result;
     }
 
-    private String makeJobId(String jobId, int count, Statement statement) {
-        if (!StringUtils.isEmpty(jobId) && count == 0) {
+    private static String makeJobId(String jobId, Statement statement, int index, int total) {
+        if (!StringUtils.isEmpty(jobId) && total == 1) {
             return jobId;
         }
 
@@ -95,8 +101,8 @@ public class DefaultRsqlService implements RsqlService {
             tempJobId = jobId;
         }
 
-        if (count != 0) {
-            tempJobId = String.join("@", tempJobId, String.valueOf(count));
+        if (!StringUtils.isEmpty(jobId)) {
+            tempJobId = String.join("@", tempJobId, String.valueOf(index));
         }
 
         logger.info("create jobId from sql. jobId=[{}], sql=[{}]", tempJobId, statement.getContent());
@@ -105,12 +111,12 @@ public class DefaultRsqlService implements RsqlService {
     }
 
     @Override
-    public void queryTask() {
-        Map<String, CommandStatus> pairs = this.rsqlEngin.queryAll();
+    public List<QueryResult> queryTask() {
+        return this.rsqlEngin.queryAll();
     }
 
     @Override
-    public CommandStatus queryTaskByJobId(String jobId) {
+    public QueryResult queryTaskByJobId(String jobId) {
         return this.rsqlEngin.queryByJobId(jobId);
     }
 
@@ -122,17 +128,12 @@ public class DefaultRsqlService implements RsqlService {
 
     @Override
     public void restart(String jobId) {
-
+        this.rsqlEngin.restart(jobId);
     }
 
     @Override
     public void remove(String jobId) {
-
-    }
-
-    @Override
-    public void removeAll() {
-
+        this.rsqlEngin.remove(jobId);
     }
 
 

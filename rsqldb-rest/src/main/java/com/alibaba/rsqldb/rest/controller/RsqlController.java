@@ -16,12 +16,22 @@
  */
 package com.alibaba.rsqldb.rest.controller;
 
+import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import com.alibaba.rsqldb.rest.response.BaseResult;
+import com.alibaba.rsqldb.rest.response.FailedResult;
+import com.alibaba.rsqldb.rest.response.QueryResult;
+import com.alibaba.rsqldb.rest.response.RequestStatus;
+import com.alibaba.rsqldb.rest.response.SuccessResult;
 import com.alibaba.rsqldb.rest.service.RsqlService;
-import com.alibaba.rsqldb.rest.store.CommandResult;
+import com.alibaba.rsqldb.rest.store.CommandStatus;
+import com.alibaba.rsqldb.rest.util.RestUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,6 +40,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/command")
 public class RsqlController {
+    private static final Logger logger = LoggerFactory.getLogger(RsqlController.class);
+
     private RsqlService rsqlService;
 
     public RsqlController(RsqlService rsqlService) {
@@ -37,45 +49,108 @@ public class RsqlController {
     }
 
     @PostMapping("/task/submit")
-    public List<String> executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
-        return this.rsqlService.executeSql(sql, jobId);
+    @ResponseBody
+    public BaseResult executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
+        try {
+            List<String> result = this.rsqlService.executeSql(sql, jobId);
+
+            return new SuccessResult<>(result, RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("executeSql error, sql=[{}], jobId=[{}]", sql, jobId, t);
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
+
     }
 
     //查询任务，以及运行状态
     @PostMapping("/task/queryAll")
-    public void queryTask() {
-        this.rsqlService.queryTask();
+    public BaseResult queryTask() {
+        try {
+            List<QueryResult> queryTask = this.rsqlService.queryTask();
+
+            return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("queryTask error", t);
+
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
     }
 
     @PostMapping("/task/queryById")
-    public CommandResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
-        return this.rsqlService.queryTaskByJobId(jobId);
+    public BaseResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
+        try {
+            QueryResult queryTask = this.rsqlService.queryTaskByJobId(jobId);
+
+            return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("queryTaskByJobId error, jobId=[{}]",jobId, t);
+
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
     }
 
     //停止任务
     @PostMapping("/task/terminate")
-    public Boolean terminate(@RequestParam(value = "jobId") String jobId) {
-        this.rsqlService.terminate(jobId);
-        return true;
+    public BaseResult terminate(@RequestParam(value = "jobId") String jobId) {
+        try {
+            this.rsqlService.terminate(jobId);
+
+            return new SuccessResult<>(RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("terminate error, jobId=[{}]",jobId, t);
+
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
     }
 
     @PostMapping("/task/restart")
-    public Boolean restart(@RequestParam(value = "jobId") String jobId) {
-        this.rsqlService.restart(jobId);
-        return true;
+    public BaseResult restart(@RequestParam(value = "jobId") String jobId) {
+        try {
+            this.rsqlService.restart(jobId);
+
+            return new SuccessResult<>(RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("restart error, jobId=[{}]",jobId, t);
+
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
     }
 
 
-    //移除任务
     @PostMapping("/task/remove")
-    public Boolean remove(@RequestParam(value = "jobId") String jobId) {
-        this.rsqlService.remove(jobId);
-        return true;
-    }
+    public BaseResult remove(@RequestParam(value = "jobId") String jobId) {
+        try {
+            this.rsqlService.remove(jobId);
 
-    @PostMapping("/task/removeAll")
-    public Boolean removeAll() {
-        this.rsqlService.removeAll();
-        return true;
+            return new SuccessResult<>(RequestStatus.SUCCESS);
+        } catch (Throwable t) {
+            logger.error("remove error, jobId=[{}]",jobId, t);
+
+            if (t instanceof RSQLServerException) {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+            } else {
+                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+            }
+        }
     }
 }

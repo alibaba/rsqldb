@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.rest.store;
 
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.service.iml.CommandNode;
 import com.alibaba.rsqldb.rest.service.iml.CommandOperator;
 import org.apache.rocketmq.streams.core.util.Pair;
@@ -45,9 +46,9 @@ public interface CommandQueue {
     //可能返回CreateTableStatement，也可能返回CreateViewStatement
     Statement findTable(String tableName);
 
-    CommandStatus queryStatus(String jobId);
+    QueryResult queryStatus(String jobId);
 
-    Map<String, CommandStatus> queryStatus();
+    List<QueryResult> queryStatus();
 
     void remove(String jobId);
 

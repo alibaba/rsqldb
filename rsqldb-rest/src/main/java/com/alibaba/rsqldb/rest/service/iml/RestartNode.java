@@ -19,8 +19,8 @@ package com.alibaba.rsqldb.rest.service.iml;
 
 
 public class RestartNode extends CommandNode {
-    public RestartNode(String content, String jobId) {
-        super(content, jobId);
+    public RestartNode(String jobId, String content) {
+        super(jobId, content);
     }
 
 

@@ -26,8 +26,8 @@ import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
 import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.serialization.Serializer;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
-import com.alibaba.rsqldb.rest.service.iml.CommandNode;
 import com.alibaba.rsqldb.rest.service.iml.CommandOperator;
 import com.alibaba.rsqldb.rest.service.iml.RemoveNode;
 import com.alibaba.rsqldb.rest.service.iml.RestartNode;
@@ -55,8 +55,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +215,8 @@ public class CommandStore implements CommandQueue {
 
             producer.send(message, new SelectMessageQueueByHash(), jobId);
 
-            logger.info("put command into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, node.getContent());
+            logger.info("put command into rocketmq command topic:{} with jobId:[{}],CommandOperator:[{}] command:[{}]",
+                    RSQLConfig.SQL_TOPIC_NAME, jobId, operator.name(), node.getContent());
         } catch (Throwable e) {
             throw new RSQLServerException("put sql to command topic error.", e);
         }
@@ -232,12 +231,16 @@ public class CommandStore implements CommandQueue {
     @Override
     public Pair<String/*jobId*/, Node> getNextCommand() throws Exception {
         //先从restore恢复中拉去
-        CommandResult result = this.restoreCommand.pop();
-        if (result != null && result.getStatus() != CommandStatus.TERMINATED) {
-            return new Pair<String, Node>(result.getJobId(), result.getNode());
+        if (this.restoreCommand.size() != 0) {
+            CommandResult result = this.restoreCommand.pop();
+            this.commandMap.put(result.getJobId(), result);
+            if (result.getStatus() != CommandStatus.TERMINATED) {
+                return new Pair<String, Node>(result.getJobId(), result.getNode());
+            }
         }
 
-        List<MessageExt> messageExts = pullConsumer.poll();
+
+        List<MessageExt> messageExts = pullConsumer.poll(10);
 
         if (messageExts == null || messageExts.size() == 0) {
             return null;
@@ -315,22 +318,24 @@ public class CommandStore implements CommandQueue {
     }
 
     @Override
-    public CommandStatus queryStatus(String jobId) {
+    public QueryResult queryStatus(String jobId) {
         CommandResult result = this.commandMap.get(jobId);
         if (result != null) {
-            return result.getStatus();
+            return new QueryResult(jobId, result.getNode().getContent(), result.getStatus());
         }
 
         return null;
     }
 
     @Override
-    public Map<String, CommandStatus> queryStatus() {
-        Map<String, CommandStatus> result = new HashMap<>();
+    public List<QueryResult> queryStatus() {
+        List<QueryResult> result = new ArrayList<>();
 
         for (String jobId : commandMap.keySet()) {
             CommandResult temp = commandMap.get(jobId);
-            result.put(jobId, temp.getStatus());
+            QueryResult queryResult = new QueryResult(jobId, temp.getNode().getContent(), temp.getStatus());
+
+            result.add(queryResult);
         }
 
         return result;
@@ -390,18 +395,18 @@ public class CommandStore implements CommandQueue {
     private void pullToLast() {
         List<MessageExt> holder = new ArrayList<>();
         //recover
-        List<MessageExt> result = pullConsumer.poll(100);
+        List<MessageExt> result = pullConsumer.poll(10);
         while (result != null && result.size() != 0) {
             holder.addAll(result);
             if (holder.size() <= 1000) {
-                result = pullConsumer.poll(100);
+                result = pullConsumer.poll(10);
                 continue;
             }
 
             replayState(holder);
             holder.clear();
 
-            result = pullConsumer.poll(100);
+            result = pullConsumer.poll(10);
         }
 
         if (holder.size() != 0) {
@@ -446,7 +451,7 @@ public class CommandStore implements CommandQueue {
                         break;
                     }
                 }
-            }  else {
+            } else {
                 commandResult = new CommandResult(jobId, CommandStatus.RESTORE, node);
             }
 

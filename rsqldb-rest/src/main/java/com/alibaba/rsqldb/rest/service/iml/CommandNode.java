@@ -21,7 +21,7 @@ import com.alibaba.rsqldb.parser.model.Node;
 public abstract class CommandNode extends Node {
     private String jobId;
 
-    public CommandNode(String content, String jobId) {
+    public CommandNode(String jobId, String content) {
         super(content);
         this.jobId = jobId;
     }

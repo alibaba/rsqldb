@@ -31,9 +31,9 @@ import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.WindowStream;
-import org.apache.rocketmq.streams.core.runtime.operators.Time;
-import org.apache.rocketmq.streams.core.runtime.operators.WindowBuilder;
-import org.apache.rocketmq.streams.core.runtime.operators.WindowInfo;
+import org.apache.rocketmq.streams.core.window.Time;
+import org.apache.rocketmq.streams.core.window.WindowBuilder;
+import org.apache.rocketmq.streams.core.window.WindowInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

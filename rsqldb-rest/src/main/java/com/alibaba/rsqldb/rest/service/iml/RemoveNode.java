@@ -18,7 +18,7 @@ package com.alibaba.rsqldb.rest.service.iml;
 
 
 public class RemoveNode extends CommandNode {
-    public RemoveNode(String content, String jobId) {
-        super(content, jobId);
+    public RemoveNode(String jobId, String content) {
+        super(jobId, content);
     }
 }

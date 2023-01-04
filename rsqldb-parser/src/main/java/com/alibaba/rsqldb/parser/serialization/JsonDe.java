@@ -31,7 +31,6 @@ public class JsonDe implements Deserializer {
     public JsonDe() {
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addKeyDeserializer(Field.class, new FieldKeyDeserializer());
-//        simpleModule.addDeserializer(Expression.class, new ExpressionDeserializer());
         objectMapper.registerModule(simpleModule);
     }
 

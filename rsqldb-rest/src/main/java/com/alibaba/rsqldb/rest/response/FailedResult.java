@@ -14,28 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.service;
+package com.alibaba.rsqldb.rest.response;
 
-import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.alibaba.rsqldb.rest.response.QueryResult;
-import com.alibaba.rsqldb.rest.store.CommandStatus;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-public interface Engin {
-    void start();
-
-    CompletableFuture<Throwable> putStatement(String jobId, Statement node);
-
-    List<QueryResult> queryAll();
-
-    QueryResult queryByJobId(String jobId);
-
-    void terminate(String jobId);
-
-    void restart(String jobId);
-
-    void remove(String jobId);
+public class FailedResult extends BaseResult<String> {
+    public FailedResult(String data, RequestStatus status) {
+        super(data, status.name(), status.getMessage(), status.getCode(), false);
+    }
 }

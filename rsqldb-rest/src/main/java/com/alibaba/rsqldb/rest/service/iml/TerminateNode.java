@@ -19,6 +19,6 @@ package com.alibaba.rsqldb.rest.service.iml;
 
 public class TerminateNode extends CommandNode {
     public TerminateNode(String jobId, String content) {
-        super(content, jobId);
+        super(jobId, content);
     }
 }

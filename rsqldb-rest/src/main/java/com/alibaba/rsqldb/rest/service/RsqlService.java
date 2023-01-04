@@ -17,16 +17,16 @@
 package com.alibaba.rsqldb.rest.service;
 
 
-import com.alibaba.rsqldb.rest.store.CommandStatus;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 
 import java.util.List;
 
 public interface RsqlService {
     List<String> executeSql(String sql, String jobId);
 
-    void queryTask();
+    List<QueryResult> queryTask();
 
-    CommandStatus queryTaskByJobId(String jobId);
+    QueryResult queryTaskByJobId(String jobId);
 
     void terminate(String jobId);
 
@@ -34,5 +34,4 @@ public interface RsqlService {
 
     void remove(String jobId);
 
-    void removeAll();
 }

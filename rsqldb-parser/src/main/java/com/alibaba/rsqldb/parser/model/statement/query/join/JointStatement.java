@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.rstream.JoinedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
-import org.apache.rocketmq.streams.core.runtime.operators.Time;
-import org.apache.rocketmq.streams.core.runtime.operators.WindowBuilder;
 import org.apache.rocketmq.streams.core.util.Pair;
+import org.apache.rocketmq.streams.core.window.Time;
+import org.apache.rocketmq.streams.core.window.WindowBuilder;
 
 import java.util.List;
 import java.util.Map;

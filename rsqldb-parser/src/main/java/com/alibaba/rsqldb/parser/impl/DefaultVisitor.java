@@ -75,7 +75,6 @@ import com.alibaba.rsqldb.parser.util.Validator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.ArrayList;
@@ -413,7 +412,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         List<SqlParser.AsFieldContext> asFieldContexts = ctx.asField();
 
-        if (asFieldContexts != null) {
+        if (asFieldContexts != null && asFieldContexts.size() != 0) {
 
             List<WindowInfoInSQL> windowInfoInSQLS = new ArrayList<>();
 

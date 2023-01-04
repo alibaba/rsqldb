@@ -14,28 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.service;
+package com.alibaba.rsqldb.rest.response;
 
-import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.alibaba.rsqldb.rest.response.QueryResult;
-import com.alibaba.rsqldb.rest.store.CommandStatus;
+public enum RequestStatus {
+    SUCCESS("Success", 200),
+    RSQLDB_SERVER_EXCEPTION("Internal Server Error", 500),
+    CLIENT_EXCEPTION("Bad request", 400);
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+    private String message;
+    private int code;
 
-public interface Engin {
-    void start();
+    RequestStatus(String message, int code) {
+        this.message = message;
+        this.code = code;
+    }
 
-    CompletableFuture<Throwable> putStatement(String jobId, Statement node);
+    public String getMessage() {
+        return message;
+    }
 
-    List<QueryResult> queryAll();
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
-    QueryResult queryByJobId(String jobId);
+    public int getCode() {
+        return code;
+    }
 
-    void terminate(String jobId);
-
-    void restart(String jobId);
-
-    void remove(String jobId);
+    public void setCode(int code) {
+        this.code = code;
+    }
 }

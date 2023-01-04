@@ -20,6 +20,7 @@ import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.service.Engin;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.store.CommandQueue;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -47,9 +49,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * 有个线程池，不断获取command，并执行
- */
+
 @Service
 public class RSQLEngin implements Engin {
     private static final Logger logger = LoggerFactory.getLogger(RSQLEngin.class);
@@ -135,7 +135,7 @@ public class RSQLEngin implements Engin {
                     String jobId = commandResult.getKey();
                     BuildContext context = new BuildContext(producer, jobId);
 
-                    logger.info("start construct stream task, with jobId={}, command={}", jobId, nextCommand.getContent());
+                    logger.info("【prepare stream task】, with jobId={}, command={}", jobId, nextCommand.getContent());
 
                     BuildContext dispatch = taskFactory.dispatch((Statement) nextCommand, context);
 
@@ -144,6 +144,7 @@ public class RSQLEngin implements Engin {
 
                         Properties properties = new Properties();
                         properties.put(MixAll.NAMESRV_ADDR_PROPERTY, rsqlConfig.getNamesrvAddr());
+                        properties.put(Constant.SKIP_DATA_ERROR, true);
 
                         RocketMQStream rocketMQStream = new RocketMQStream(topologyBuilder, properties);
                         RocketMQStream previous = rStreams.put(jobId, rocketMQStream);
@@ -154,7 +155,7 @@ public class RSQLEngin implements Engin {
 
                         rocketMQStream.start();
 
-                        logger.info("start a stream task, with jobId:[{}] and sql content=[{}]", jobId, nextCommand.getContent());
+                        logger.info("【start stream task】, with jobId:[{}] and sql content=[{}]", jobId, nextCommand.getContent());
                     }
 
                     this.commandQueue.onCompleted(commandResult.getKey(), CommandStatus.RUNNING);
@@ -173,12 +174,12 @@ public class RSQLEngin implements Engin {
                     String jobId = node.getJobId();
 
                     RocketMQStream stream = this.rStreams.get(jobId);
-
-                    CommandStatus status = this.commandQueue.queryStatus(jobId);
-                    if (stream != null && status == CommandStatus.TERMINATED) {
+                    if (stream != null) {
                         stream.start();
-                        this.commandQueue.onCompleted(jobId, CommandStatus.RUNNING);
                     }
+
+                    this.commandQueue.onCompleted(jobId, CommandStatus.RUNNING);
+
                 } else if (nextCommand instanceof RemoveNode) {
                     RemoveNode node = (RemoveNode) nextCommand;
                     String jobId = node.getJobId();
@@ -207,21 +208,27 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public Map<String, CommandStatus> queryAll() {
+    public List<QueryResult> queryAll() {
         validate();
         return this.commandQueue.queryStatus();
     }
 
     @Override
-    public CommandStatus queryByJobId(String jobId) {
+    public QueryResult queryByJobId(String jobId) {
         validate();
         return this.commandQueue.queryStatus(jobId);
     }
 
     @Override
     public void terminate(String jobId) {
+        validate();
         //发送任务终止命令到rocketmq
-        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId,  CommandOperator.STOP);
+        QueryResult result = this.queryByJobId(jobId);
+        if (result != null && result.getStatus() == CommandStatus.TERMINATED) {
+            logger.info("jobId=[{}] is terminated, does not need terminated.", jobId);
+            return;
+        }
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.STOP);
 
         wait4Finish(future);
     }
@@ -229,6 +236,12 @@ public class RSQLEngin implements Engin {
     @Override
     public void restart(String jobId) {
         validate();
+        QueryResult result = this.queryByJobId(jobId);
+        if (result != null && result.getStatus() == CommandStatus.RUNNING) {
+            logger.info("jobId=[{}] is running, does not need restart.", jobId);
+            return;
+        }
+
         CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.RESTART);
 
         wait4Finish(future);
@@ -237,6 +250,12 @@ public class RSQLEngin implements Engin {
     @Override
     public void remove(String jobId) {
         validate();
+        QueryResult result = this.queryByJobId(jobId);
+        if (result != null && result.getStatus() == CommandStatus.RUNNING) {
+            logger.info("jobId=[{}] is running, can not remove.", jobId);
+            return;
+        }
+
         CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.REMOVE);
         wait4Finish(future);
     }

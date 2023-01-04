@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultParser implements RsqlParser {
+    private final DefaultVisitor visitor = new DefaultVisitor();
+
     @Override
     @SuppressWarnings("unchecked")
     public List<Statement> parseStatement(String sql) throws SyntaxErrorException {
@@ -51,16 +53,13 @@ public class DefaultParser implements RsqlParser {
         com.alibaba.rsqldb.parser.SqlParser.SqlStatementsContext statements = parser.sqlStatements();
 
 
-        DefaultVisitor visitor = new DefaultVisitor();
-        ListNode<Node> nodes = (ListNode<Node>)visitor.visit(statements);
+        ListNode<Node> nodes = (ListNode<Node>) visitor.visit(statements);
 
         for (Node node : nodes.getHolder()) {
-            System.out.println(node);
-
             if (node instanceof Statement) {
                 result.add((Statement) node);
             } else {
-                throw new RuntimeException("not a statement sql.");
+                throw new SyntaxErrorException("not a statement sql.");
             }
         }
 

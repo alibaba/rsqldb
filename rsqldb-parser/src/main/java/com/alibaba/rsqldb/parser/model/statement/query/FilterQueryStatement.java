@@ -16,7 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
-import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
@@ -41,11 +40,6 @@ public class FilterQueryStatement extends QueryStatement {
                                 @JsonProperty("selectFieldAndCalculator") Map<Field, Calculator> selectFieldAndCalculator,
                                 @JsonProperty("filter") Expression filter) {
         super(content, tableName, selectFieldAndCalculator);
-        for (Calculator value : selectFieldAndCalculator.values()) {
-            if (value != null) {
-                throw new SyntaxErrorException("has function in sql. function=" + value + ", sql=" + content);
-            }
-        }
         this.filter = filter;
     }
 
