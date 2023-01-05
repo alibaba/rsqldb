@@ -18,12 +18,16 @@ package com.alibaba.rsqldb.parser.serialization;
 
 import com.alibaba.rsqldb.common.exception.SerializeException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JsonSer implements Serializer {
+    private static final String KEY = "key";
+    private static final String VALUE = "value";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public byte[] serialize(Object obj) {
+    public byte[] serialize(Object obj) throws SerializeException {
         if (obj == null) {
             return new byte[0];
         }
@@ -31,6 +35,32 @@ public class JsonSer implements Serializer {
             return objectMapper.writeValueAsBytes(obj);
         } catch (JsonProcessingException e) {
             throw new SerializeException(e);
+        }
+    }
+
+    @Override
+    public byte[] serialize(Object key, Object value) throws SerializeException {
+        if (key == null) {
+            return this.serialize(value);
+        }
+
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+
+            String valueAsString = objectMapper.writeValueAsString(value);
+            JsonNode valueJsonNode = objectMapper.readTree(valueAsString);
+
+            if (key.getClass().isPrimitive()) {
+                objectNode.set(String.valueOf(key), valueJsonNode);
+            } else {
+                throw new UnsupportedOperationException("key is not primitive.");
+            }
+
+            String result = objectNode.toPrettyString();
+
+            return objectMapper.writeValueAsBytes(result);
+        } catch (Throwable t) {
+            throw new SerializeException(t);
         }
     }
 }

@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.common.exception;
 
-public class SerializeException extends RuntimeException{
+public class SerializeException extends Exception {
     public SerializeException() {
     }
 

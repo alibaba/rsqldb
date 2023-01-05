@@ -22,16 +22,16 @@ import com.alibaba.rsqldb.rest.response.QueryResult;
 import java.util.List;
 
 public interface RsqlService {
-    List<String> executeSql(String sql, String jobId);
+    List<String> executeSql(String sql, String jobId) throws Throwable;
 
     List<QueryResult> queryTask();
 
     QueryResult queryTaskByJobId(String jobId);
 
-    void terminate(String jobId);
+    void terminate(String jobId) throws Throwable;
 
-    void restart(String jobId);
+    void restart(String jobId) throws Throwable;
 
-    void remove(String jobId);
+    void remove(String jobId) throws Throwable;
 
 }

@@ -16,8 +16,15 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.statement.InsertQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import org.apache.rocketmq.streams.core.util.Utils;
 import org.junit.Test;
 
@@ -222,7 +229,18 @@ public class TestQuery {
 
         DefaultParser parser = new DefaultParser();
         List<Statement> statements = parser.parseStatement(sql);
-        System.out.println(statements);
+
+        for (Statement statement : statements) {
+            System.out.println(statement);
+            Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
+            byte[] bytes = serializer.serialize(statement);
+
+
+            Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
+            Node deserialize = deserializer.deserialize(bytes, InsertQueryStatement.class);
+
+            System.out.println(deserialize);
+        }
     }
 
     @Test

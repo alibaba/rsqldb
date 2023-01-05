@@ -16,6 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.serialization;
 
+import com.alibaba.rsqldb.common.exception.SerializeException;
+
 public interface Serializer {
-    byte[] serialize(Object obj);
+    byte[] serialize(Object obj) throws SerializeException ;
+
+    byte[] serialize(Object key, Object value) throws SerializeException;
 }

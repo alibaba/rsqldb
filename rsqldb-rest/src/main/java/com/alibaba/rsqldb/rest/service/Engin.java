@@ -27,15 +27,15 @@ import java.util.concurrent.CompletableFuture;
 public interface Engin {
     void start();
 
-    CompletableFuture<Throwable> putStatement(String jobId, Statement node);
+    CompletableFuture<Throwable> putStatement(String jobId, Statement node) throws Throwable;
 
     List<QueryResult> queryAll();
 
     QueryResult queryByJobId(String jobId);
 
-    void terminate(String jobId);
+    void terminate(String jobId) throws Throwable;
 
-    void restart(String jobId);
+    void restart(String jobId) throws Throwable;
 
-    void remove(String jobId);
+    void remove(String jobId) throws Throwable;
 }

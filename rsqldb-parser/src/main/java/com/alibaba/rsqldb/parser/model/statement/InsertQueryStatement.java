@@ -20,6 +20,9 @@ import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
@@ -33,23 +36,27 @@ import java.util.Set;
 
 /**
  * String sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City)\n" +
- *                 "select field_1\n" +
- *                 "     , field_2\n" +
- *                 "     , field_3\n" +
- *                 "     , field_4\n" +
- *                 "from test_source where field_1='1';";
+ * "select field_1\n" +
+ * "     , field_2\n" +
+ * "     , field_3\n" +
+ * "     , field_4\n" +
+ * "from test_source where field_1='1';";
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InsertQueryStatement extends Statement {
     private static final Logger logger = LoggerFactory.getLogger(InsertQueryStatement.class);
     private QueryStatement queryStatement;
     private Columns columns;
+
 
     public InsertQueryStatement(String content, String tableName, QueryStatement queryStatement) {
         super(content, tableName);
         this.queryStatement = queryStatement;
     }
 
-    public InsertQueryStatement(String content, String tableName, QueryStatement queryStatement, Columns columns) {
+    @JsonCreator
+    public InsertQueryStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                @JsonProperty("queryStatement") QueryStatement queryStatement, @JsonProperty("columns") Columns columns) {
         super(content, tableName);
         this.queryStatement = queryStatement;
         this.columns = columns;
@@ -87,7 +94,8 @@ public class InsertQueryStatement extends Statement {
             fieldName2NewName.put(name, name);
         }
 
-        RStream<JsonNode> stream = context.getRStreamSource(this.getTableName());
+        //the right RStream will in StreamResult field, because build queryStatement will happen before this.
+        RStream<? extends JsonNode> stream = context.getrStreamResult();
 
         WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
         GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();

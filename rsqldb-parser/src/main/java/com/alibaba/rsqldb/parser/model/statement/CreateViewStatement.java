@@ -18,11 +18,17 @@ package com.alibaba.rsqldb.parser.model.statement;
 
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateViewStatement extends Statement {
     private QueryStatement queryStatement;
 
-    public CreateViewStatement(String content, String tableName, QueryStatement queryStatement) {
+    @JsonCreator
+    public CreateViewStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                               @JsonProperty("queryStatement") QueryStatement queryStatement) {
         super(content, tableName);
         this.queryStatement = queryStatement;
     }

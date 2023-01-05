@@ -16,7 +16,13 @@
  */
 package com.alibaba.rsqldb.parser;
 
+import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.statement.InsertQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import org.junit.Test;
 
 import java.util.List;
@@ -52,7 +58,20 @@ public class TestInsertValueStatement {
                 "from test_source where field_1='1';";
 
         DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
+        List<Statement> statements = parser.parseStatement(sql);
+
+
+        for (Statement statement : statements) {
+            System.out.println(statement);
+            Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
+            byte[] bytes = serializer.serialize(statement);
+
+
+            Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
+            Node deserialize = deserializer.deserialize(bytes, InsertQueryStatement.class);
+
+            System.out.println(deserialize);
+        }
     }
 
     @Test

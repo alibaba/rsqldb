@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.rest.store;
 
 
+import com.alibaba.rsqldb.common.exception.SerializeException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.response.QueryResult;
@@ -35,13 +36,13 @@ public interface CommandQueue {
     /**
      * 从头恢复消费，直到最后一条命令。恢复所有的命令到本地，供后续查找
      */
-    CompletableFuture<Boolean> restore() throws Exception;
+    CompletableFuture<Boolean> restore() throws Throwable;
 
-    CompletableFuture<Throwable> putStatement(String jobId, Statement statement);
+    CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable;
 
-    CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator);
+    CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator) throws Throwable;
 
-    Pair<String/*jobId*/, Node> getNextCommand() throws Exception;
+    Pair<String/*jobId*/, Node> getNextCommand() throws Throwable;
 
     //可能返回CreateTableStatement，也可能返回CreateViewStatement
     Statement findTable(String tableName);

@@ -19,9 +19,13 @@ package com.alibaba.rsqldb.parser.model.statement.query;
 
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.concurrent.TimeUnit;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WindowInfoInSQL extends Node {
     public enum WindowType {
         TUMBLE, HOP, SESSION
@@ -51,8 +55,9 @@ public class WindowInfoInSQL extends Node {
     private FirstWordInSQL firstWordInSQL;
     private String newFieldName;
 
-
-    public WindowInfoInSQL(String content, WindowType type, long slide, long size, Field timeField) {
+    @JsonCreator
+    public WindowInfoInSQL(@JsonProperty("content") String content, @JsonProperty("type") WindowType type,
+                           @JsonProperty("slide") long slide, @JsonProperty("size") long size, @JsonProperty("timeField") Field timeField) {
         super(content);
         this.type = type;
         this.slide = slide;

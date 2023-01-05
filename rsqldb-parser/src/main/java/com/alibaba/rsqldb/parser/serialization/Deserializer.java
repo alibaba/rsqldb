@@ -16,12 +16,13 @@
  */
 package com.alibaba.rsqldb.parser.serialization;
 
+import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public interface Deserializer {
-    JsonNode deserialize(byte[] source);
+    JsonNode deserialize(byte[] source) throws DeserializeException;
 
-    default <T> T deserialize(byte[] source, Class<T> clazz) {
+    default <T> T deserialize(byte[] source, Class<T> clazz) throws DeserializeException {
         return null;
     }
 }

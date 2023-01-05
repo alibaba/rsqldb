@@ -27,6 +27,9 @@ import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.NumberType;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.util.Pair;
 
@@ -46,12 +49,15 @@ import java.util.Map;
  *
  * 没有source，只有sink
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InsertValueStatement extends Statement {
     private static final String template = "insert sql=[%s], create table sql=[%s]";
     //columns中顺序就是insert语句中值的顺序：INSERT INTO `purchaser_dim` VALUES (1,'tom','male','16');
     private List<ColumnValue> columns = new ArrayList<>();
 
-    public InsertValueStatement(String content, String tableName, List<ColumnValue> columns) {
+    @JsonCreator
+    public InsertValueStatement(@JsonProperty("content") String content, @JsonProperty("tableName") String tableName,
+                                @JsonProperty("columns") List<ColumnValue> columns) {
         super(content, tableName);
         this.columns = columns;
     }

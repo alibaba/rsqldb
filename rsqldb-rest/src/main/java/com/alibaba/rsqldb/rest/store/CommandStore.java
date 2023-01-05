@@ -18,7 +18,9 @@ package com.alibaba.rsqldb.rest.store;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import com.alibaba.rsqldb.common.exception.SerializeException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
@@ -122,7 +124,7 @@ public class CommandStore implements CommandQueue {
     }
 
     @Override
-    public CompletableFuture<Boolean> restore() throws Exception {
+    public CompletableFuture<Boolean> restore() throws Throwable {
         //恢复command topic中所有的命令到本地，存储建表语句
         pullConsumer.setPullBatchSize(1000);
         pullConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
@@ -141,7 +143,7 @@ public class CommandStore implements CommandQueue {
             } catch (Throwable t) {
                 completableFuture.complete(false);
                 logger.error("pull to last error.", t);
-                throw t;
+                throw new RSQLServerException(t);
             }
         });
 
@@ -149,7 +151,7 @@ public class CommandStore implements CommandQueue {
     }
 
     @Override
-    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) {
+    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable {
         if (statement == null || StringUtils.isEmpty(jobId)) {
             throw new IllegalArgumentException("jobId or statement is null.");
         }
@@ -183,7 +185,7 @@ public class CommandStore implements CommandQueue {
 
     //todo compact topic 在static topic下行为表现
     @Override
-    public CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator) {
+    public CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator) throws Throwable {
         if (operator == null || StringUtils.isEmpty(jobId)) {
             throw new IllegalArgumentException("jobId or status is null.");
         }
@@ -229,7 +231,7 @@ public class CommandStore implements CommandQueue {
     }
 
     @Override
-    public Pair<String/*jobId*/, Node> getNextCommand() throws Exception {
+    public Pair<String/*jobId*/, Node> getNextCommand() throws Throwable {
         //先从restore恢复中拉去
         if (this.restoreCommand.size() != 0) {
             CommandResult result = this.restoreCommand.pop();
@@ -392,7 +394,7 @@ public class CommandStore implements CommandQueue {
         }
     }
 
-    private void pullToLast() {
+    private void pullToLast() throws DeserializeException {
         List<MessageExt> holder = new ArrayList<>();
         //recover
         List<MessageExt> result = pullConsumer.poll(10);
@@ -414,7 +416,7 @@ public class CommandStore implements CommandQueue {
         }
     }
 
-    private void replayState(List<MessageExt> msgs) {
+    private void replayState(List<MessageExt> msgs) throws DeserializeException {
         if (msgs == null || msgs.size() == 0) {
             return;
         }
@@ -460,7 +462,7 @@ public class CommandStore implements CommandQueue {
     }
 
     @SuppressWarnings("unchecked")
-    private Node deserializeAndSaveTable(MessageExt command) {
+    private Node deserializeAndSaveTable(MessageExt command) throws DeserializeException {
         String clazzName = command.getUserProperty(RSQLConstant.BODY_TYPE);
 
         Class<Node> clazz = null;

@@ -65,7 +65,7 @@ public class DefaultRsqlService implements RsqlService {
      * @param sql
      */
     @Override
-    public List<String> executeSql(String sql, String jobId) {
+    public List<String> executeSql(String sql, String jobId) throws Throwable {
         if (StringUtils.isEmpty(sql)) {
             logger.info("sql is null, skip.");
             return null;
@@ -121,18 +121,18 @@ public class DefaultRsqlService implements RsqlService {
     }
 
     @Override
-    public void terminate(String jobId) {
+    public void terminate(String jobId) throws Throwable {
         //终止本地任务
         this.rsqlEngin.terminate(jobId);
     }
 
     @Override
-    public void restart(String jobId) {
+    public void restart(String jobId) throws Throwable {
         this.rsqlEngin.restart(jobId);
     }
 
     @Override
-    public void remove(String jobId) {
+    public void remove(String jobId) throws Throwable {
         this.rsqlEngin.remove(jobId);
     }
 

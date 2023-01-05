@@ -18,7 +18,6 @@ package com.alibaba.rsqldb.parser.serialization;
 
 import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -47,7 +46,7 @@ public class JsonDe implements Deserializer {
     }
 
     @Override
-    public <T> T deserialize(byte[] source, Class<T> clazz) {
+    public <T> T deserialize(byte[] source, Class<T> clazz) throws DeserializeException {
         if (source == null || source.length == 0) {
             return null;
         }

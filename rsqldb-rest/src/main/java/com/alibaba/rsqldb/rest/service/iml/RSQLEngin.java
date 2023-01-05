@@ -93,7 +93,7 @@ public class RSQLEngin implements Engin {
                     holder.set(exception);
                 }
             });
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new RSQLServerException(e);
         }
 
@@ -202,7 +202,7 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) {
+    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable {
         validate();
         return this.commandQueue.putStatement(jobId, statement);
     }
@@ -220,7 +220,7 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public void terminate(String jobId) {
+    public void terminate(String jobId) throws Throwable {
         validate();
         //发送任务终止命令到rocketmq
         QueryResult result = this.queryByJobId(jobId);
@@ -234,7 +234,7 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public void restart(String jobId) {
+    public void restart(String jobId) throws Throwable {
         validate();
         QueryResult result = this.queryByJobId(jobId);
         if (result != null && result.getStatus() == CommandStatus.RUNNING) {
@@ -246,9 +246,9 @@ public class RSQLEngin implements Engin {
 
         wait4Finish(future);
     }
-
+    //todo 移除create table和create view时候要非常小心,因为可能有针对这个表的insert等操作；
     @Override
-    public void remove(String jobId) {
+    public void remove(String jobId) throws Throwable {
         validate();
         QueryResult result = this.queryByJobId(jobId);
         if (result != null && result.getStatus() == CommandStatus.RUNNING) {

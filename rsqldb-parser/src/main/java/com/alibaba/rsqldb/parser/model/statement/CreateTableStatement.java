@@ -27,6 +27,7 @@ import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,6 +38,8 @@ import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.StreamBuilder;
 import org.apache.rocketmq.streams.core.rstream.WindowStream;
 import org.apache.rocketmq.streams.core.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +52,7 @@ import java.util.Set;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateTableStatement extends Statement {
+    private static final Logger logger = LoggerFactory.getLogger(CreateTableStatement.class);
     private Columns columns;
     private List<Pair<String, Literal<?>>> properties;
 
@@ -166,7 +170,7 @@ public class CreateTableStatement extends Statement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
-        Set<String> fieldNames =  this.columns.getFields();
+        Set<String> fieldNames = this.columns.getFields();
 
         if (context.getHeader(RSQLConstant.TABLE_TYPE) == RSQLConstant.TableType.SOURCE) {
             StreamBuilder builder = context.getStreamBuilder();
@@ -178,6 +182,7 @@ public class CreateTableStatement extends Statement {
                 while (entryIterator.hasNext()) {
                     Map.Entry<String, JsonNode> next = entryIterator.next();
                     if (!fieldNames.contains(next.getKey())) {
+                        logger.info("remove field, name:{}, value:{}", next.getKey(), next.getValue());
                         entryIterator.remove();
                     }
                 }
@@ -188,6 +193,7 @@ public class CreateTableStatement extends Statement {
             context.addRStreamSource(this.getTableName(), rStream);
             context.setCreateTableStatement(this);
         } else if (context.getHeader(RSQLConstant.TABLE_TYPE) == RSQLConstant.TableType.SINK) {
+            Serializer serializer = SerializeTypeContainer.getSerializer(serializeType);
             RStream<? extends JsonNode> stream = context.getrStreamResult();
             WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
             GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
@@ -197,7 +203,7 @@ public class CreateTableStatement extends Statement {
             } else if (groupedStream != null) {
                 groupedStream.sink(topicName, new JsonStringKVSer<>());
             } else {
-                stream.sink(topicName, new JsonObjectKVSer<>());
+                stream.sink(topicName, new JsonObjectKVSer<>(serializer));
             }
         }
 
