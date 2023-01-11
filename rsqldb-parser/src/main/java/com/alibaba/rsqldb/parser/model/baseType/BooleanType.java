@@ -39,7 +39,7 @@ public class BooleanType extends Literal<Boolean> {
     }
 
     @Override
-    public Boolean getResult() {
+    public Boolean result() {
         return result;
     }
 }

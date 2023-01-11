@@ -54,7 +54,7 @@ public class SingleValueExpression extends SingleExpression {
                 JsonNode node = jsonNode.get(fieldName);
 
                 String value = node.asText();
-                String target = String.valueOf(this.value.getResult());
+                String target = String.valueOf(this.value.result());
 
                 return StringUtils.equalsIgnoreCase(value, target);
             }
@@ -66,7 +66,7 @@ public class SingleValueExpression extends SingleExpression {
                 }
                 JsonNode node = jsonNode.get(fieldName);
                 Double value = Double.valueOf(node.asText());
-                Double target = Double.valueOf(String.valueOf(this.value.getResult()));
+                Double target = Double.valueOf(String.valueOf(this.value.result()));
 
                 return compare(this.getOperator(), value, target);
             }

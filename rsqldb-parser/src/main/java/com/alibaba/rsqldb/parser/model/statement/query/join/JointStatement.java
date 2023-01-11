@@ -113,14 +113,16 @@ public class JointStatement extends QueryStatement {
             Field left = pair.getKey();
             String leftTableName = left.getTableName();
 
-            if (!StringUtils.isEmpty(leftTableName) && (!leftTableName.equals(this.getTableName()) && !leftTableName.equals(asSourceTableName))) {
+            if (!StringUtils.isEmpty(leftTableName) && (!leftTableName.equals(this.getTableName()) && !leftTableName.equals(asSourceTableName))
+            && !(leftTableName.equals(joinTableName)) && !(leftTableName.equals(asJoinTableName))) {
                 throw new SyntaxErrorException("left table " + leftTableName +
                         " not equals to table name=" + this.getTableName() + " or asTable name=" + asSourceTableName + ".sql=" + this.getContent());
             }
 
             Field right = pair.getValue();
             String rightTableName = right.getTableName();
-            if (!StringUtils.isEmpty(rightTableName) && (!rightTableName.equals(joinTableName) && !rightTableName.equals(asJoinTableName))) {
+            if (!StringUtils.isEmpty(rightTableName) && (!rightTableName.equals(joinTableName) && !rightTableName.equals(asJoinTableName))
+            && !(rightTableName.equals(this.getTableName())) && !(rightTableName.equals(asSourceTableName))) {
                 throw new SyntaxErrorException("right table " + rightTableName +
                         " not equals to join table name=" + joinTableName + " or join asTable name=" + asJoinTableName + ".sql=" + this.getContent());
             }

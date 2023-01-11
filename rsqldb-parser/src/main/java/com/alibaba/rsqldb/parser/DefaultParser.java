@@ -47,7 +47,10 @@ public class DefaultParser implements RsqlParser {
         CommonTokenStream tokens = new CommonTokenStream(sqlLexer);
         com.alibaba.rsqldb.parser.SqlParser parser = new com.alibaba.rsqldb.parser.SqlParser(tokens);
 
+        sqlLexer.removeErrorListeners();
         sqlLexer.addErrorListener(new DefaultErrorListener());
+
+        parser.removeErrorListeners();
         parser.addErrorListener(new DefaultErrorListener());
 
         com.alibaba.rsqldb.parser.SqlParser.SqlStatementsContext statements = parser.sqlStatements();

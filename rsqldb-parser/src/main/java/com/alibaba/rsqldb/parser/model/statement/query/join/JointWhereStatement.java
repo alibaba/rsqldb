@@ -63,7 +63,7 @@ public class JointWhereStatement extends JointStatement {
                                @JsonProperty("afterJoinWhereExpression") Expression afterJoinWhereExpression) {
 
         super(content, tableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition);
-        if (beforeJoinWhereExpression == null || afterJoinWhereExpression == null) {
+        if (beforeJoinWhereExpression == null && afterJoinWhereExpression == null) {
             throw new IllegalArgumentException("expression can not be null");
         }
         this.beforeJoinWhereExpression = beforeJoinWhereExpression;

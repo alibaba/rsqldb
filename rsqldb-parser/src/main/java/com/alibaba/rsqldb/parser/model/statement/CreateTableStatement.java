@@ -123,7 +123,7 @@ public class CreateTableStatement extends Statement {
                     throw new SyntaxErrorException("topicName is not string.");
                 }
                 StringType temp = (StringType) value;
-                topicName = temp.getResult();
+                topicName = temp.result();
             }
         }
 
@@ -150,7 +150,7 @@ public class CreateTableStatement extends Statement {
                     throw new SyntaxErrorException("data_format is not string.");
                 }
                 StringType temp = (StringType) value;
-                dataFormat = temp.getResult();
+                dataFormat = temp.result();
             }
         }
 

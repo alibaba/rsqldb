@@ -34,6 +34,6 @@ public abstract class Literal<T> extends Node {
         super(content);
     }
 
-    public abstract T getResult();
+    public abstract T result();
 
 }

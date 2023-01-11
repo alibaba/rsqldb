@@ -38,7 +38,7 @@ tableProperties
     ;
 
 tableProperty
-    : identifier EQUAL_SYMBOL literal
+    : identifier EQUAL_SYMBOL value
     ;
 
 query
@@ -59,7 +59,7 @@ havingPhrase
     : HAVING booleanExpression
     ;
 joinPhrase
-    : (LEFT)? JOIN tableName (AS identifier)? ON joinCondition
+    : (LEFT | INNER)? JOIN tableName (AS identifier)? ON joinCondition
     ;
 
 selectField
@@ -83,21 +83,22 @@ oneJoinCondition
 
 booleanExpression
     : booleanExpression (AND | OR) booleanExpression                    #jointExpression
-    | fieldName operator literal                                        #operatorExpression
+    | fieldName operator value                                        #operatorExpression
     | fieldName IS NULL                                                 #isNullExpression
     | fieldName BETWEEN NUMBER AND NUMBER                               #betweenExpression
     | fieldName IN values                                               #inExpression
-    | function operator literal                                         #functionExpression
+    | function operator value                                         #functionExpression
     ;
 
-literal
-    : NULL                                  #nullLiteral
-    | (TRUE | FALSE)                        #booleanLiteral
-    | STRING                                #stringLiteral
-    | VARIABLE                              #variableLiteral
-    | NUMBER                                #numberLiteral
-    | QUOTED_NUMBER                         #quotedNumberLiteral
-    | QUOTED_STRING                         #quotedStringLiteral
+value
+    : NULL                                  #nullValue
+    | (TRUE | FALSE)                        #booleanValue
+    | STRING                                #stringValue
+    | VARIABLE                              #variableValue
+    | NUMBER                                #numberValue
+    | QUOTED_NUMBER                         #quotedNumberValue
+    | QUOTED_STRING                         #quotedStringValue
+    | BACKQUOTED_STRING                     #backQuotedStringValue
     ;
 
 function
@@ -142,7 +143,7 @@ timeunit
 
 
 values
-    : LR_BRACKET literal (COMMA literal)* RR_BRACKET
+    : LR_BRACKET value (COMMA value)* RR_BRACKET
     ;
 
 columnConstraint

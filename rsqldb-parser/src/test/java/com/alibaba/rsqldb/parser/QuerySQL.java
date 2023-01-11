@@ -14,32 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.model.baseType;
+package com.alibaba.rsqldb.parser;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class NumberType extends Literal<Number> {
-    private Number number;
-
-    @JsonCreator
-    public NumberType(@JsonProperty("content") String content, @JsonProperty("number") Number number) {
-        super(content);
-        this.number = number;
-    }
-
-    public Number getNumber() {
-        return number;
-    }
-
-    public void setNumber(Number number) {
-        this.number = number;
-    }
-
-    @Override
-    public Number result() {
-        return number;
-    }
+public interface QuerySQL {
 }

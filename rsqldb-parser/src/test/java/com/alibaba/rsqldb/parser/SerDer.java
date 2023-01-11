@@ -16,29 +16,22 @@
  */
 package com.alibaba.rsqldb.parser;
 
-
 import com.alibaba.rsqldb.common.SerializeType;
-import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
 import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.serialization.Serializer;
-import org.junit.Test;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
-public class TestCreate {
+public abstract class SerDer {
 
-    @Test
-    public void createTable1() throws Throwable {
-        //在properties中指定timeField字段，指定允许延迟时间。
-        String sql = CreateAndInsertSQL.createTable;
-
+    protected  <T> T parser(String sql, Class<T> clazz) throws Throwable {
         DefaultParser parser = new DefaultParser();
         List<Statement> statements = parser.parseStatement(sql);
 
@@ -51,15 +44,10 @@ public class TestCreate {
 
 
         Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
-        CreateTableStatement target = deserializer.deserialize(bytes, CreateTableStatement.class);
+        T target = deserializer.deserialize(bytes, clazz);
 
         assertNotNull(target);
-        assertEquals("odeum", target.getTableName());
-        assertEquals(3, target.getColumns().getHolder().size());
-        assertEquals("rsqldb-odeum", target.getTopicName());
-        assertEquals(SerializeType.JSON, target.getSerializeType());
+
+        return target;
     }
-
-
-
 }

@@ -39,6 +39,7 @@ LESS_SYMBOL:                         '<';
 NOT_EQUAL_SYMBOL:                    '<>'       |   '!=';
 GREATER_EQUAL_SYMBOL:                '>=';
 LESS_EQUAL_SYMBOL:                   '<=';
+//support like
 
 // Operators. Bit
 
@@ -100,6 +101,7 @@ AND:                                    'AND'               |       'and';
 IN:                                     'IN'                |       'in';
 INTO:                                   'INTO'              |       'into';
 LEFT:                                   'LEFT'              |       'left';
+INNER:                                  'INNER'             |       'inner';
 ON:                                     'ON'                |       'on';
 YEAR:                                   'YEAR'              |       'year';
 MONTH:                                  'MONTH'             |       'month';
@@ -129,6 +131,7 @@ INTEGER
     : NUM+
     ;
 
+// '123', "1234"
 QUOTED_NUMBER
     : '\'' NUMBER '\''
     | '"' NUMBER '"'

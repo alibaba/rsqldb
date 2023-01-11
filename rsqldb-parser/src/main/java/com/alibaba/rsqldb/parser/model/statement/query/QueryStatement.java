@@ -68,9 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 单纯的select * from 语句map中的value都是null，不会存在计算。
- */
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

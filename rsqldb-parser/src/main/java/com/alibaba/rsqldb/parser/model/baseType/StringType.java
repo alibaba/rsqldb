@@ -40,7 +40,7 @@ public class StringType extends Literal<String> {
     }
 
     @Override
-    public String getResult() {
+    public String result() {
         return literal;
     }
 }
