@@ -11,238 +11,76 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>rsqldb-parser</module>
-        <module>rsqldb-udf</module>
-        <module>rsqldb-server</module>
-        <module>rsqldb-runner</module>
-        <module>rsql-dim</module>
-        <module>rsqldb-disk</module>
+
+        <module>rsqldb-rest</module>
         <module>rsqldb-client</module>
+        <module>rsqldb-cli</module>
+        <module>rsqldb-parser</module>
+        <module>rsqldb-common</module>
     </modules>
 
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <blink.version>blink-3.4.0</blink.version>
-        <flink.version>1.13.1</flink.version>
-        <scala-library.version>2.12.4</scala-library.version>
-        <rocketmq-streams.version>1.0.2-preview-SNAPSHOT</rocketmq-streams.version>
+        <rocketmq-streams.version>1.1.0-preview-SNAPSHOT</rocketmq-streams.version>
+        <antlr.version>4.9.2</antlr.version>
+        <logback.version>1.2.10</logback.version>
     </properties>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <version>0.12</version>
-                <configuration>
-                    <excludes>
-                        <exclude>.gitignore</exclude>
-                        <exclude>.travis.yml</exclude>
-                        <exclude>.asf.yaml</exclude>
-                        <exclude>README.md</exclude>
-                        <exclude>README-Chinese.md</exclude>
-                        <exclude>QUICKSTART.md</exclude>
-                        <exclude>.github/**</exclude>
-                        <exclude>*/target/**</exclude>
-                        <exclude>*/*.iml</exclude>
-                        <exclude>**/*.txt</exclude>
-                        <exclude>**/*.cs</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-server</artifactId>
-                <version>${project.version}</version>
+                <artifactId>rsqldb-common</artifactId>
+                <version>${version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-parser</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-udf</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-dim</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-runner</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>rsqldb-dim</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-clients</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <version>${version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-window</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-commons</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.12.0</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-script</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-filter</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.1</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-channel-rocketmq</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>2.6.0</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-configurable</artifactId>
-                <version>${rocketmq-streams.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>2.6.3</version>
+                <scope>test</scope>
             </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-db-operator</artifactId>
-                <version>${rocketmq-streams.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-streams-channel-db</artifactId>
-                <version>${rocketmq-streams.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.alibaba.blink</groupId>
-                <artifactId>flink-table_2.11</artifactId>
-                <version>${blink.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.alibaba.blink</groupId>
-                <artifactId>flink-sql-parser</artifactId>
-                <version>${blink.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table</artifactId>
-                <version>${flink.version}</version>
-                <type>pom</type>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table-common</artifactId>
-                <version>${flink.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table-api-java</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-sql-parser</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>${scala-library.version}</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
+
+    <build>
+
+    </build>
+
+
 </project>
