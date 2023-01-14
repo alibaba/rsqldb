@@ -17,17 +17,13 @@
 package com.alibaba.rsqldb.rest.store;
 
 
-import com.alibaba.rsqldb.common.exception.SerializeException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.response.QueryResult;
-import com.alibaba.rsqldb.rest.service.iml.CommandNode;
 import com.alibaba.rsqldb.rest.service.iml.CommandOperator;
 import org.apache.rocketmq.streams.core.util.Pair;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface CommandQueue {
@@ -38,7 +34,7 @@ public interface CommandQueue {
      */
     CompletableFuture<Boolean> restore() throws Throwable;
 
-    CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable;
+    CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable;
 
     CompletableFuture<Throwable> putCommand(String jobId, CommandOperator operator) throws Throwable;
 

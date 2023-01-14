@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -202,9 +201,9 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable {
+    public CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable {
         validate();
-        return this.commandQueue.putStatement(jobId, statement);
+        return this.commandQueue.putCommand(jobId, node);
     }
 
     @Override
