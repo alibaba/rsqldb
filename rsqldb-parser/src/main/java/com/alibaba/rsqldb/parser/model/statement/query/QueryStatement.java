@@ -23,7 +23,6 @@ import com.alibaba.rsqldb.common.function.CountFunction;
 import com.alibaba.rsqldb.common.function.EmptyFunction;
 import com.alibaba.rsqldb.common.function.MaxFunction;
 import com.alibaba.rsqldb.common.function.MinFunction;
-import com.alibaba.rsqldb.common.function.RSQLAccumulator;
 import com.alibaba.rsqldb.common.function.SQLFunction;
 import com.alibaba.rsqldb.common.function.SumFunction;
 import com.alibaba.rsqldb.common.function.WindowBoundaryTimeFunction;

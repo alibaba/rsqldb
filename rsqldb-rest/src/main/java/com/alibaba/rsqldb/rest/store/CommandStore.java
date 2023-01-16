@@ -168,7 +168,7 @@ public class CommandStore implements CommandQueue {
             message.setKeys(jobId);
             message.putUserProperty(RSQLConstant.BODY_TYPE, node.getClass().getName());
 
-            producer.send(message, new SelectMessageQueueByHash(), jobId);
+            producer.send(message);
 
             logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, node.getContent());
         } catch (Throwable e) {
@@ -214,7 +214,7 @@ public class CommandStore implements CommandQueue {
                 message.putUserProperty(Constant.EMPTY_BODY, Constant.TRUE);
             }
 
-            producer.send(message, new SelectMessageQueueByHash(), jobId);
+            producer.send(message);
 
             logger.info("put command into rocketmq command topic:{} with jobId:[{}],CommandOperator:[{}] command:[{}]",
                     RSQLConfig.SQL_TOPIC_NAME, jobId, operator.name(), node.getContent());
