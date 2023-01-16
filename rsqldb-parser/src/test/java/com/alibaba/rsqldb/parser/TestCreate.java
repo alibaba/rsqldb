@@ -17,7 +17,6 @@ package com.alibaba.rsqldb.parser;
 
 
 import com.alibaba.rsqldb.common.SerializeType;
-import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
@@ -27,41 +26,39 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 public class TestCreate {
 
     @Test
-    public void create1() throws Throwable {
+    public void createTable1() throws Throwable {
         //在properties中指定timeField字段，指定允许延迟时间。
-        String sql = "create table odeum(`id` INT,`name` VARCHAR, `gmt_modified` TIMESTAMP) WITH (type = null, topic = 'rsqldb-odeum', data_format='JSON');";
+        String sql = CreateAndInsertSQL.createTable;
 
         DefaultParser parser = new DefaultParser();
         List<Statement> statements = parser.parseStatement(sql);
 
-        for (Statement statement : statements) {
-            System.out.println(statement);
-            Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
-            byte[] bytes = serializer.serialize(statement);
+        assertEquals(1, statements.size());
+
+        Statement statement = statements.get(0);
+
+        Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
+        byte[] bytes = serializer.serialize(statement);
 
 
-            Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
-            Node deserialize = deserializer.deserialize(bytes, CreateTableStatement.class);
+        Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
+        CreateTableStatement target = deserializer.deserialize(bytes, CreateTableStatement.class);
 
-            System.out.println(deserialize);
-        }
+        assertNotNull(target);
+        assertEquals("odeum", target.getTableName());
+        assertEquals(3, target.getColumns().getHolder().size());
+        assertEquals("rsqldb-odeum", target.getTopicName());
+        assertEquals(SerializeType.JSON, target.getSerializeType());
     }
 
 
-    @Test
-    public void create2() throws Throwable {
-        String sql = "CREATE VIEW test_view AS\n" +
-                "SELECT\n" +
-                "    TUMBLE_START(ts, INTERVAL '10' MINUTE)     as window_start,\n" +
-                "    username                                as username,\n" +
-                "    count(click_url)                        as clicks\n" +
-                "FROM user_clicks\n" +
-                "GROUP BY TUMBLE(ts, INTERVAL '10' MINUTE), username;";
 
-        DefaultParser parser = new DefaultParser();
-        parser.parseStatement(sql);
-    }
 }

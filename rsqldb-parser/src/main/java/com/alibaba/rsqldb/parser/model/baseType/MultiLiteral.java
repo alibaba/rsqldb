@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,7 +33,7 @@ public class MultiLiteral extends Literal<List<Literal<?>>> {
     }
 
     public List<Literal<?>> getLiterals() {
-        return literals;
+        return Collections.unmodifiableList(literals);
     }
 
     public void setLiterals(List<Literal<?>> literals) {
@@ -40,7 +41,7 @@ public class MultiLiteral extends Literal<List<Literal<?>>> {
     }
 
     @Override
-    public List<Literal<?>> getResult() {
-        return literals;
+    public List<Literal<?>> result() {
+        return Collections.unmodifiableList(literals);
     }
 }

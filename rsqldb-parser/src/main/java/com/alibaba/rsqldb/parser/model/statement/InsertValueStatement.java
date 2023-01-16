@@ -106,7 +106,7 @@ public class InsertValueStatement extends Statement {
         }
 
         HashMap<String, Object> fieldAndValue = new HashMap<>();
-        map.forEach((s, literal) -> fieldAndValue.put(s, literal.getResult()));
+        map.forEach((s, literal) -> fieldAndValue.put(s, literal.result()));
 
         SerializeType type = context.getCreateTableStatement().getSerializeType();
         Serializer serializer = SerializeTypeContainer.getSerializer(type);

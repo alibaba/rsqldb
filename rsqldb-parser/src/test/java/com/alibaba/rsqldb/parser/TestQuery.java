@@ -17,18 +17,33 @@ package com.alibaba.rsqldb.parser;
 
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.model.Calculator;
+import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.alibaba.rsqldb.parser.model.Operator;
+import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import com.alibaba.rsqldb.parser.model.baseType.NumberType;
+import com.alibaba.rsqldb.parser.model.expression.Expression;
+import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
 import com.alibaba.rsqldb.parser.model.statement.InsertQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
+import com.alibaba.rsqldb.parser.model.statement.query.join.JointGroupByHavingStatement;
+import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinCondition;
+import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinType;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
 import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.serialization.Serializer;
+import org.apache.rocketmq.streams.core.util.Pair;
 import org.apache.rocketmq.streams.core.util.Utils;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestQuery {
     //----------------------------------where-------------------------------------
@@ -38,7 +53,7 @@ public class TestQuery {
                 "     , field_2\n" +
                 "     , field_3\n" +
                 "     , field_4\n" +
-                "from rocketmq_source where field_1='1';";
+                "from rocketmq_source where field_1=23;";
 
         DefaultParser parser = new DefaultParser();
         List<Statement> statements = parser.parseStatement(sql);
@@ -81,6 +96,7 @@ public class TestQuery {
         DefaultParser parser = new DefaultParser();
         parser.parseStatement(sql);
     }
+
     //-----------------------------------------------------select item-----------------------------------------------------------------------
     @Test
     public void query10() throws Throwable {
@@ -291,6 +307,88 @@ public class TestQuery {
         byte[] bytes = sql.getBytes(StandardCharsets.UTF_8);
         String str = Utils.toHexString(bytes);
         System.out.println(str);
+    }
+
+    @Test
+    public void query31() throws Throwable {
+        String sql = "SELECT Websites.name as `count`, Websites.url as url, SUM(access_log.count) AS nums FROM access_log " +
+                " INNER JOIN Websites ON access_log.site_id=Websites.id\n" +
+                " GROUP BY Websites.name\n" +
+                " HAVING SUM(access_log.`count`) > 200;";//todo having 和select中不一样； select中表名的作用。
+
+        DefaultParser parser = new DefaultParser();
+        List<Statement> statements = parser.parseStatement(sql);
+
+        assertEquals(1, statements.size());
+        Statement statement = statements.get(0);
+
+        JointGroupByHavingStatement havingStatement = serde(statement, JointGroupByHavingStatement.class);
+
+        assertNotNull(havingStatement);
+        assertEquals("access_log", havingStatement.getTableName());
+        assertEquals("Websites", havingStatement.getJoinTableName());
+
+        Expression havingExpression = havingStatement.getHavingExpression();
+        List<Field> groupByFieldList = havingStatement.getGroupByField();
+        JoinType joinType = havingStatement.getJoinType();
+        Map<Field, Calculator> fieldAndCalculator = havingStatement.getSelectFieldAndCalculator();
+        JoinCondition joinCondition = havingStatement.getJoinCondition();
+
+        assertTrue(havingExpression instanceof SingleValueCalcuExpression);
+        SingleValueCalcuExpression valueCalcuExpression = (SingleValueCalcuExpression) havingExpression;
+        Operator operator = valueCalcuExpression.getOperator();
+        Calculator calculator = valueCalcuExpression.getCalculator();
+        Literal<?> value = valueCalcuExpression.getValue();
+        assertEquals(operator, Operator.GREATER);
+        assertEquals(calculator, Calculator.SUM);
+        assertTrue(value instanceof NumberType);
+        assertEquals(((NumberType) value).result().intValue(), 200);
+
+
+        assertEquals(groupByFieldList.size(), 1);
+        Field groupByField = groupByFieldList.get(0);
+        assertEquals(groupByField.getTableName(), "Websites");
+        assertEquals(groupByField.getFieldName(), "name");
+
+        assertEquals(joinType, JoinType.INNER_JOIN);
+
+        List<Pair<Field, Field>> holder = joinCondition.getHolder();
+        assertEquals(holder.size(), 1);
+        Pair<Field, Field> pair = holder.get(0);
+        Field firstField = pair.getKey();
+        Field secondField = pair.getValue();
+        assertEquals(firstField.getTableName(), "access_log");
+        assertEquals(firstField.getFieldName(), "site_id");
+        assertEquals(secondField.getTableName(), "Websites");
+        assertEquals(secondField.getFieldName(), "id");
+
+        assertEquals(3, fieldAndCalculator.size());
+
+        for (Field field : fieldAndCalculator.keySet()) {
+            if (field.getAsFieldName().equals("count")) {
+                assertEquals(field.getTableName(), "Websites");
+                assertEquals(field.getFieldName(), "name");
+            } else if (field.getAsFieldName().equals("url")) {
+                assertEquals(field.getTableName(), "Websites");
+                assertEquals(field.getFieldName(), "url");
+            } else if (field.getAsFieldName().equals("nums")) {
+                assertEquals(field.getTableName(), "access_log");
+                assertEquals(field.getFieldName(), "count");
+                Calculator calculator1 = fieldAndCalculator.get(field);
+                assertEquals(calculator1, Calculator.SUM);
+            } else {
+                throw new IllegalStateException("unexpected as name." + field.getAsFieldName());
+            }
+        }
+    }
+
+    private <T> T serde(Statement statement, Class<T> clazz) throws Throwable {
+        Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
+        byte[] bytes = serializer.serialize(statement);
+
+
+        Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
+        return deserializer.deserialize(bytes, clazz);
     }
 
 }

@@ -18,6 +18,7 @@ package com.alibaba.rsqldb.rest.service.iml;
 import com.alibaba.rsqldb.parser.DefaultParser;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
+import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.rest.response.QueryResult;
@@ -78,7 +79,7 @@ public class DefaultRsqlService implements RsqlService {
             Statement statement = temp.get(i);
             String tempJobId = makeJobId(jobId, statement, i, temp.size());
 
-            this.rsqlEngin.putStatement(tempJobId, statement);
+            this.rsqlEngin.putCommand(jobId, statement);
 
             result.add(tempJobId);
         }

@@ -62,7 +62,7 @@ public class MultiValueExpression extends SingleExpression {
 
         List<Literal<?>> literals = values.getLiterals();
         for (Literal<?> literal : literals) {
-            String target = String.valueOf(literal.getResult());
+            String target = String.valueOf(literal.result());
             if (StringUtils.equalsIgnoreCase(value, target)) {
                 return true;
             }

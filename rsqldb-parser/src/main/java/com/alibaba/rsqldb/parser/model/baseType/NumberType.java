@@ -38,7 +38,7 @@ public class NumberType extends Literal<Number> {
     }
 
     @Override
-    public Number getResult() {
+    public Number result() {
         return number;
     }
 }

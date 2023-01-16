@@ -16,7 +16,7 @@ target/
 *.iml
 *.ipr
 *.gz
-*/rsqldb.cs
+
 
 ### NetBeans ###
 nbproject/private/
@@ -29,7 +29,7 @@ nbdist/
 
 node_modules/
 _book/
-
+rsqldb-parser/src/main/antlr4/com.alibaba.rsqldb.parser/gen/
+SqlLexer.tokens
 */dependency-reduced-pom.xml
-/rsqldb-disk/log/
-/rsqldb-disk/server/rsqldb.cs
+

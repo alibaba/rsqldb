@@ -15,16 +15,46 @@
  */
 package com.alibaba.rsqldb.parser.impl;
 
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.SqlParser;
+import com.alibaba.rsqldb.parser.util.ParserUtil;
 import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.misc.Interval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultErrorListener extends BaseErrorListener {
+    private static final Logger logger = LoggerFactory.getLogger(DefaultErrorListener.class);
+    private final KeyWordPredictor predictor = new KeyWordPredictor();
+
     @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
+    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                            int line, int charPositionInLine, String msg, RecognitionException e) {
+        if (predictor.apply(msg, e)) {
+            return;
+        }
+
+        CharStream inputStream = ((CommonToken) offendingSymbol).getInputStream();
+        String sql = inputStream.getText(Interval.of(0, 1000));
+
+        logger.error("error when parse sql. position=(line:{}, char index:{}), error msg:{}, \n {}", line, charPositionInLine, msg, sql);
         if (e != null) {
-            throw new RuntimeException(e);
+            if (e.getOffendingToken() != null) {
+                String targetIdentifier = e.getOffendingToken().getText();
+                boolean keyWord = ParserUtil.isKeyWord(targetIdentifier);
+                if (keyWord) {
+                    logger.error("{} is a keyWord, change it to `{}`", targetIdentifier, targetIdentifier);
+                }
+            }
+            throw new SyntaxErrorException(msg, e);
+        } else {
+            throw new SyntaxErrorException(msg);
         }
     }
+
 }

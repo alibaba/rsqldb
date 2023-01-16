@@ -150,8 +150,8 @@ public class CommandStore implements CommandQueue {
     }
 
     @Override
-    public CompletableFuture<Throwable> putStatement(String jobId, Statement statement) throws Throwable {
-        if (statement == null || StringUtils.isEmpty(jobId)) {
+    public CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable {
+        if (node == null || StringUtils.isEmpty(jobId)) {
             throw new IllegalArgumentException("jobId or statement is null.");
         }
 
@@ -161,22 +161,22 @@ public class CommandStore implements CommandQueue {
 
 
         Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
-        byte[] bytes = serializer.serialize(statement);
+        byte[] bytes = serializer.serialize(node);
 
         try {
             Message message = new Message(RSQLConfig.SQL_TOPIC_NAME, bytes);
             message.setKeys(jobId);
-            message.putUserProperty(RSQLConstant.BODY_TYPE, statement.getClass().getName());
+            message.putUserProperty(RSQLConstant.BODY_TYPE, node.getClass().getName());
 
             producer.send(message, new SelectMessageQueueByHash(), jobId);
 
-            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, statement.getContent());
+            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]", RSQLConfig.SQL_TOPIC_NAME, jobId, node.getContent());
         } catch (Throwable e) {
             throw new RSQLServerException("put sql to command topic error.", e);
         }
 
         CompletableFuture<Throwable> result = new CompletableFuture<>();
-        CommandResult commandResult = new CommandResult(jobId, CommandStatus.STORE, statement, result);
+        CommandResult commandResult = new CommandResult(jobId, CommandStatus.STORE, node, result);
         commandMap.put(jobId, commandResult);
 
         return result;

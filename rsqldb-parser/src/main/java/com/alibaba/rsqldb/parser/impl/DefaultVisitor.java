@@ -71,10 +71,16 @@ import com.alibaba.rsqldb.parser.model.statement.query.phrase.JoinPhrase;
 import com.alibaba.rsqldb.parser.model.statement.query.phrase.WherePhrase;
 import com.alibaba.rsqldb.parser.util.ParserUtil;
 import com.alibaba.rsqldb.parser.util.Validator;
+import org.antlr.v4.runtime.InputMismatchException;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.streams.core.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,6 +91,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
+    private static final Logger logger = LoggerFactory.getLogger(DefaultVisitor.class);
+
     @Override
     public Node visitSqlStatements(SqlParser.SqlStatementsContext ctx) {
         List<SqlParser.SqlStatementContext> sqlStatementContexts = ctx.sqlStatement();
@@ -135,7 +143,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.IdentifierContext identifier = ctx.identifier();
         if (identifier != null) {
             StringType temp = (StringType) visit(identifier);
-            asSourceTableName = temp.getResult();
+            asSourceTableName = temp.result();
         }
 
         JoinPhrase joinPhrase = null;
@@ -277,7 +285,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.TablePropertiesContext propertiesContext = ctx.tableProperties();
         TableProperties properties = (TableProperties) visit(propertiesContext);
 
-        return new CreateTableStatement(ParserUtil.getText(ctx), tableName.getResult(), columns, properties.getHolder());
+        return new CreateTableStatement(ParserUtil.getText(ctx), tableName.result(), columns, properties.getHolder());
     }
 
     @Override
@@ -285,7 +293,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.ViewNameContext viewNameContext = ctx.viewName();
         StringType viewTableName = (StringType) visit(viewNameContext.identifier());
         QueryStatement queryStatement = (QueryStatement) visit(ctx.query());
-        return new CreateViewStatement(ParserUtil.getText(ctx), viewTableName.getResult(), queryStatement);
+        return new CreateViewStatement(ParserUtil.getText(ctx), viewTableName.result(), queryStatement);
     }
 
     @Override
@@ -310,7 +318,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     @Override
     public Node visitInsertValue(SqlParser.InsertValueContext ctx) {
         StringType tableNameStringType = (StringType) visit(ctx.tableName());
-        String tableName = tableNameStringType.getResult();
+        String tableName = tableNameStringType.result();
 
         SqlParser.TableDescriptorContext tableDescriptor = ctx.tableDescriptor();
         Columns targetColumns = null;
@@ -392,11 +400,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         String joinTableName = ParserUtil.getText(ctx.tableName());
 
-        Object tableNameAsJoin = visit(ctx.identifier());
+        Object tableNameAsJoin = null;
+        SqlParser.IdentifierContext identifier = ctx.identifier();
+        if (identifier != null) {
+            tableNameAsJoin = visit(identifier);
+        }
+
         String asJoinTableName = null;
         if (tableNameAsJoin != null) {
             StringType temp = (StringType) tableNameAsJoin;
-            asJoinTableName = temp.getResult();
+            asJoinTableName = temp.result();
         }
 
         SqlParser.JoinConditionContext joinConditionContext = ctx.joinCondition();
@@ -535,10 +548,10 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         if (dataTypeContext != null) {
             StringType columnType = (StringType) visit(dataTypeContext);
 
-            type = FieldType.getByType(columnType.getResult());
+            type = FieldType.getByType(columnType.result());
         }
 
-        columns.addFieldNameAndType(columnName.getResult(), type);
+        columns.addFieldNameAndType(columnName.result(), type);
 
         return columns;
     }
@@ -562,11 +575,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.IdentifierContext identifier = ctx.identifier();
 
         StringType temp = (StringType) visit(identifier);
-        String key = temp.getResult();
+        String key = temp.result();
 
 
-        SqlParser.LiteralContext literal = ctx.literal();
-        Literal<?> result = (Literal<?>) visit(literal);
+        SqlParser.ValueContext value = ctx.value();
+        Literal<?> result = (Literal<?>) visit(value);
 
         TableProperties tableProperties = new TableProperties(ParserUtil.getText(ctx));
         tableProperties.addProperties(key, result);
@@ -761,11 +774,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         Expression left = (Expression) visit(leftExpressionContext);
         Expression right = (Expression) visit(rightExpressionContext);
 
-        if (ctx.AND().getSymbol().getType() == SqlParser.AND) {
+        if (ctx.AND() != null && ctx.AND().getSymbol().getType() == SqlParser.AND) {
             return new AndExpression(ParserUtil.getText(ctx), left, right);
         }
 
-        if (ctx.OR().getSymbol().getType() == SqlParser.OR) {
+        if (ctx.OR() != null && ctx.OR().getSymbol().getType() == SqlParser.OR) {
             return new OrExpression(ParserUtil.getText(ctx), left, right);
         }
 
@@ -780,7 +793,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         String operatorText = ctx.operator().getText();
         Operator operator = ParserUtil.getOperator(operatorText);
 
-        Node node = visit(ctx.literal());
+        Node node = visit(ctx.value());
         if (node == null) {
             return new SingleValueExpression(ParserUtil.getText(ctx), field, operator, null);
         } else {
@@ -829,7 +842,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         String operatorText = ctx.operator().getText();
         Operator operator = ParserUtil.getOperator(operatorText);
 
-        Node node = visit(ctx.literal());
+        Node node = visit(ctx.value());
         if (node == null) {
             return new SingleValueCalcuExpression(ParserUtil.getText(ctx), function.getField(), operator, null, function.getCalculator());
         } else {
@@ -848,7 +861,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
             StringType tableNameType = (StringType) visit(tableNameContext);
             StringType fieldNameType = (StringType) visit(ctx.identifier());
             fieldName = fieldNameType.getLiteral();
-            tableName = tableNameType.getResult();
+            tableName = tableNameType.result();
         } else {
             StringType fieldNameType = (StringType) visit(ctx.identifier());
             fieldName = fieldNameType.getLiteral();
@@ -856,6 +869,27 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         return new Field(ParserUtil.getText(ctx), tableName, fieldName);
     }
 
+    @Override
+    public Node visitErrorNode(ErrorNode node) {
+        ParseTree parent = node.getParent();
+        if (!(parent instanceof SqlParser.IdentifierContext)) {
+            return super.visitErrorNode(node);
+        }
+
+        SqlParser.IdentifierContext context = (SqlParser.IdentifierContext) parent;
+        RecognitionException recognitionException = context.exception;
+        if (!(recognitionException instanceof InputMismatchException)) {
+            return super.visitErrorNode(node);
+        }
+
+        String str = ParserUtil.getText(context);
+        if (ParserUtil.isKeyWord(str)) {
+            logger.info("【visitErrorNode】identifier is key word, that is ok, identifier:{}.", str);
+            return new StringType(str, str);
+        }
+
+        return super.visitErrorNode(node);
+    }
 
     @Override
     public Node visitAlphabetIdentifier(SqlParser.AlphabetIdentifierContext ctx) {
@@ -918,20 +952,29 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitValues(SqlParser.ValuesContext ctx) {
-        List<SqlParser.LiteralContext> literals = ctx.literal();
+        List<SqlParser.ValueContext> literals = ctx.value();
         List<Literal<?>> values = literals.stream().map(this::visit).map(value -> (Literal<?>) value).collect(Collectors.toList());
         return new MultiLiteral(ParserUtil.getText(ctx), values);
     }
 
     @Override
-    public Node visitNullLiteral(SqlParser.NullLiteralContext ctx) {
+    public Node visitNullValue(SqlParser.NullValueContext ctx) {
         return new StringType(ParserUtil.getText(ctx), null);
     }
 
+
+
     @Override
-    public Node visitBooleanLiteral(SqlParser.BooleanLiteralContext ctx) {
-        String falseBoolean = ctx.FALSE().getText();
-        String trueBoolean = ctx.TRUE().getText();
+    public Node visitBooleanValue(SqlParser.BooleanValueContext ctx) {
+        String falseBoolean = null;
+        if (ctx.FALSE() != null) {
+            falseBoolean = ctx.FALSE().getText();
+        }
+
+        String trueBoolean = null;
+        if (ctx.TRUE() != null) {
+            trueBoolean = ctx.TRUE().getText();
+        }
 
         boolean value;
         if (falseBoolean != null) {
@@ -944,7 +987,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitNumberLiteral(SqlParser.NumberLiteralContext ctx) {
+    public Node visitNumberValue(SqlParser.NumberValueContext ctx) {
         String text = ctx.NUMBER().getText();
         Number result = 0;
         if (text.contains(".")) {
@@ -956,7 +999,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitStringLiteral(SqlParser.StringLiteralContext ctx) {
+    public Node visitStringValue(SqlParser.StringValueContext ctx) {
         String text = ctx.STRING().getText();
 
         if (text == null) {
@@ -969,12 +1012,12 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitVariableLiteral(SqlParser.VariableLiteralContext ctx) {
+    public Node visitVariableValue(SqlParser.VariableValueContext ctx) {
         throw new UnsupportedOperationException(ParserUtil.getText(ctx));
     }
 
     @Override
-    public Node visitQuotedNumberLiteral(SqlParser.QuotedNumberLiteralContext ctx) {
+    public Node visitQuotedNumberValue(SqlParser.QuotedNumberValueContext ctx) {
         String text = ctx.QUOTED_NUMBER().getText();
         if (text == null) {
             return null;
@@ -982,18 +1025,25 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
         text = text.substring(1, text.length() - 1);
 
-        Number result = 0;
-        if (text.contains(".")) {
-            result = Double.valueOf(text);
-        } else {
-            result = Long.valueOf(text);
-        }
-        return new NumberType(ParserUtil.getText(ctx), result);
+        return new StringType(ParserUtil.getText(ctx), text);
     }
 
     @Override
-    public Node visitQuotedStringLiteral(SqlParser.QuotedStringLiteralContext ctx) {
+    public Node visitQuotedStringValue(SqlParser.QuotedStringValueContext ctx) {
         String text = ctx.QUOTED_STRING().getText();
+        if (text == null) {
+            return null;
+        }
+
+        text = text.substring(1, text.length() - 1);
+
+        return new StringType(ParserUtil.getText(ctx), text);
+    }
+
+    @Override
+    public Node visitBackQuotedStringValue(SqlParser.BackQuotedStringValueContext ctx) {
+        String text = ctx.BACKQUOTED_STRING().getText();
+
         if (text == null) {
             return null;
         }
@@ -1006,7 +1056,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     private String getIdentifier(SqlParser.IdentifierContext identifier) {
         if (identifier != null) {
             Literal<String> literal = (Literal<String>) visit(identifier);
-            return literal.getResult();
+            return literal.result();
         }
         return null;
     }

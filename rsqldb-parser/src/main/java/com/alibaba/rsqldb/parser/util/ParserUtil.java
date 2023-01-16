@@ -15,17 +15,22 @@
  */
 package com.alibaba.rsqldb.parser.util;
 
+import com.alibaba.rsqldb.parser.SqlParser;
 import com.alibaba.rsqldb.parser.model.Operator;
-import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
 public class ParserUtil {
+    private static final Logger logger = LoggerFactory.getLogger(ParserUtil.class);
+
     public static String getText(ParserRuleContext context) {
         if (context == null) {
             return null;
@@ -97,8 +102,18 @@ public class ParserUtil {
         return TimeUnit.valueOf(unit.toUpperCase());
     }
 
-    public static void main(String[] args) {
-        TimeUnit days = getTimeUnit("MILLISECOND");
-        System.out.println(days);
+    public static boolean isKeyWord(String targetIdentifier) {
+        Vocabulary vocabulary = SqlParser.VOCABULARY;
+        int nums = vocabulary.getMaxTokenType();
+
+        for (int i = 0; i < nums; i++) {
+            String keyWord = vocabulary.getSymbolicName(i);
+            if (!StringUtils.isEmpty(keyWord) && keyWord.equalsIgnoreCase(targetIdentifier)) {
+                logger.info("mismatched input:[{}] is a keyword:[{}], to be a variable is ok.", targetIdentifier, keyWord);
+                return true;
+            }
+        }
+        return false;
     }
+
 }

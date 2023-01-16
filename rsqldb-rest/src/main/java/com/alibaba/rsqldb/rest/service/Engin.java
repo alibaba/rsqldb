@@ -15,6 +15,7 @@
  */
 package com.alibaba.rsqldb.rest.service;
 
+import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.store.CommandStatus;
@@ -26,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 public interface Engin {
     void start();
 
-    CompletableFuture<Throwable> putStatement(String jobId, Statement node) throws Throwable;
+    CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable;
 
     List<QueryResult> queryAll();
 

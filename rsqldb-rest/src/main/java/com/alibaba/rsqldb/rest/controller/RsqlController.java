@@ -22,7 +22,6 @@ import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.response.RequestStatus;
 import com.alibaba.rsqldb.rest.response.SuccessResult;
 import com.alibaba.rsqldb.rest.service.RsqlService;
-import com.alibaba.rsqldb.rest.store.CommandStatus;
 import com.alibaba.rsqldb.rest.util.RestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/command")
+@RequestMapping("/rslqdb")
 public class RsqlController {
     private static final Logger logger = LoggerFactory.getLogger(RsqlController.class);
 
@@ -47,7 +46,7 @@ public class RsqlController {
         this.rsqlService = rsqlService;
     }
 
-    @PostMapping("/task/submit")
+    @PostMapping("/submit")
     @ResponseBody
     public BaseResult executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
         try {
@@ -66,7 +65,7 @@ public class RsqlController {
     }
 
     //查询任务，以及运行状态
-    @PostMapping("/task/queryAll")
+    @PostMapping("/queryAll")
     public BaseResult queryTask() {
         try {
             List<QueryResult> queryTask = this.rsqlService.queryTask();
@@ -83,7 +82,7 @@ public class RsqlController {
         }
     }
 
-    @PostMapping("/task/queryById")
+    @PostMapping("/queryById")
     public BaseResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
         try {
             QueryResult queryTask = this.rsqlService.queryTaskByJobId(jobId);
@@ -101,7 +100,7 @@ public class RsqlController {
     }
 
     //停止任务
-    @PostMapping("/task/terminate")
+    @PostMapping("/terminate")
     public BaseResult terminate(@RequestParam(value = "jobId") String jobId) {
         try {
             this.rsqlService.terminate(jobId);
@@ -118,7 +117,7 @@ public class RsqlController {
         }
     }
 
-    @PostMapping("/task/restart")
+    @PostMapping("/restart")
     public BaseResult restart(@RequestParam(value = "jobId") String jobId) {
         try {
             this.rsqlService.restart(jobId);
@@ -136,7 +135,7 @@ public class RsqlController {
     }
 
 
-    @PostMapping("/task/remove")
+    @PostMapping("/remove")
     public BaseResult remove(@RequestParam(value = "jobId") String jobId) {
         try {
             this.rsqlService.remove(jobId);
