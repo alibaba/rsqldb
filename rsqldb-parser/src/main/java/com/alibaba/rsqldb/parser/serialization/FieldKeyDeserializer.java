@@ -35,16 +35,28 @@ public class FieldKeyDeserializer extends KeyDeserializer {
 
 
         String[] contentField = split[0].split("=");
-        String content = contentField[1];
+        String content = null;
+        if (contentField.length == 2) {
+            content = contentField[1];
+        }
 
         String[] tableNameField = split[1].split("=");
-        String tableName = tableNameField[1];
+        String tableName = null;
+        if (tableNameField.length == 2) {
+            tableName = tableNameField[1];
+        }
 
         String[] fieldNameField = split[2].split("=");
-        String fieldName = fieldNameField[1];
+        String fieldName = null;
+        if (fieldNameField.length == 2) {
+            fieldName = fieldNameField[1];
+        }
 
         String[] asFieldNameField = split[3].split("=");
-        String asFieldName = asFieldNameField[1];
+        String asFieldName = null;
+        if (asFieldNameField.length == 2) {
+            asFieldName = asFieldNameField[1];
+        }
 
         return new Field(content, tableName, fieldName, asFieldName);
     }

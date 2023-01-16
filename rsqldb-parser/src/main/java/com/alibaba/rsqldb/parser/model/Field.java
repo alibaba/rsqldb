@@ -112,10 +112,14 @@ public class Field extends Node {
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("content").append("=").append(this.getContent()).append(Constant.SPLIT)
-                .append("tableName").append("=").append(tableName).append(Constant.SPLIT)
-                .append("fieldName").append("=").append(fieldName).append(Constant.SPLIT)
-                .append("asFieldName").append("=").append(asFieldName);
+                .append("tableName").append("=").append(convert(tableName)).append(Constant.SPLIT)
+                .append("fieldName").append("=").append(convert(fieldName)).append(Constant.SPLIT)
+                .append("asFieldName").append("=").append(convert(asFieldName));
 
         return buffer.toString();
+    }
+
+    private String convert(String value) {
+        return StringUtils.isNotBlank(value) ? value : "";
     }
 }

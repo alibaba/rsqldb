@@ -774,11 +774,11 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         Expression left = (Expression) visit(leftExpressionContext);
         Expression right = (Expression) visit(rightExpressionContext);
 
-        if (ctx.AND().getSymbol().getType() == SqlParser.AND) {
+        if (ctx.AND() != null && ctx.AND().getSymbol().getType() == SqlParser.AND) {
             return new AndExpression(ParserUtil.getText(ctx), left, right);
         }
 
-        if (ctx.OR().getSymbol().getType() == SqlParser.OR) {
+        if (ctx.OR() != null && ctx.OR().getSymbol().getType() == SqlParser.OR) {
             return new OrExpression(ParserUtil.getText(ctx), left, right);
         }
 
@@ -966,8 +966,15 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
 
     @Override
     public Node visitBooleanValue(SqlParser.BooleanValueContext ctx) {
-        String falseBoolean = ctx.FALSE().getText();
-        String trueBoolean = ctx.TRUE().getText();
+        String falseBoolean = null;
+        if (ctx.FALSE() != null) {
+            falseBoolean = ctx.FALSE().getText();
+        }
+
+        String trueBoolean = null;
+        if (ctx.TRUE() != null) {
+            trueBoolean = ctx.TRUE().getText();
+        }
 
         boolean value;
         if (falseBoolean != null) {

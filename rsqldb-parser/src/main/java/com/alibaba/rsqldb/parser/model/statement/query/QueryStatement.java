@@ -30,9 +30,6 @@ import com.alibaba.rsqldb.common.function.WindowBoundaryTimeFunction;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
-import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
-import com.alibaba.rsqldb.parser.model.baseType.NumberType;
-import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.alibaba.rsqldb.parser.model.expression.AndExpression;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.expression.OrExpression;
@@ -183,9 +180,9 @@ public class QueryStatement extends Statement {
             String name = pair.getKey().getFieldName();
             Calculator calculator = pair.getValue();
 
-            Calculator calculatorInSelect = this.getCalculator(name);
+            boolean calculatorInSelect = this.checkInSelect(name, calculator);
 
-            if (!inSelectField(name) || calculatorInSelect != calculator) {
+            if (!inSelectField(name) || !calculatorInSelect) {
                 throw new SyntaxErrorException("field in having but not in select. sql=" + this.getContent());
             }
         }
@@ -259,17 +256,19 @@ public class QueryStatement extends Statement {
         return false;
     }
 
-    private Calculator getCalculator(String fieldName) {
-        if (StringUtils.isEmpty(fieldName)) {
-            return null;
+    private boolean checkInSelect(String fieldName, Calculator checkCalculator) {
+        if (StringUtils.isEmpty(fieldName) || checkCalculator == null) {
+            return false;
         }
 
         for (Field field : selectFieldAndCalculator.keySet()) {
-            if (fieldName.equals(field.getFieldName())) {
-                return selectFieldAndCalculator.get(field);
+            Calculator calculator = selectFieldAndCalculator.get(field);
+
+            if (fieldName.equals(field.getFieldName()) && checkCalculator == calculator) {
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
     protected boolean isSelectAll() {

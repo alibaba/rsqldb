@@ -16,11 +16,14 @@
 package com.alibaba.rsqldb.parser.impl;
 
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
+import com.alibaba.rsqldb.parser.SqlParser;
+import com.alibaba.rsqldb.parser.util.ParserUtil;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +44,13 @@ public class DefaultErrorListener extends BaseErrorListener {
 
         logger.error("error when parse sql. position=(line:{}, char index:{}), error msg:{}, \n {}", line, charPositionInLine, msg, sql);
         if (e != null) {
+            if (e.getOffendingToken() != null) {
+                String targetIdentifier = e.getOffendingToken().getText();
+                boolean keyWord = ParserUtil.isKeyWord(targetIdentifier);
+                if (keyWord) {
+                    logger.error("{} is a keyWord, change it to `{}`", targetIdentifier, targetIdentifier);
+                }
+            }
             throw new SyntaxErrorException(msg, e);
         } else {
             throw new SyntaxErrorException(msg);
