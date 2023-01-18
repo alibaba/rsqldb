@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.join.JointStatement;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
+import com.alibaba.rsqldb.rest.service.RSQLConfigBuilder;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
 
@@ -40,8 +41,8 @@ public class TaskFactory {
     private RSQLConfig rsqlConfig;
     private Function<String, Statement> function;
 
-    public TaskFactory(RSQLConfig rsqlConfig) {
-        this.rsqlConfig = rsqlConfig;
+    public TaskFactory(RSQLConfigBuilder builder) {
+        this.rsqlConfig = builder.build();
     }
 
     public void init(Function<String, Statement> function) {

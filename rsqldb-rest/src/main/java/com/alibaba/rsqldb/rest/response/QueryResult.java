@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package com.alibaba.rsqldb.rest.response;
 
-import com.alibaba.rsqldb.rest.store.CommandStatus;
+ import com.alibaba.rsqldb.storage.api.CommandStatus;
 
-public class QueryResult {
+ public class QueryResult {
     private String jobId;
     private String sql;
     private CommandStatus status;

@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+*/
 package com.alibaba.rsqldb.rest.service;
 
-import org.springframework.stereotype.Service;
+import org.apache.commons.lang3.StringUtils;
 
-@Service
+
 public class RSQLConfig {
-    public static String SQL_TOPIC_NAME = System.getProperty("sqlTopicName","RSQLDB-COMMAND-TOPIC");
-    public static String SQL_GROUP_NAME = System.getProperty("sqlGroupName","RSQLDB-COMMAND-GROUP");
+    private String namesrvAddr = "127.0.0.1:9876";
 
-    public String namesrvAddr= "127.0.0.1:9876";
-    public int threadNum;
+    private String storage = "rocketmq";
+
+    RSQLConfig() {
+    }
 
 
     public String getNamesrvAddr() {
@@ -35,11 +36,13 @@ public class RSQLConfig {
     }
 
 
-    public int getThreadNum() {
-        return threadNum;
+    public String getStorage() {
+        return storage;
     }
 
-    public void setThreadNum(int threadNum) {
-        this.threadNum = threadNum;
+    public void setStorage(String storage) {
+        if (!StringUtils.isBlank(storage)) {
+            this.storage = storage.toLowerCase();
+        }
     }
 }

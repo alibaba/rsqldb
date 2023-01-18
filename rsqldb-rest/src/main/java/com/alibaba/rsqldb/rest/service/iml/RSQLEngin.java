@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,15 @@ import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.service.Engin;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
-import com.alibaba.rsqldb.rest.store.CommandQueue;
-import com.alibaba.rsqldb.rest.store.CommandStatus;
+import com.alibaba.rsqldb.rest.service.RSQLConfigBuilder;
+import com.alibaba.rsqldb.rest.spi.ServiceLoader;
+import com.alibaba.rsqldb.storage.api.CallBack;
+import com.alibaba.rsqldb.storage.api.Command;
+import com.alibaba.rsqldb.storage.api.CommandQueue;
+import com.alibaba.rsqldb.storage.api.CommandStatus;
+import com.alibaba.rsqldb.storage.api.CommandWrapper;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.MixAll;
@@ -31,7 +35,6 @@ import org.apache.rocketmq.common.ThreadFactoryImpl;
 import org.apache.rocketmq.streams.core.RocketMQStream;
 import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.topology.TopologyBuilder;
-import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -66,9 +69,8 @@ public class RSQLEngin implements Engin {
     private volatile boolean stop = false;
     private HashMap<String, RocketMQStream> rStreams = new HashMap<>();
 
-    public RSQLEngin(CommandQueue commandQueue, RSQLConfig rsqlConfig, TaskFactory taskFactory) {
-        this.rsqlConfig = rsqlConfig;
-        this.commandQueue = commandQueue;
+    public RSQLEngin(RSQLConfigBuilder builder, TaskFactory taskFactory, ServiceLoader serviceLoader) {
+        this.rsqlConfig = builder.build();
         this.taskFactory = taskFactory;
         this.producer = this.producer();
         this.executor = new ThreadPoolExecutor(
@@ -79,7 +81,14 @@ public class RSQLEngin implements Engin {
                 this.cacheQueue,
                 new ThreadFactoryImpl("RSQL_EnginThread_"));
 
-        this.commandQueue.start();
+        try {
+            this.commandQueue = serviceLoader.load(CommandQueue.class, rsqlConfig.getStorage());
+        } catch (Exception e) {
+            logger.error("load storage module error.", e);
+            throw new RSQLServerException(e);
+        }
+
+        this.commandQueue.start(builder.getProperties());
         try {
             CompletableFuture<Boolean> future = this.commandQueue.restore();
 
@@ -94,7 +103,6 @@ public class RSQLEngin implements Engin {
         } catch (Throwable e) {
             throw new RSQLServerException(e);
         }
-
     }
 
 
@@ -120,99 +128,115 @@ public class RSQLEngin implements Engin {
 
     private void runInLoop() {
         while (!stop) {
-            Pair<String/*jobId*/, Node> commandResult = null;
+            Command command = null;
+            CallBack callBack = null;
+            String jobId = null;
+
             try {
-                commandResult = this.commandQueue.getNextCommand();
-                if (commandResult == null) {
+                CommandWrapper commandWrapper = this.commandQueue.getNextCommand();
+                if (commandWrapper == null) {
                     continue;
                 }
                 //任务开始后才能提交消费位点；
-                Node nextCommand = commandResult.getValue();
+                command = commandWrapper.getCommand();
+                jobId = command.getJobId();
+                CommandStatus status = command.getStatus();
 
-                if (nextCommand instanceof Statement) {
-                    String jobId = commandResult.getKey();
-                    BuildContext context = new BuildContext(producer, jobId);
+                callBack = commandWrapper.getCallBack();
 
-                    logger.info("【prepare stream task】, with jobId={}, command={}", jobId, nextCommand.getContent());
+                RocketMQStream stream = this.rStreams.get(jobId);
 
-                    BuildContext dispatch = taskFactory.dispatch((Statement) nextCommand, context);
-
-                    if (dispatch != null) {
-                        TopologyBuilder topologyBuilder = dispatch.getStreamBuilder().build();
-
-                        Properties properties = new Properties();
-                        properties.put(MixAll.NAMESRV_ADDR_PROPERTY, rsqlConfig.getNamesrvAddr());
-                        properties.put(Constant.SKIP_DATA_ERROR, true);
-
-                        RocketMQStream rocketMQStream = new RocketMQStream(topologyBuilder, properties);
-                        RocketMQStream previous = rStreams.put(jobId, rocketMQStream);
-                        if (previous != null) {
-                            logger.warn("jobId replaced, jobId=[{}], new sql content=[{}]", jobId, nextCommand.getContent());
-                            previous.stop();
+                switch (status) {
+                    case RUNNING: {
+                        if (stream != null) {
+                            stream.start();
+                        } else {
+                            startStream(command);
                         }
-
-                        rocketMQStream.start();
-
-                        logger.info("【start stream task】, with jobId:[{}] and sql content=[{}]", jobId, nextCommand.getContent());
+                        break;
                     }
-
-                    this.commandQueue.onCompleted(commandResult.getKey(), CommandStatus.RUNNING);
-                } else if (nextCommand instanceof TerminateNode) {
-                    TerminateNode command = (TerminateNode) nextCommand;
-                    String jobId = command.getJobId();
-
-                    RocketMQStream stream = this.rStreams.get(jobId);
-                    if (stream != null) {
-                        stream.stop();
+                    case STOPPED: {
+                        if (stream != null) {
+                            stream.stop();
+                        } else {
+                            logger.warn("the RocketMQStream is null, jobId:[{}], status:[{}]", jobId, CommandStatus.STOPPED);
+                        }
+                        break;
                     }
-
-                    this.commandQueue.onCompleted(jobId, CommandStatus.TERMINATED);
-                } else if (nextCommand instanceof RestartNode) {
-                    RestartNode node = (RestartNode) nextCommand;
-                    String jobId = node.getJobId();
-
-                    RocketMQStream stream = this.rStreams.get(jobId);
-                    if (stream != null) {
-                        stream.start();
+                    case REMOVED: {
+                        stream = this.rStreams.remove(jobId);
+                        if (stream != null) {
+                            stream.stop();
+                        } else {
+                            logger.warn("the RocketMQStream is null, jobId:[{}], status:[{}]", jobId, CommandStatus.REMOVED);
+                        }
+                        break;
                     }
-
-                    this.commandQueue.onCompleted(jobId, CommandStatus.RUNNING);
-
-                } else if (nextCommand instanceof RemoveNode) {
-                    RemoveNode node = (RemoveNode) nextCommand;
-                    String jobId = node.getJobId();
-
-                    RocketMQStream stream = this.rStreams.remove(jobId);
-                    if (stream != null) {
-                        stream.stop();
+                    default: {
+                        throw new RSQLServerException("unknown command status: " + status);
                     }
-                    this.commandQueue.remove(jobId);
-
-                    this.commandQueue.onCompleted(jobId, null);
                 }
             } catch (Throwable t) {
-                logger.error("execute command failed, this command will be skipped. content in command: [{}]", commandResult, t);
-                if (commandResult != null) {
-                    this.commandQueue.onError(commandResult.getKey(), CommandStatus.SKIPPED, t);
+                logger.error("execute command failed, this command will be skipped. content in command: [{}]", command, t);
+                if (callBack != null) {
+                    command.setStatus(CommandStatus.STOPPED);
+                    callBack.onError(jobId, command, t);
+                }
+            } finally {
+                if (callBack != null) {
+                    callBack.onCompleted(jobId, command);
                 }
             }
+        }
+    }
+
+    private void startStream(Command command) throws Throwable {
+        String jobId = command.getJobId();
+        Node node = command.getNode();
+
+        BuildContext context = new BuildContext(producer, jobId);
+
+        logger.info("【prepare stream task】, with jobId={}, command={}", jobId, node.getContent());
+
+        BuildContext dispatch = taskFactory.dispatch((Statement) node, context);
+
+        if (dispatch != null) {
+            TopologyBuilder topologyBuilder = dispatch.getStreamBuilder().build();
+
+            Properties properties = new Properties();
+            properties.put(MixAll.NAMESRV_ADDR_PROPERTY, rsqlConfig.getNamesrvAddr());
+            properties.put(Constant.SKIP_DATA_ERROR, true);
+
+            RocketMQStream rocketMQStream = new RocketMQStream(topologyBuilder, properties);
+            RocketMQStream previous = rStreams.put(jobId, rocketMQStream);
+            if (previous != null) {
+                logger.warn("jobId replaced, jobId=[{}], new sql content=[{}]", jobId, node.getContent());
+                previous.stop();
+            }
+
+            rocketMQStream.start();
+
+            logger.info("【start stream task】, with jobId:[{}] and sql content=[{}]", jobId, node.getContent());
+        } else {
+            logger.info("non-runnable task, command:[{}]", command);
         }
     }
 
     @Override
     public CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable {
         validate();
-        return this.commandQueue.putCommand(jobId, node);
+        Command command = new Command(jobId, node, CommandStatus.RUNNING);
+        return this.commandQueue.putCommand(command);
     }
 
     @Override
-    public List<QueryResult> queryAll() {
+    public List<Command> queryAll() {
         validate();
         return this.commandQueue.queryStatus();
     }
 
     @Override
-    public QueryResult queryByJobId(String jobId) {
+    public Command queryByJobId(String jobId) {
         validate();
         return this.commandQueue.queryStatus(jobId);
     }
@@ -221,12 +245,19 @@ public class RSQLEngin implements Engin {
     public void terminate(String jobId) throws Throwable {
         validate();
         //发送任务终止命令到rocketmq
-        QueryResult result = this.queryByJobId(jobId);
-        if (result != null && result.getStatus() == CommandStatus.TERMINATED) {
+        Command result = this.queryByJobId(jobId);
+        if (result == null) {
+            logger.info("the command is empty corresponding to jobId: {}", jobId);
+            return;
+        }
+
+        if (result.getStatus() == CommandStatus.STOPPED) {
             logger.info("jobId=[{}] is terminated, does not need terminated.", jobId);
             return;
         }
-        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.STOP);
+
+        Command command = new Command(jobId, result.getNode(), CommandStatus.STOPPED);
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(command);
 
         wait4Finish(future);
     }
@@ -234,27 +265,40 @@ public class RSQLEngin implements Engin {
     @Override
     public void restart(String jobId) throws Throwable {
         validate();
-        QueryResult result = this.queryByJobId(jobId);
-        if (result != null && result.getStatus() == CommandStatus.RUNNING) {
+        Command result = this.queryByJobId(jobId);
+        if (result == null) {
+            logger.info("the command is empty corresponding to jobId: {}", jobId);
+            return;
+        }
+
+        if (result.getStatus() == CommandStatus.RUNNING) {
             logger.info("jobId=[{}] is running, does not need restart.", jobId);
             return;
         }
 
-        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.RESTART);
+        Command command = new Command(jobId, result.getNode(), CommandStatus.RUNNING);
+        CompletableFuture<Throwable> future = this.commandQueue.putCommand(command);
 
         wait4Finish(future);
     }
+
     //todo 移除create table和create view时候要非常小心,因为可能有针对这个表的insert等操作；
     @Override
     public void remove(String jobId) throws Throwable {
         validate();
-        QueryResult result = this.queryByJobId(jobId);
-        if (result != null && result.getStatus() == CommandStatus.RUNNING) {
+        Command result = this.queryByJobId(jobId);
+        if (result == null) {
+            logger.info("the command is empty corresponding to jobId: {}", jobId);
+            return;
+        }
+
+        if (result.getStatus() == CommandStatus.RUNNING) {
             logger.info("jobId=[{}] is running, can not remove.", jobId);
             return;
         }
 
-        CompletableFuture<Throwable> future = this.commandQueue.putCommand(jobId, CommandOperator.REMOVE);
+
+        CompletableFuture<Throwable> future = this.commandQueue.delete(jobId);
         wait4Finish(future);
     }
 
@@ -262,6 +306,11 @@ public class RSQLEngin implements Engin {
     @PreDestroy
     public void shutdown() {
         this.stop = true;
+        try {
+            this.commandQueue.close();
+        } catch (Exception e) {
+        }
+
         for (RocketMQStream stream : rStreams.values()) {
             stream.stop();
         }
@@ -270,7 +319,7 @@ public class RSQLEngin implements Engin {
     }
 
     private DefaultMQProducer producer() {
-        String nameSrvAddr = this.rsqlConfig.namesrvAddr;
+        String nameSrvAddr = this.rsqlConfig.getNamesrvAddr();
         DefaultMQProducer producer = new DefaultMQProducer(PRODUCER_GROUP);
         producer.setNamesrvAddr(nameSrvAddr);
 
@@ -287,4 +336,5 @@ public class RSQLEngin implements Engin {
             throw new RSQLServerException(e);
         }
     }
+
 }

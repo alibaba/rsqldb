@@ -1,0 +1,1 @@
+rocketmq=com.alibaba.rsqldb.storage.rocketmq.RocketMQCommandQueue

@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.service.iml;
+package com.alibaba.rsqldb.storage.api;
 
-import com.alibaba.rsqldb.parser.model.Node;
+public interface CallBack {
+    void onCompleted(String jobId, Command status);
 
-public abstract class CommandNode extends Node {
-    private String jobId;
-
-    public CommandNode(String jobId, String content) {
-        super(content);
-        this.jobId = jobId;
-    }
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
-    }
+    void onError(String jobId, Command status, Throwable attachment);
 }

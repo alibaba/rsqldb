@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.store;
+package com.alibaba.rsqldb.storage.api;
 
 public enum CommandStatus {
-    STORE, RESTORE, CONSUMED, SKIPPED, RUNNING, TERMINATED;
+    RUNNING, STOPPED, REMOVED
 }

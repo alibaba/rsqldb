@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,11 @@ package com.alibaba.rsqldb.rest.controller;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.rest.response.BaseResult;
 import com.alibaba.rsqldb.rest.response.FailedResult;
-import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.response.RequestStatus;
 import com.alibaba.rsqldb.rest.response.SuccessResult;
 import com.alibaba.rsqldb.rest.service.RsqlService;
 import com.alibaba.rsqldb.rest.util.RestUtil;
+import com.alibaba.rsqldb.storage.api.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,7 +68,7 @@ public class RsqlController {
     @PostMapping("/queryAll")
     public BaseResult queryTask() {
         try {
-            List<QueryResult> queryTask = this.rsqlService.queryTask();
+            List<Command> queryTask = this.rsqlService.queryTask();
 
             return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
         } catch (Throwable t) {
@@ -85,7 +85,7 @@ public class RsqlController {
     @PostMapping("/queryById")
     public BaseResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
         try {
-            QueryResult queryTask = this.rsqlService.queryTaskByJobId(jobId);
+            Command queryTask = this.rsqlService.queryTaskByJobId(jobId);
 
             return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
         } catch (Throwable t) {

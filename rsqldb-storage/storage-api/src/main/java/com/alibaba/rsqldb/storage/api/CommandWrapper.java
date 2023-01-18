@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.service.iml;
+package com.alibaba.rsqldb.storage.api;
 
+public class CommandWrapper {
+    private Command command;
+    private CallBack callBack;
 
-public class TerminateNode extends CommandNode {
-    public TerminateNode(String jobId, String content) {
-        super(jobId, content);
+    public CommandWrapper(Command command, CallBack callBack) {
+        this.command = command;
+        this.callBack = callBack;
+    }
+
+    public Command getCommand() {
+        return command;
+    }
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public CallBack getCallBack() {
+        return callBack;
+    }
+
+    public void setCallBack(CallBack callBack) {
+        this.callBack = callBack;
     }
 }

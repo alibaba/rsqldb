@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,9 @@
 package com.alibaba.rsqldb.rest.service;
 
 import com.alibaba.rsqldb.parser.model.Node;
-import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.alibaba.rsqldb.rest.response.QueryResult;
-import com.alibaba.rsqldb.rest.store.CommandStatus;
+import com.alibaba.rsqldb.storage.api.Command;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public interface Engin {
@@ -29,9 +26,9 @@ public interface Engin {
 
     CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable;
 
-    List<QueryResult> queryAll();
+    List<Command> queryAll();
 
-    QueryResult queryByJobId(String jobId);
+    Command queryByJobId(String jobId);
 
     void terminate(String jobId) throws Throwable;
 
