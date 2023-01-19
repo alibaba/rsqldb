@@ -63,7 +63,7 @@ public class RsqlController {
 
             return new SuccessResult<>(result, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("executeSql error, sql=[{}], jobId=[{}]", sql, jobId, t);
+            logger.error("executeSql error, jobId=[{}], sql=[{}], error msg:{}", jobId, sql, t.getMessage(), t);
             if (t instanceof RSQLServerException) {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
             } else {
@@ -93,7 +93,7 @@ public class RsqlController {
 
             return new SuccessResult<>(list, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("queryTask error", t);
+            logger.error("remove error, error message:{}", t.getMessage(), t);
 
             if (t instanceof RSQLServerException) {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
@@ -122,7 +122,7 @@ public class RsqlController {
 
             return new SuccessResult<>(result, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("queryTaskByJobId error, jobId=[{}]",jobId, t);
+            logger.error("remove error, jobId=[{}], error message:{}", jobId, t.getMessage(), t);
 
             if (t instanceof RSQLServerException) {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
@@ -144,7 +144,7 @@ public class RsqlController {
 
             return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("terminate error, jobId=[{}]",jobId, t);
+            logger.error("remove error, jobId=[{}], error message:{}", jobId, t.getMessage(), t);
 
             if (t instanceof RSQLServerException) {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
@@ -165,7 +165,7 @@ public class RsqlController {
 
             return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("restart error, jobId=[{}]",jobId, t);
+            logger.error("remove error, jobId=[{}], error message:{}", jobId, t.getMessage(), t);
 
             if (t instanceof RSQLServerException) {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
@@ -187,12 +187,12 @@ public class RsqlController {
 
             return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
-            logger.error("remove error, jobId=[{}]",jobId, t);
+            logger.error("remove error, jobId=[{}], error message:{}", jobId, t.getMessage(), t);
 
             if (t instanceof RSQLServerException) {
-                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.RSQLDB_SERVER_EXCEPTION);
+                return new FailedResult(t.getMessage(), RequestStatus.RSQLDB_SERVER_EXCEPTION);
             } else {
-                return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
+                return new FailedResult(t.getMessage(), RequestStatus.CLIENT_EXCEPTION);
             }
         }
     }

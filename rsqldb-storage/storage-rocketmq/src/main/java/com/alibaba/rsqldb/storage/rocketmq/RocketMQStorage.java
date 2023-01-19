@@ -208,6 +208,8 @@ public class RocketMQStorage implements CommandQueue {
         }
         return false;
     }
+
+
     @Override
     public CommandWrapper getNextCommand() throws Throwable {
         //先从restore恢复中拉去
@@ -220,18 +222,8 @@ public class RocketMQStorage implements CommandQueue {
             return new CommandWrapper(restored, new RocketMQCallBack(future, this::commitStatus));
         }
 
-
-        List<MessageExt> messageExts = pullConsumer.poll(10);
-
-        if (messageExts == null || messageExts.size() == 0) {
-            return null;
-        }
-
-        if (messageExts.size() > 1) {
-            throw new RSQLServerException("unexpected error, command num more than 1.");
-        }
-
-        MessageExt messageExt = messageExts.get(0);
+        //poll from rocketmq
+        MessageExt messageExt = pollFromStore();
         if (messageExt == null) {
             return null;
         }
@@ -246,6 +238,29 @@ public class RocketMQStorage implements CommandQueue {
         }
 
         return new CommandWrapper(command, new RocketMQCallBack(remove, this::commitStatus, this::commit));
+    }
+
+    private final LinkedList<MessageExt> cache = new LinkedList<>();
+    private MessageExt pollFromStore() {
+        MessageExt messageExt;
+        if (cache.size() != 0) {
+            messageExt = cache.pop();
+        } else {
+            List<MessageExt> messageExts = pullConsumer.poll(10);
+            if (messageExts == null || messageExts.size() == 0) {
+                return null;
+            }
+            if (messageExts.size() > 1) {
+                pullConsumer.setPullBatchSize(1);
+                logger.info("batch message num greater than 1, cache it first.");
+                cache.addAll(messageExts);
+                messageExt = cache.pop();
+            } else {
+                messageExt = messageExts.get(0);
+            }
+        }
+
+        return messageExt;
     }
 
 
@@ -337,18 +352,18 @@ public class RocketMQStorage implements CommandQueue {
     private void pullToLast() throws DeserializeException {
         List<MessageExt> holder = new ArrayList<>();
         //recover
-        List<MessageExt> result = pullConsumer.poll(10);
+        List<MessageExt> result = pullConsumer.poll(100);
         while (result != null && result.size() != 0) {
             holder.addAll(result);
             if (holder.size() <= 1000) {
-                result = pullConsumer.poll(10);
+                result = pullConsumer.poll(100);
                 continue;
             }
 
             replayState(holder);
             holder.clear();
 
-            result = pullConsumer.poll(10);
+            result = pullConsumer.poll(100);
         }
 
         if (holder.size() != 0) {

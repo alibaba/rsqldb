@@ -149,6 +149,7 @@ public class RSQLEngin implements Engin {
 
                 switch (status) {
                     case RUNNING: {
+                        logger.info("start stream task, jobId:{}", jobId);
                         if (stream != null) {
                             stream.start();
                         } else {
@@ -157,6 +158,7 @@ public class RSQLEngin implements Engin {
                         break;
                     }
                     case STOPPED: {
+                        logger.info("stop stream task, jobId:{}", jobId);
                         if (stream != null) {
                             stream.stop();
                         } else {
@@ -165,6 +167,7 @@ public class RSQLEngin implements Engin {
                         break;
                     }
                     case REMOVED: {
+                        logger.info("remove stream task, jobId:{}", jobId);
                         stream = this.rStreams.remove(jobId);
                         if (stream != null) {
                             stream.stop();
@@ -258,13 +261,15 @@ public class RSQLEngin implements Engin {
         //发送任务终止命令到rocketmq
         Command result = this.queryByJobId(jobId);
         if (result == null) {
-            logger.info("the command is empty corresponding to jobId: {}", jobId);
-            return;
+            String format = String.format("the command is empty corresponding to jobId: %s", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         if (result.getStatus() == CommandStatus.STOPPED) {
-            logger.info("jobId=[{}] is terminated, does not need terminated.", jobId);
-            return;
+            String format = String.format("jobId=[%s] is terminated, does not need terminated.", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         Command command = new Command(jobId, result.getNode(), CommandStatus.STOPPED);
@@ -278,13 +283,15 @@ public class RSQLEngin implements Engin {
         validate();
         Command result = this.queryByJobId(jobId);
         if (result == null) {
-            logger.info("the command is empty corresponding to jobId: {}", jobId);
-            return;
+            String format = String.format("the command is empty corresponding to jobId: %s", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         if (result.getStatus() == CommandStatus.RUNNING) {
-            logger.info("jobId=[{}] is running, does not need restart.", jobId);
-            return;
+            String format = String.format("jobId=[%s] is running, does not need restart.", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         Command command = new Command(jobId, result.getNode(), CommandStatus.RUNNING);
@@ -299,13 +306,15 @@ public class RSQLEngin implements Engin {
         validate();
         Command result = this.queryByJobId(jobId);
         if (result == null) {
-            logger.info("the command is empty corresponding to jobId: {}", jobId);
-            return;
+            String format = String.format("the command is empty corresponding to jobId: %s", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         if (result.getStatus() == CommandStatus.RUNNING) {
-            logger.info("jobId=[{}] is running, can not remove.", jobId);
-            return;
+            String format = String.format("jobId=[%s] is running, terminate it first.", jobId);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
 
