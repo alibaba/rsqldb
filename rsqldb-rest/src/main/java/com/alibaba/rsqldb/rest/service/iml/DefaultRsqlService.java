@@ -56,7 +56,7 @@ public class DefaultRsqlService implements RsqlService {
      * @param sql
      */
     @Override
-    public List<String> executeSql(String sql, String jobId) throws Throwable {
+    public List<String> executeSql(String sql, String jobId, boolean startJob) throws Throwable {
         if (StringUtils.isEmpty(sql)) {
             logger.info("sql is null, skip.");
             return null;
@@ -70,7 +70,7 @@ public class DefaultRsqlService implements RsqlService {
             Statement statement = temp.get(i);
             String tempJobId = makeJobId(jobId, statement, i, temp.size());
 
-            this.rsqlEngin.putCommand(tempJobId, statement);
+            this.rsqlEngin.putCommand(tempJobId, statement, startJob);
 
             result.add(tempJobId);
         }

@@ -22,7 +22,7 @@ import com.alibaba.rsqldb.storage.api.Command;
 import java.util.List;
 
 public interface RsqlService {
-    List<String> executeSql(String sql, String jobId) throws Throwable;
+    List<String> executeSql(String sql, String jobId, boolean startJob) throws Throwable;
 
     List<Command> queryTask();
 

@@ -63,8 +63,8 @@ public class Command {
     public String toString() {
         return "Command{" +
                 "jobId='" + jobId + '\'' +
-                ", node=" + node.getContent() +
-                ", status=" + status +
+                ", node=[" + node.getContent() +
+                "], status=" + status +
                 '}';
     }
 }

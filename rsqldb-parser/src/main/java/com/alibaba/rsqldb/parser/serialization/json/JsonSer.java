@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.serialization;
+package com.alibaba.rsqldb.parser.serialization.json;
 
 import com.alibaba.rsqldb.common.exception.SerializeException;
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JsonSer implements Serializer {
-    private static final String KEY = "key";
-    private static final String VALUE = "value";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public byte[] serialize(Object obj) throws SerializeException {

@@ -16,6 +16,8 @@
 package com.alibaba.rsqldb.parser.serialization;
 
 import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.parser.serialization.json.JsonDe;
+import com.alibaba.rsqldb.parser.serialization.json.JsonSer;
 
 import java.util.HashMap;
 

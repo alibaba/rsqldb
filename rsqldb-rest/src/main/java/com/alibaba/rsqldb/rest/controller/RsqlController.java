@@ -16,13 +16,16 @@
 package com.alibaba.rsqldb.rest.controller;
 
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.rest.response.BaseResult;
 import com.alibaba.rsqldb.rest.response.FailedResult;
+import com.alibaba.rsqldb.rest.response.QueryResult;
 import com.alibaba.rsqldb.rest.response.RequestStatus;
 import com.alibaba.rsqldb.rest.response.SuccessResult;
 import com.alibaba.rsqldb.rest.service.RsqlService;
 import com.alibaba.rsqldb.rest.util.RestUtil;
 import com.alibaba.rsqldb.storage.api.Command;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,11 +35,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 @RestController
-@RequestMapping("/rslqdb")
+@RequestMapping("/rsqldb")
 public class RsqlController {
     private static final Logger logger = LoggerFactory.getLogger(RsqlController.class);
 
@@ -48,9 +52,14 @@ public class RsqlController {
 
     @PostMapping("/submit")
     @ResponseBody
-    public BaseResult executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId) {
+    public BaseResult executeSql(@RequestBody String sql, @RequestParam(value = "jobId") String jobId,
+                                 @RequestParam(value = "startJob") Boolean startJob) {
         try {
-            List<String> result = this.rsqlService.executeSql(sql, jobId);
+            if (startJob == null) {
+                startJob = false;
+            }
+
+            List<String> result = this.rsqlService.executeSql(sql, jobId, startJob);
 
             return new SuccessResult<>(result, RequestStatus.SUCCESS);
         } catch (Throwable t) {
@@ -70,7 +79,19 @@ public class RsqlController {
         try {
             List<Command> queryTask = this.rsqlService.queryTask();
 
-            return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
+            ArrayList<QueryResult> list = new ArrayList<>();
+            for (Command command : queryTask) {
+                Node node = command.getNode();
+                QueryResult result;
+                if (node != null) {
+                    result = new QueryResult(command.getJobId(), node.getContent(), command.getStatus());
+                } else {
+                    result = new QueryResult(command.getJobId(), null, command.getStatus());
+                }
+                list.add(result);
+            }
+
+            return new SuccessResult<>(list, RequestStatus.SUCCESS);
         } catch (Throwable t) {
             logger.error("queryTask error", t);
 
@@ -84,10 +105,22 @@ public class RsqlController {
 
     @PostMapping("/queryById")
     public BaseResult queryTaskByJobId(@RequestParam(value = "jobId") String jobId) {
-        try {
-            Command queryTask = this.rsqlService.queryTaskByJobId(jobId);
+        if (StringUtils.isBlank(jobId)) {
+            return buildReturn();
+        }
 
-            return new SuccessResult<>(queryTask, RequestStatus.SUCCESS);
+        try {
+            Command command = this.rsqlService.queryTaskByJobId(jobId);
+            Node node = command.getNode();
+
+            QueryResult result;
+            if (node != null) {
+                result = new QueryResult(command.getJobId(), node.getContent(), command.getStatus());
+            } else {
+                result = new QueryResult(command.getJobId(), null, command.getStatus());
+            }
+
+            return new SuccessResult<>(result, RequestStatus.SUCCESS);
         } catch (Throwable t) {
             logger.error("queryTaskByJobId error, jobId=[{}]",jobId, t);
 
@@ -102,10 +135,14 @@ public class RsqlController {
     //停止任务
     @PostMapping("/terminate")
     public BaseResult terminate(@RequestParam(value = "jobId") String jobId) {
+        if (StringUtils.isBlank(jobId)) {
+            return buildReturn();
+        }
+
         try {
             this.rsqlService.terminate(jobId);
 
-            return new SuccessResult<>(RequestStatus.SUCCESS);
+            return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
             logger.error("terminate error, jobId=[{}]",jobId, t);
 
@@ -119,10 +156,14 @@ public class RsqlController {
 
     @PostMapping("/restart")
     public BaseResult restart(@RequestParam(value = "jobId") String jobId) {
+        if (StringUtils.isBlank(jobId)) {
+            return buildReturn();
+        }
+
         try {
             this.rsqlService.restart(jobId);
 
-            return new SuccessResult<>(RequestStatus.SUCCESS);
+            return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
             logger.error("restart error, jobId=[{}]",jobId, t);
 
@@ -137,10 +178,14 @@ public class RsqlController {
 
     @PostMapping("/remove")
     public BaseResult remove(@RequestParam(value = "jobId") String jobId) {
+        if (StringUtils.isBlank(jobId)) {
+            return buildReturn();
+        }
+
         try {
             this.rsqlService.remove(jobId);
 
-            return new SuccessResult<>(RequestStatus.SUCCESS);
+            return new SuccessResult<>(jobId, RequestStatus.SUCCESS);
         } catch (Throwable t) {
             logger.error("remove error, jobId=[{}]",jobId, t);
 
@@ -150,5 +195,9 @@ public class RsqlController {
                 return new FailedResult(RestUtil.getStackInfo(t), RequestStatus.CLIENT_EXCEPTION);
             }
         }
+    }
+
+    private BaseResult buildReturn() {
+        return new FailedResult("jobId is indispensable.", RequestStatus.CLIENT_EXCEPTION);
     }
 }

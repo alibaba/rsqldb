@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public interface Engin {
     void start();
 
-    CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable;
+    CompletableFuture<Throwable> putCommand(String jobId, Node node, boolean startJob) throws Throwable;
 
     List<Command> queryAll();
 

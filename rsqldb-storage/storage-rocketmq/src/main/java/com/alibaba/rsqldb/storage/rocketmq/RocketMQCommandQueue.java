@@ -17,20 +17,18 @@
 package com.alibaba.rsqldb.storage.rocketmq;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
-import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
-import com.alibaba.rsqldb.parser.serialization.Deserializer;
-import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
-import com.alibaba.rsqldb.parser.serialization.Serializer;
 import com.alibaba.rsqldb.storage.api.Command;
 import com.alibaba.rsqldb.storage.api.CommandQueue;
+import com.alibaba.rsqldb.storage.api.CommandSerDe;
 import com.alibaba.rsqldb.storage.api.CommandStatus;
 import com.alibaba.rsqldb.storage.api.CommandWrapper;
+import com.alibaba.rsqldb.storage.api.serialize.DefaultCommandSerDe;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -72,6 +70,7 @@ public class RocketMQCommandQueue implements CommandQueue {
     private DefaultMQProducer producer;
     private DefaultMQAdminExt mqAdmin;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final CommandSerDe commandSerDe = new DefaultCommandSerDe();
 
     private Collection<MessageQueue> commandMessageQueue;
     private final ConcurrentHashMap<String/*tableName*/, Statement> tableCache = new ConcurrentHashMap<>();
@@ -147,6 +146,7 @@ public class RocketMQCommandQueue implements CommandQueue {
                 pullToLast();
                 //pull into cache, but not execute the job，It not sure if that job will be executed success.
                 //if not, it will be skipped.
+                //if the ser-de changed, the pullToLast will raise exception, and not commit the offset.
                 commit();
                 pullConsumer.setPullBatchSize(1);
 
@@ -169,9 +169,7 @@ public class RocketMQCommandQueue implements CommandQueue {
             return result;
         }
 
-
-        Serializer serializer = SerializeTypeContainer.getSerializer(SerializeType.JSON);
-        byte[] bytes = serializer.serialize(command);
+        byte[] bytes = commandSerDe.serialize(command);
 
         String jobId = command.getJobId();
 
@@ -182,7 +180,8 @@ public class RocketMQCommandQueue implements CommandQueue {
 
             producer.send(message);
 
-            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]", topicName, jobId, command.getNode().getContent());
+            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]",
+                    topicName, jobId, command.getNode() == null ? null : command.getNode().getContent());
         } catch (Throwable e) {
             throw new RSQLServerException("put sql to command topic error.", e);
         }
@@ -270,7 +269,7 @@ public class RocketMQCommandQueue implements CommandQueue {
 
         Command old = this.commandMap.put(jobId, command);
         if (old != null) {
-            logger.info("change command, from:[{}] to:[{}]", old, command);
+            logger.info("change command, jobId:{}, status from:[{}] to:[{}]", jobId, old.getStatus(), command.getStatus());
         }
     }
 
@@ -383,23 +382,14 @@ public class RocketMQCommandQueue implements CommandQueue {
         }
     }
 
-    private final ConcurrentHashMap<String, Class<Command>> cache = new ConcurrentHashMap<>();
     @SuppressWarnings("unchecked")
     private Command deserializeAndSaveTable(MessageExt msg) throws DeserializeException {
         String clazzName = msg.getUserProperty(RSQLConstant.BODY_TYPE);
+        if (!Command.class.getName().equals(clazzName)) {
+            throw new DeserializeException("unknown class name: " + clazzName);
+        }
 
-        Class<Command> clazz = cache.computeIfAbsent(clazzName, s -> {
-            try {
-                return  (Class<Command>) Class.forName(clazzName);
-            } catch (ClassNotFoundException e) {
-                throw new RSQLServerException(e);
-            }
-        });
-
-
-        Deserializer deserializer = SerializeTypeContainer.getDeserializer(SerializeType.JSON);
-
-        Command command = deserializer.deserialize(msg.getBody(), clazz);
+        Command command = commandSerDe.deserialize(msg.getBody());
         Node node = command.getNode();
 
         //保存到本地内存

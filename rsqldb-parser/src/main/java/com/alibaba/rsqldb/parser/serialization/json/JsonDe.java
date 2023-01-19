@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.serialization;
+package com.alibaba.rsqldb.parser.serialization.json;
 
 import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.alibaba.rsqldb.parser.model.Field;
+import com.alibaba.rsqldb.parser.serialization.Deserializer;
+import com.alibaba.rsqldb.parser.serialization.FieldKeyDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;

@@ -131,6 +131,7 @@ public class RSQLEngin implements Engin {
             Command command = null;
             CallBack callBack = null;
             String jobId = null;
+            Throwable error = null;
 
             try {
                 CommandWrapper commandWrapper = this.commandQueue.getNextCommand();
@@ -177,15 +178,18 @@ public class RSQLEngin implements Engin {
                     }
                 }
             } catch (Throwable t) {
+                error = t;
                 logger.error("execute command failed, this command will be skipped. content in command: [{}]", command, t);
-                if (callBack != null) {
-                    command.setStatus(CommandStatus.STOPPED);
-                    callBack.onError(jobId, command, t);
-                }
             } finally {
                 if (callBack != null) {
-                    callBack.onCompleted(jobId, command);
+                    if (error == null) {
+                        callBack.onCompleted(jobId, command);
+                    } else {
+                        command.setStatus(CommandStatus.STOPPED);
+                        callBack.onError(jobId, command, error);
+                    }
                 }
+
             }
         }
     }
@@ -223,9 +227,16 @@ public class RSQLEngin implements Engin {
     }
 
     @Override
-    public CompletableFuture<Throwable> putCommand(String jobId, Node node) throws Throwable {
+    public CompletableFuture<Throwable> putCommand(String jobId, Node node, boolean startJob) throws Throwable {
         validate();
-        Command command = new Command(jobId, node, CommandStatus.RUNNING);
+
+        Command command;
+        if (startJob) {
+            command = new Command(jobId, node, CommandStatus.RUNNING);
+        } else {
+            command = new Command(jobId, node, CommandStatus.STOPPED);
+        }
+
         return this.commandQueue.putCommand(command);
     }
 

@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.rest.response;
+package com.alibaba.rsqldb.storage.api;
 
-public class SuccessResult<T> extends BaseResult<T> {
-    public SuccessResult(T data, RequestStatus status) {
-        super(data, status.name(), status.getMessage(), status.getCode(), true);
-    }
+import com.alibaba.rsqldb.common.exception.DeserializeException;
+import com.alibaba.rsqldb.common.exception.SerializeException;
+
+public interface CommandSerDe {
+    byte[] serialize(Command command) throws SerializeException;
+
+    Command deserialize(byte[] source) throws DeserializeException;
 }

@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.rsqldb.parser.serialization;
+package com.alibaba.rsqldb.parser.serialization.json;
 
-
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
 
-public class JsonStringKVSer<V> implements KeyValueSerializer<String, V> {
+public class JsonObjectKVSer<V> implements KeyValueSerializer<Object, V> {
+    private final Serializer serializer;
+
+    public JsonObjectKVSer(Serializer serializer) {
+        this.serializer = serializer;
+    }
 
     @Override
-    public byte[] serialize(String s, V data) throws Throwable {
-        return new byte[0];
+    public byte[] serialize(Object o, V data) throws Throwable {
+        return serializer.serialize(o, data);
     }
 }
