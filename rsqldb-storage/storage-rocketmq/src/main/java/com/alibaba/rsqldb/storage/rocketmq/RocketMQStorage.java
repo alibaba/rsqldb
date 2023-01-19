@@ -60,8 +60,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
-public class RocketMQCommandQueue implements CommandQueue {
-    private static final Logger logger = LoggerFactory.getLogger(RocketMQCommandQueue.class);
+public class RocketMQStorage implements CommandQueue {
+    private static final Logger logger = LoggerFactory.getLogger(RocketMQStorage.class);
 
     private RocketMQClient rocketMQClient;
     private String topicName;

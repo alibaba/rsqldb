@@ -13,7 +13,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>storage-rocketmq</module>
-        <module>storage-mysql</module>
         <module>storage-api</module>
     </modules>
 

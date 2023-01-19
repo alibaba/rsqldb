@@ -138,6 +138,7 @@ public class DefaultCommandSerDe implements CommandSerDe {
                     throw new RuntimeException(e);
                 }
             });
+            nodeClassBuf.release();
         }
 
         Node node = null;
@@ -147,6 +148,8 @@ public class DefaultCommandSerDe implements CommandSerDe {
             byte[] nodeBytes = new byte[nodeLength];
             nodeBuf.readBytes(nodeBytes);
             node = deserializer.deserialize(nodeBytes, cache.get(nodeClassName));
+
+            nodeBuf.release();
         }
 
         //status
@@ -157,6 +160,10 @@ public class DefaultCommandSerDe implements CommandSerDe {
 
         String status = new String(statusBytes, StandardCharsets.UTF_8);
         CommandStatus commandStatus = CommandStatus.valueOf(status);
+
+        byteBuf.release();
+        buf.release();
+        statusBuf.release();
 
         return new Command(jobId, node, commandStatus);
     }

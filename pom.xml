@@ -13,8 +13,6 @@
     <modules>
 
         <module>rsqldb-rest</module>
-        <module>rsqldb-client</module>
-        <module>rsqldb-cli</module>
         <module>rsqldb-parser</module>
         <module>rsqldb-common</module>
         <module>rsqldb-storage</module>
