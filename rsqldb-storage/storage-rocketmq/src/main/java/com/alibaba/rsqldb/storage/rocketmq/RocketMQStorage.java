@@ -173,25 +173,26 @@ public class RocketMQStorage implements CommandQueue {
 
         String jobId = command.getJobId();
 
-        try {
-            Message message = new Message(topicName, bytes);
-            message.setKeys(jobId);
-            message.putUserProperty(RSQLConstant.BODY_TYPE, command.getClass().getName());
-
-            producer.send(message);
-
-            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]",
-                    topicName, jobId, command.getNode() == null ? null : command.getNode().getContent());
-        } catch (Throwable e) {
-            throw new RSQLServerException("put sql to command topic error.", e);
-        }
-
+        //put completableFuture first, then send data to rocketmq.
         CompletableFuture<Throwable> completableFuture = new CompletableFuture<>();
         CompletableFuture<Throwable> oldFuture = this.preCommandMap.put(jobId, completableFuture);
         if (oldFuture != null) {
             logger.warn("find uncompleted completableFuture, completed it.");
             oldFuture.complete(null);
         }
+
+        try {
+            Message message = new Message(topicName, bytes);
+            message.setKeys(jobId);
+            message.putUserProperty(RSQLConstant.BODY_TYPE, command.getClass().getName());
+
+            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}], status:[{}]",
+                    topicName, jobId, command.getNode() == null ? null : command.getNode().getContent(), command.getStatus());
+            producer.send(message);
+        } catch (Throwable e) {
+            throw new RSQLServerException("put sql to command topic error.", e);
+        }
+
 
         return completableFuture;
     }
