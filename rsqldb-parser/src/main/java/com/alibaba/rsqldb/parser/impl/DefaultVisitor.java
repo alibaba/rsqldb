@@ -820,7 +820,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         String high = ctx.NUMBER(1).getText();
 
 
-        return new RangeValueExpression(ParserUtil.getText(ctx), field, Long.parseLong(low), Long.parseLong(high));
+        return new RangeValueExpression(ParserUtil.getText(ctx), field, Double.parseDouble(low), Double.parseDouble(high));
     }
 
     @Override

@@ -18,12 +18,20 @@ package com.alibaba.rsqldb.parser.model.expression;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
+import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
+import com.alibaba.rsqldb.parser.model.baseType.NumberType;
+import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SingleValueExpression extends SingleExpression {
@@ -47,15 +55,19 @@ public class SingleValueExpression extends SingleExpression {
     @Override
     public boolean isTrue(JsonNode jsonNode) {
         String fieldName = this.getField().getFieldName();
+        JsonNode node = jsonNode.get(fieldName);
+        if (node == null) {
+            return this.value == null;
+        }
+
 
         switch (this.getOperator()) {
             case EQUAL: {
-                JsonNode node = jsonNode.get(fieldName);
-
-                String value = node.asText();
-                String target = String.valueOf(this.value.result());
-
-                return StringUtils.equalsIgnoreCase(value, target);
+                try {
+                    return super.isEqual(node, this.value);
+                } catch (Throwable t) {
+                    return false;
+                }
             }
             default: {
                 if (!(this.getOperator() == Operator.GREATER) && !(this.getOperator() == Operator.LESS)
@@ -63,7 +75,11 @@ public class SingleValueExpression extends SingleExpression {
                         && !(this.getOperator() == Operator.LESS_EQUAL)) {
                     throw new SyntaxErrorException("unknown operator type: " + this.getOperator());
                 }
-                JsonNode node = jsonNode.get(fieldName);
+
+                if (!(this.value instanceof NumberType) || !(node instanceof NumericNode)) {
+                    return false;
+                }
+
                 Double value = Double.valueOf(node.asText());
                 Double target = Double.valueOf(String.valueOf(this.value.result()));
 
@@ -81,7 +97,7 @@ public class SingleValueExpression extends SingleExpression {
                 return value < target;
             }
             case NOT_EQUAL: {
-                return value != target;
+                return !Objects.equals(value, target);
             }
             case GREATER_EQUAL: {
                 return value >= target;

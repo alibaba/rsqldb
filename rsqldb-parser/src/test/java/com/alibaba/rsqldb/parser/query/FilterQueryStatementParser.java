@@ -243,8 +243,8 @@
          assertTrue(filter instanceof RangeValueExpression);
          RangeValueExpression valueExpression = (RangeValueExpression) filter;
 
-         assertEquals(valueExpression.getLow(), 1);
-         assertEquals(valueExpression.getHigh(), 10);
+         assertEquals(1, valueExpression.getLow(), 0);
+         assertEquals(10, valueExpression.getHigh(), 0);
          assertEquals(valueExpression.getField().getFieldName(), "field_1");
 
          assertEquals(valueExpression.getOperator(), Operator.BETWEEN_AND);

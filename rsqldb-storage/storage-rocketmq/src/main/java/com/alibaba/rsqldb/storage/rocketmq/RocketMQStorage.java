@@ -187,24 +187,30 @@ public class RocketMQStorage implements CommandQueue {
         }
 
         CompletableFuture<Throwable> completableFuture = new CompletableFuture<>();
-        this.preCommandMap.put(jobId, completableFuture);
+        CompletableFuture<Throwable> oldFuture = this.preCommandMap.put(jobId, completableFuture);
+        if (oldFuture != null) {
+            logger.warn("find uncompleted completableFuture, completed it.");
+            oldFuture.complete(null);
+        }
 
         return completableFuture;
     }
 
-    private boolean checkExist(Command command) {
+    private boolean checkExist(Command command) throws Throwable {
         String jobId = command.getJobId();
         Command tempCommand = commandMap.get(jobId);
 
         if (tempCommand != null  && tempCommand.getStatus() == command.getStatus()) {
-            logger.info("exist a command has same jobId and status in commandMap, cache command:[{}]", tempCommand);
-            return true;
+            String format = String.format("exist a command has same jobId and status in commandMap, not executed yet, exist command:[%s].", tempCommand);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         CompletableFuture<Throwable> future = preCommandMap.get(jobId);
         if (future != null) {
-            logger.info("exist a command with same jobId:[{}], not execute completed.", jobId);
-            return true;
+            String format = String.format("exist a command with same jobId, not executed yet, exist command:[%s].", tempCommand);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
         return false;
     }
@@ -234,6 +240,10 @@ public class RocketMQStorage implements CommandQueue {
         CompletableFuture<Throwable> remove = this.preCommandMap.remove(jobId);
 
         if (remove == null) {
+            logger.info("CompletableFuture is empty in local, the command maybe submit in other RSQLDB instance, jobId:{}", jobId);
+            for (String jobIdInPreCommandMap : preCommandMap.keySet()) {
+                logger.info("jobId in preCommandMap: {}", jobIdInPreCommandMap);
+            }
             remove = new CompletableFuture<>();
         }
 
@@ -270,7 +280,7 @@ public class RocketMQStorage implements CommandQueue {
             if (remove != null) {
                 logger.info("remove command from cache, command:[{}]", remove);
                 Node node = remove.getNode();
-                if (node instanceof Statement) {
+                if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
                     Statement statement = (Statement) node;
                     String tableName = statement.getTableName();
                     Statement removedStatement = this.tableCache.remove(tableName);
