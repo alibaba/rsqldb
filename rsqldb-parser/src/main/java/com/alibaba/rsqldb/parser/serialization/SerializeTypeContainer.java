@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
 package com.alibaba.rsqldb.parser.serialization;
 
 import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.parser.serialization.json.JsonDe;
+import com.alibaba.rsqldb.parser.serialization.json.JsonSer;
 
 import java.util.HashMap;
 

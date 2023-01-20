@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,5 +39,10 @@ public class RSQLConstant {
         public static final String DATA_FORMAT = "data_format";
     }
 
+    public static class RocketMQ {
+        public static final String NAMESRV_ADDR= "namesrvAddr";
+        public static String SQL_TOPIC_NAME = System.getProperty("sqlTopicName","RSQLDB-COMMAND-TOPIC");
+        public static String SQL_GROUP_NAME = System.getProperty("sqlGroupName","RSQLDB-COMMAND-GROUP");
+    }
 
 }

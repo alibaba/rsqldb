@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,5 @@ package com.alibaba.rsqldb.rest.response;
 public class SuccessResult<T> extends BaseResult<T> {
     public SuccessResult(T data, RequestStatus status) {
         super(data, status.name(), status.getMessage(), status.getCode(), true);
-    }
-
-    public SuccessResult(RequestStatus status) {
-        super(null, status.name(), status.getMessage(), status.getCode(), true);
     }
 }

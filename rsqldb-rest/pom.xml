@@ -40,13 +40,16 @@
             <artifactId>rsqldb-parser</artifactId>
             <version>${version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.alibaba</groupId>
-            <artifactId>rsqldb-common</artifactId>
+            <artifactId>storage-api</artifactId>
             <version>${version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>storage-rocketmq</artifactId>
+            <version>${version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.assertj</groupId>

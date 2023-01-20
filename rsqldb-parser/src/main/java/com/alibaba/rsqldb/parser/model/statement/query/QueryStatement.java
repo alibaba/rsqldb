@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import com.alibaba.rsqldb.common.function.CountFunction;
 import com.alibaba.rsqldb.common.function.EmptyFunction;
 import com.alibaba.rsqldb.common.function.MaxFunction;
 import com.alibaba.rsqldb.common.function.MinFunction;
-import com.alibaba.rsqldb.common.function.RSQLAccumulator;
 import com.alibaba.rsqldb.common.function.SQLFunction;
 import com.alibaba.rsqldb.common.function.SumFunction;
 import com.alibaba.rsqldb.common.function.WindowBoundaryTimeFunction;

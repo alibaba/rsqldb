@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,17 @@
 package com.alibaba.rsqldb.rest.service;
 
 
-import com.alibaba.rsqldb.rest.response.QueryResult;
+
+import com.alibaba.rsqldb.storage.api.Command;
 
 import java.util.List;
 
 public interface RsqlService {
-    List<String> executeSql(String sql, String jobId) throws Throwable;
+    List<String> executeSql(String sql, String jobId, boolean startJob) throws Throwable;
 
-    List<QueryResult> queryTask();
+    List<Command> queryTask();
 
-    QueryResult queryTaskByJobId(String jobId);
+    Command queryTaskByJobId(String jobId);
 
     void terminate(String jobId) throws Throwable;
 

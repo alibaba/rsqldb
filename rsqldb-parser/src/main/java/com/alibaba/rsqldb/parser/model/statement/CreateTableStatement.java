@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@ import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.SerializeType;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
-import com.alibaba.rsqldb.parser.serialization.JsonObjectKVSer;
-import com.alibaba.rsqldb.parser.serialization.JsonStringKVSer;
+import com.alibaba.rsqldb.parser.serialization.json.JsonObjectKVSer;
+import com.alibaba.rsqldb.parser.serialization.json.JsonStringKVSer;
 import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Columns;
