@@ -173,41 +173,50 @@ public class RocketMQStorage implements CommandQueue {
 
         String jobId = command.getJobId();
 
+        //put completableFuture first, then send data to rocketmq.
+        CompletableFuture<Throwable> completableFuture = new CompletableFuture<>();
+        CompletableFuture<Throwable> oldFuture = this.preCommandMap.put(jobId, completableFuture);
+        if (oldFuture != null) {
+            logger.warn("find uncompleted completableFuture, completed it.");
+            oldFuture.complete(null);
+        }
+
         try {
             Message message = new Message(topicName, bytes);
             message.setKeys(jobId);
             message.putUserProperty(RSQLConstant.BODY_TYPE, command.getClass().getName());
 
+            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}], status:[{}]",
+                    topicName, jobId, command.getNode() == null ? null : command.getNode().getContent(), command.getStatus());
             producer.send(message);
-
-            logger.info("put statement into rocketmq command topic:{} with jobId:[{}], command:[{}]",
-                    topicName, jobId, command.getNode() == null ? null : command.getNode().getContent());
         } catch (Throwable e) {
             throw new RSQLServerException("put sql to command topic error.", e);
         }
 
-        CompletableFuture<Throwable> completableFuture = new CompletableFuture<>();
-        this.preCommandMap.put(jobId, completableFuture);
 
         return completableFuture;
     }
 
-    private boolean checkExist(Command command) {
+    private boolean checkExist(Command command) throws Throwable {
         String jobId = command.getJobId();
         Command tempCommand = commandMap.get(jobId);
 
         if (tempCommand != null  && tempCommand.getStatus() == command.getStatus()) {
-            logger.info("exist a command has same jobId and status in commandMap, cache command:[{}]", tempCommand);
-            return true;
+            String format = String.format("exist a command has same jobId and status in commandMap, not executed yet, exist command:[%s].", tempCommand);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
 
         CompletableFuture<Throwable> future = preCommandMap.get(jobId);
         if (future != null) {
-            logger.info("exist a command with same jobId:[{}], not execute completed.", jobId);
-            return true;
+            String format = String.format("exist a command with same jobId, not executed yet, exist command:[%s].", tempCommand);
+            logger.error(format);
+            throw new RSQLServerException(format);
         }
         return false;
     }
+
+
     @Override
     public CommandWrapper getNextCommand() throws Throwable {
         //先从restore恢复中拉去
@@ -220,18 +229,8 @@ public class RocketMQStorage implements CommandQueue {
             return new CommandWrapper(restored, new RocketMQCallBack(future, this::commitStatus));
         }
 
-
-        List<MessageExt> messageExts = pullConsumer.poll(10);
-
-        if (messageExts == null || messageExts.size() == 0) {
-            return null;
-        }
-
-        if (messageExts.size() > 1) {
-            throw new RSQLServerException("unexpected error, command num more than 1.");
-        }
-
-        MessageExt messageExt = messageExts.get(0);
+        //poll from rocketmq
+        MessageExt messageExt = pollFromStore();
         if (messageExt == null) {
             return null;
         }
@@ -242,10 +241,37 @@ public class RocketMQStorage implements CommandQueue {
         CompletableFuture<Throwable> remove = this.preCommandMap.remove(jobId);
 
         if (remove == null) {
+            logger.info("CompletableFuture is empty in local, the command maybe submit in other RSQLDB instance, jobId:{}", jobId);
+            for (String jobIdInPreCommandMap : preCommandMap.keySet()) {
+                logger.info("jobId in preCommandMap: {}", jobIdInPreCommandMap);
+            }
             remove = new CompletableFuture<>();
         }
 
         return new CommandWrapper(command, new RocketMQCallBack(remove, this::commitStatus, this::commit));
+    }
+
+    private final LinkedList<MessageExt> cache = new LinkedList<>();
+    private MessageExt pollFromStore() {
+        MessageExt messageExt;
+        if (cache.size() != 0) {
+            messageExt = cache.pop();
+        } else {
+            List<MessageExt> messageExts = pullConsumer.poll(10);
+            if (messageExts == null || messageExts.size() == 0) {
+                return null;
+            }
+            if (messageExts.size() > 1) {
+                pullConsumer.setPullBatchSize(1);
+                logger.info("batch message num greater than 1, cache it first.");
+                cache.addAll(messageExts);
+                messageExt = cache.pop();
+            } else {
+                messageExt = messageExts.get(0);
+            }
+        }
+
+        return messageExt;
     }
 
 
@@ -255,7 +281,7 @@ public class RocketMQStorage implements CommandQueue {
             if (remove != null) {
                 logger.info("remove command from cache, command:[{}]", remove);
                 Node node = remove.getNode();
-                if (node instanceof Statement) {
+                if (node instanceof CreateTableStatement || node instanceof CreateViewStatement) {
                     Statement statement = (Statement) node;
                     String tableName = statement.getTableName();
                     Statement removedStatement = this.tableCache.remove(tableName);
@@ -337,18 +363,18 @@ public class RocketMQStorage implements CommandQueue {
     private void pullToLast() throws DeserializeException {
         List<MessageExt> holder = new ArrayList<>();
         //recover
-        List<MessageExt> result = pullConsumer.poll(10);
+        List<MessageExt> result = pullConsumer.poll(100);
         while (result != null && result.size() != 0) {
             holder.addAll(result);
             if (holder.size() <= 1000) {
-                result = pullConsumer.poll(10);
+                result = pullConsumer.poll(100);
                 continue;
             }
 
             replayState(holder);
             holder.clear();
 
-            result = pullConsumer.poll(10);
+            result = pullConsumer.poll(100);
         }
 
         if (holder.size() != 0) {

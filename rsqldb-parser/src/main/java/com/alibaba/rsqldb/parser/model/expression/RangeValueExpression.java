@@ -24,30 +24,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RangeValueExpression extends SingleExpression {
-    private long low;
-    private long high;
+    private double low;
+    private double high;
 
     @JsonCreator
     public RangeValueExpression(@JsonProperty("content") String content, @JsonProperty("fieldName") Field field,
-                                @JsonProperty("low") long low, @JsonProperty("high") long high) {
+                                @JsonProperty("low") double low, @JsonProperty("high") double high) {
         super(content, field, Operator.BETWEEN_AND);
         this.low = low;
         this.high = high;
     }
 
-    public long getLow() {
+    public double getLow() {
         return low;
     }
 
-    public void setLow(long low) {
+    public void setLow(double low) {
         this.low = low;
     }
 
-    public long getHigh() {
+    public double getHigh() {
         return high;
     }
 
-    public void setHigh(long high) {
+    public void setHigh(double high) {
         this.high = high;
     }
 
@@ -64,7 +64,7 @@ public class RangeValueExpression extends SingleExpression {
             return false;
         }
 
-        long value = node.asLong();
+        double value = node.asDouble();
 
         return low <= value && value <= high;
     }

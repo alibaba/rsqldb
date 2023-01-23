@@ -19,12 +19,17 @@ package com.alibaba.rsqldb.parser.model.expression;
 import com.alibaba.rsqldb.parser.model.Node;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
+import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.NumberType;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.antlr.v4.runtime.ParserRuleContext;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import java.util.Objects;
 
 // fieldName > 10 and AVG(fieldName) < 12 ...
 @JsonTypeInfo(
@@ -52,4 +57,40 @@ public abstract class Expression extends Node {
      * @return
      */
     public abstract boolean isTrue(JsonNode jsonNode);
+
+
+    protected boolean isEqual(JsonNode node, Literal<?> literal) {
+        if (node == null && literal == null) {
+            return true;
+        }
+
+        if (node == null || literal == null) {
+            return false;
+        }
+
+        String value = node.asText();
+        String target = String.valueOf(literal.result());
+
+        if (literal instanceof StringType) {
+            if (!(node instanceof TextNode)) {
+                return false;
+            }
+
+            return Objects.equals(value, target);
+        } else if (literal instanceof NumberType) {
+            if (!(node instanceof NumericNode)) {
+                return false;
+            }
+
+            return Objects.equals(value, target);
+        } else if (literal instanceof BooleanType) {
+            if (!(node instanceof BooleanNode)) {
+                return false;
+            }
+
+            return Objects.equals(value, target);
+        }
+
+        return false;
+    }
 }

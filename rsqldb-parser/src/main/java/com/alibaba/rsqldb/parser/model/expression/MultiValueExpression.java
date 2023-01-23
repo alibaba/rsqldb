@@ -19,10 +19,12 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.Operator;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
+import com.alibaba.rsqldb.parser.model.baseType.StringType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -57,15 +59,13 @@ public class MultiValueExpression extends SingleExpression {
     public boolean isTrue(JsonNode jsonNode) {
         String fieldName = this.getField().getFieldName();
         JsonNode node = jsonNode.get(fieldName);
-
-        String value = node.asText();
+        if (node == null) {
+            return this.values == null;
+        }
 
         List<Literal<?>> literals = values.getLiterals();
         for (Literal<?> literal : literals) {
-            String target = String.valueOf(literal.result());
-            if (StringUtils.equalsIgnoreCase(value, target)) {
-                return true;
-            }
+            return super.isEqual(node, literal);
         }
         return false;
     }
