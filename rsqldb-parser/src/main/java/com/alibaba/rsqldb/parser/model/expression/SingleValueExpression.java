@@ -35,6 +35,7 @@ import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SingleValueExpression extends SingleExpression {
+    private static final String stringNull = "null";
     private Literal<?> value;
 
     @JsonCreator
@@ -56,7 +57,7 @@ public class SingleValueExpression extends SingleExpression {
     public boolean isTrue(JsonNode jsonNode) {
         String fieldName = this.getField().getFieldName();
         JsonNode node = jsonNode.get(fieldName);
-        if (node == null) {
+        if (node == null || StringUtils.isBlank(node.asText()) || stringNull.equalsIgnoreCase(node.asText())) {
             return this.value == null;
         }
 
