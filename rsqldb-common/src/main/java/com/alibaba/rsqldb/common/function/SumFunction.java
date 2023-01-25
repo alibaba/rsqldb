@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,14 +38,21 @@ public class SumFunction implements SQLFunction {
     @Override
     public void apply(JsonNode jsonNode, ConcurrentHashMap<String, Object> container) {
         JsonNode valueNode = jsonNode.get(fieldName);
-        if (valueNode != null) {
+        if (valueNode instanceof NumericNode) {
             String value = valueNode.asText();
             BigDecimal newValue = new BigDecimal(value);
 
             if (!container.containsKey(asName)) {
                 container.put(asName, newValue);
             }else {
-                BigDecimal old = (BigDecimal)container.get(asName);
+                Object temp = container.get(asName);
+                BigDecimal old;
+                if (temp instanceof Number) {
+                    old = new BigDecimal(String.valueOf(temp));
+                } else {
+                    throw new RuntimeException("value is not number.");
+                }
+
                 BigDecimal add = old.add(newValue);
 
                 container.put(asName, add);

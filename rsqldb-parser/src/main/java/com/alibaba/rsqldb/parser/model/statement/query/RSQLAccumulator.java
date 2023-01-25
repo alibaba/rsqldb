@@ -16,12 +16,15 @@
 package com.alibaba.rsqldb.parser.model.statement.query;
 
 import com.alibaba.rsqldb.common.function.SQLFunction;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -31,9 +34,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
  @JsonIgnoreProperties(ignoreUnknown = true)
  public class RSQLAccumulator implements Accumulator<JsonNode, ObjectNode> {
-     private List<SQLFunction> sqlFunctions;
-     private ConcurrentHashMap<String, Object> container = new ConcurrentHashMap<>();
+     private static final Logger logger = LoggerFactory.getLogger(RSQLAccumulator.class);
 
+     private List<SQLFunction> sqlFunctions;
+     private ConcurrentHashMap<String, Object> tempHolder = new ConcurrentHashMap<>();
+
+     @JsonCreator
      public RSQLAccumulator(@JsonProperty("sqlFunctions") List<SQLFunction> sqlFunctions) {
          this.sqlFunctions = sqlFunctions;
      }
@@ -45,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
          }
 
          for (SQLFunction function : sqlFunctions) {
-             function.apply(value, container);
+             function.apply(value, tempHolder);
          }
      }
 
@@ -59,20 +65,28 @@ import java.util.concurrent.ConcurrentHashMap;
      public ObjectNode result(Properties context) {
          //需要二次计算的，进行二次计算
          for (SQLFunction function : sqlFunctions) {
-             function.secondCalcu(container, context);
+             function.secondCalcu(tempHolder, context);
          }
 
          ObjectNode node = JsonNodeFactory.instance.objectNode();
-         for (String key : container.keySet()) {
-             Object temp = container.get(key);
-             if (temp instanceof BigDecimal) {
-                 BigDecimal value = (BigDecimal) temp;
-                 node.put(key, value.toString());
+         for (String key : tempHolder.keySet()) {
+             Object temp = tempHolder.get(key);
+             if (temp instanceof Number) {
+                 BigDecimal value = new BigDecimal(String.valueOf(temp));
+
+                 String valueStr = value.toString();
+                 if (valueStr.contains(".")) {
+                     node.put(key, value.doubleValue());
+                 } else {
+                     node.put(key, value.longValue());
+                 }
+
              } else if (temp instanceof String) {
                  node.put(key, (String) temp);
              } else if (temp instanceof JsonNode) {
                  node.set(key, (JsonNode) temp);
              } else {
+                 logger.error("unsupported type: " + temp.getClass());
                  throw new UnsupportedOperationException();
              }
          }
@@ -88,12 +102,12 @@ import java.util.concurrent.ConcurrentHashMap;
          this.sqlFunctions = sqlFunctions;
      }
 
-     public ConcurrentHashMap<String, Object> getContainer() {
-         return container;
+     public ConcurrentHashMap<String, Object> getTempHolder() {
+         return tempHolder;
      }
 
-     public void setContainer(ConcurrentHashMap<String, Object> container) {
-         this.container = container;
+     public void setTempHolder(ConcurrentHashMap<String, Object> tempHolder) {
+         this.tempHolder = tempHolder;
      }
 
      @Override
