@@ -15,11 +15,26 @@
  */
 package com.alibaba.rsqldb.common.function;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = AVGFunction.class, name = "aVGFunction"),
+        @JsonSubTypes.Type(value = CountFunction.class, name = "countFunction"),
+        @JsonSubTypes.Type(value = EmptyFunction.class, name = "emptyFunction"),
+        @JsonSubTypes.Type(value = MaxFunction.class, name = "maxFunction"),
+        @JsonSubTypes.Type(value = MinFunction.class, name = "minFunction"),
+        @JsonSubTypes.Type(value = SumFunction.class, name = "sumFunction"),
+        @JsonSubTypes.Type(value = WindowBoundaryTimeFunction.class, name = "windowBoundaryTimeFunction"),
+})
 public interface SQLFunction {
     void apply(JsonNode jsonNode, final ConcurrentHashMap<String, Object> container);
 
