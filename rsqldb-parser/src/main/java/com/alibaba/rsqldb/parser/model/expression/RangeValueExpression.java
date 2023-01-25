@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RangeValueExpression extends SingleExpression {
@@ -60,7 +61,7 @@ public class RangeValueExpression extends SingleExpression {
     public boolean isTrue(JsonNode jsonNode) {
         String fieldName = this.getField().getFieldName();
         JsonNode node = jsonNode.get(fieldName);
-        if (node == null) {
+        if (!(node instanceof NumericNode)) {
             return false;
         }
 
