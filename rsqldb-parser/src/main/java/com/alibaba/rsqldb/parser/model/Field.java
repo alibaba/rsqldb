@@ -77,36 +77,6 @@ public class Field extends Node {
         this.asFieldName = asFieldName;
     }
 
-    @Override
-    public int hashCode() {
-        int total = 0;
-        if (!StringUtils.isEmpty(tableName)) {
-            total += tableName.hashCode();
-        }
-
-        if (!StringUtils.isEmpty(fieldName)) {
-            total += fieldName.hashCode();
-        }
-
-        if (!StringUtils.isEmpty(asFieldName)) {
-            total += asFieldName.hashCode();
-        }
-
-        return total;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Field)) {
-            return false;
-        }
-
-        Field that = (Field) obj;
-
-        return Objects.equals(this.tableName, that.tableName)
-                && Objects.equals(this.fieldName, that.fieldName)
-                && Objects.equals(this.asFieldName, that.asFieldName);
-    }
 
     @Override
     public String toString() {

@@ -21,7 +21,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>storage-api</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

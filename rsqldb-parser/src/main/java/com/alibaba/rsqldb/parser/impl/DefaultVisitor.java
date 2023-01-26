@@ -898,6 +898,16 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitNumIdentifier(SqlParser.NumIdentifierContext ctx) {
+        String text = ctx.NUM_STRING().getText();
+
+        if (text == null) {
+            return null;
+        }
+        return new StringType(ParserUtil.getText(ctx), text);
+    }
+
+    @Override
     public Node visitQuotedIdentifier(SqlParser.QuotedIdentifierContext ctx) {
         String text = ctx.QUOTED_STRING().getText();
 
@@ -913,18 +923,6 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     @Override
     public Node visitBackQuotedIdentifier(SqlParser.BackQuotedIdentifierContext ctx) {
         String text = ctx.BACKQUOTED_STRING().getText();
-        if (text == null) {
-            return null;
-        }
-
-        text = text.substring(1, text.length() - 1);
-        return new StringType(ParserUtil.getText(ctx), text);
-    }
-
-    @Override
-    public Node visitNumIdentifier(SqlParser.NumIdentifierContext ctx) {
-        String text = ctx.NUM_STRING().getText();
-
         if (text == null) {
             return null;
         }

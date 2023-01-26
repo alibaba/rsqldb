@@ -24,8 +24,10 @@
  import java.util.Map;
 
  import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertNotNull;
  import static org.junit.Assert.assertNull;
  import static org.junit.Assert.assertSame;
+ import static org.junit.Assert.assertTrue;
 
  public class QueryStatementParser extends SerDer {
      @Test
@@ -75,6 +77,183 @@
              } else if (fieldName.equals("field_4")) {
                  Calculator calculator = fieldAndCalculator.get(field);
                  assertEquals(Calculator.COUNT, calculator);
+             } else {
+                 throw new IllegalStateException("unknown fieldName:" + fieldName);
+             }
+         }
+     }
+
+     @Test
+     public void query21() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , avg(field_2)\n" +
+                 "     , avg(field_2)\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+
+         assertEquals("rocketmq_source", queryStatement.getTableName());
+
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         int count = 0;
+
+         for (Field field : fieldAndCalculator.keySet()) {
+             String fieldName = field.getFieldName();
+             Calculator calculator = fieldAndCalculator.get(field);
+
+             if (fieldName.equals("field_1")) {
+                 assertNull(calculator);
+             } else if (fieldName.equals("field_2")) {
+                 assertSame(Calculator.AVG, calculator);
+                 count++;
+             } else {
+                 throw new IllegalStateException();
+             }
+         }
+
+         assertEquals(2, count);
+     }
+
+     @Test
+     public void query22() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , field_2\n" +
+                 "     , field_2\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         int count = 0;
+
+         for (Field field : fieldAndCalculator.keySet()) {
+             String fieldName = field.getFieldName();
+             Calculator calculator = fieldAndCalculator.get(field);
+
+             if (fieldName.equals("field_1")) {
+             } else if (fieldName.equals("field_2")) {
+                 count++;
+             } else {
+                 throw new IllegalStateException();
+             }
+
+             assertNull(calculator);
+         }
+
+         assertEquals(2, count);
+     }
+
+     @Test
+     public void query23() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , field_2\n" +
+                 "     , sum(field_2)\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         int count = 0;
+         int fieldNothing = 0;
+         int fieldSum = 0;
+
+         for (Field field : fieldAndCalculator.keySet()) {
+             String fieldName = field.getFieldName();
+             Calculator calculator = fieldAndCalculator.get(field);
+
+             if (fieldName.equals("field_1")) {
+                 assertNull(calculator);
+             } else if (fieldName.equals("field_2")) {
+                 if (calculator == null) {
+                     fieldNothing = -1;
+                 } else if (calculator == Calculator.SUM) {
+                     fieldSum = 1;
+                 } else {
+                     throw new IllegalStateException();
+                 }
+                 count++;
+             } else {
+                 throw new IllegalStateException();
+             }
+         }
+
+         assertEquals(2, count);
+         assertEquals(0, fieldNothing + fieldSum);
+     }
+
+     @Test
+     public void query24() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , field_2\n" +
+                 "     , sum(field_2) as sumField2\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         int count = 0;
+         int fieldNothing = 0;
+         int fieldSum = 0;
+
+         for (Field field : fieldAndCalculator.keySet()) {
+             String fieldName = field.getFieldName();
+             Calculator calculator = fieldAndCalculator.get(field);
+
+             if (fieldName.equals("field_1")) {
+                 assertNull(calculator);
+             } else if (fieldName.equals("field_2")) {
+                 if (calculator == null) {
+                     fieldNothing = -1;
+
+                     assertNull(field.getAsFieldName());
+                 } else if (calculator == Calculator.SUM) {
+                     fieldSum = 1;
+
+                     assertEquals("sumField2", field.getAsFieldName());
+                 } else {
+                     throw new IllegalStateException();
+                 }
+                 count++;
+             } else {
+                 throw new IllegalStateException();
+             }
+         }
+
+         assertEquals(2, count);
+         assertEquals(0, fieldNothing + fieldSum);
+     }
+
+     @Test
+     public void query25() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , sum(field_2) as 2Sum\n" +
+                 "     , max(field_2) as 2Max\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+
+         assertEquals("rocketmq_source", queryStatement.getTableName());
+
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         for (Field field : fieldAndCalculator.keySet()) {
+             String fieldName = field.getFieldName();
+
+             if (fieldName.equals("field_1")) {
+                 Calculator calculator = fieldAndCalculator.get(field);
+                 assertNull(calculator);
+             } else if (fieldName.equals("field_2") && field.getAsFieldName().equals("2Sum")) {
+                 Calculator calculator = fieldAndCalculator.get(field);
+                 assertEquals(Calculator.SUM, calculator);
+             } else if (fieldName.equals("field_2") && field.getAsFieldName().equals("2Max")) {
+                 Calculator calculator = fieldAndCalculator.get(field);
+                 assertEquals(Calculator.MAX, calculator);
              } else {
                  throw new IllegalStateException("unknown fieldName:" + fieldName);
              }
