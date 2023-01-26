@@ -21,6 +21,7 @@
  import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
  import org.junit.Test;
 
+ import java.util.LinkedHashMap;
  import java.util.Map;
 
  import static org.junit.Assert.assertEquals;
@@ -259,6 +260,41 @@
              }
          }
      }
+
+     @Test
+     public void query26() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , sum(field_2) as 2Sum\n" +
+                 "     , max(field_2) as 2Max\n" +
+                 "from rocketmq_source;";
+
+         QueryStatement queryStatement = parser(sql, QueryStatement.class);
+
+
+         Map<Field, Calculator> fieldAndCalculator = queryStatement.getSelectFieldAndCalculator();
+         assertEquals(3, fieldAndCalculator.size());
+
+         assertTrue(fieldAndCalculator instanceof LinkedHashMap);
+
+         LinkedHashMap<Field, Calculator> linkedHashMap = (LinkedHashMap<Field, Calculator>) fieldAndCalculator;
+
+         int index = 0;
+         for (Field field : linkedHashMap.keySet()) {
+             Calculator calculator = linkedHashMap.get(field);
+             if (index ==0 ) {
+                 assertNull(calculator);
+             } else if (index == 1) {
+                 assertSame(Calculator.SUM, calculator);
+                 assertEquals("2Sum", field.getAsFieldName());
+             } else if (index == 2) {
+                 assertSame(Calculator.MAX, calculator);
+                 assertEquals("2Max", field.getAsFieldName());
+             }
+
+             index++;
+         }
+     }
+
 
      @Test
      public void query3() throws Throwable {

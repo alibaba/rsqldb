@@ -84,6 +84,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -119,7 +120,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         SqlParser.SelectFieldContext selectFieldContext = ctx.selectField();
         ListNode<SelectFieldResult> selectFieldResults = (ListNode<SelectFieldResult>) visit(selectFieldContext);
 
-        Map<Field, Calculator> selectFieldAndCalculator = new HashMap<>();
+        LinkedHashMap<Field, Calculator> selectFieldAndCalculator = new LinkedHashMap<>();
         List<WindowInfoInSQL> windowInfoInSQLS = new ArrayList<>();
 
         //将select分类
