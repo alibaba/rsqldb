@@ -38,27 +38,29 @@ public class JsonSer implements Serializer {
 
     @Override
     public byte[] serialize(Object key, Object value) throws SerializeException {
-        if (key == null) {
-            return this.serialize(value);
-        }
+//        if (key == null) {
+//            return this.serialize(value);
+//        }
 
-        try {
-            ObjectNode objectNode = objectMapper.createObjectNode();
+        return this.serialize(value);
 
-            String valueAsString = objectMapper.writeValueAsString(value);
-            JsonNode valueJsonNode = objectMapper.readTree(valueAsString);
-
-            if (key.getClass().isPrimitive()) {
-                objectNode.set(String.valueOf(key), valueJsonNode);
-            } else {
-                throw new UnsupportedOperationException("key is not primitive.");
-            }
-
-            String result = objectNode.toPrettyString();
-
-            return objectMapper.writeValueAsBytes(result);
-        } catch (Throwable t) {
-            throw new SerializeException(t);
-        }
+//        try {
+//            ObjectNode objectNode = objectMapper.createObjectNode();
+//
+//            String valueAsString = objectMapper.writeValueAsString(value);
+//            JsonNode valueJsonNode = objectMapper.readTree(valueAsString);
+//
+//            if (key.getClass().isPrimitive()) {
+//                objectNode.set(String.valueOf(key), valueJsonNode);
+//            } else {
+//                throw new UnsupportedOperationException("key is not primitive.");
+//            }
+//
+//            String result = objectNode.toPrettyString();
+//
+//            return objectMapper.writeValueAsBytes(result);
+//        } catch (Throwable t) {
+//            throw new SerializeException(t);
+//        }
     }
 }

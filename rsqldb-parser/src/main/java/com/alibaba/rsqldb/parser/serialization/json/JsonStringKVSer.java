@@ -16,12 +16,18 @@
 package com.alibaba.rsqldb.parser.serialization.json;
 
 
+import com.alibaba.rsqldb.parser.serialization.Serializer;
 import org.apache.rocketmq.streams.core.serialization.KeyValueSerializer;
 
 public class JsonStringKVSer<V> implements KeyValueSerializer<String, V> {
+    private final Serializer serializer;
+
+    public JsonStringKVSer(Serializer serializer) {
+        this.serializer = serializer;
+    }
 
     @Override
     public byte[] serialize(String s, V data) throws Throwable {
-        return new byte[0];
+        return this.serializer.serialize(s, data);
     }
 }

@@ -63,10 +63,16 @@ public class MultiValueExpression extends SingleExpression {
             return this.values == null;
         }
 
+        boolean value = false;
+
         List<Literal<?>> literals = values.getLiterals();
         for (Literal<?> literal : literals) {
-            return super.isEqual(node, literal);
+            value = super.isEqual(node, literal);
+            if (value) {
+                break;
+            }
         }
-        return false;
+
+        return value;
     }
 }

@@ -17,6 +17,9 @@ package com.alibaba.rsqldb.common.function;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
@@ -24,11 +27,13 @@ import java.math.RoundingMode;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AVGFunction implements SQLFunction {
     private String fieldName;
     private String asName;
 
-    public AVGFunction(String fieldName, String asName) {
+    @JsonCreator
+    public AVGFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
         this.fieldName = fieldName;
         this.asName = asName;
     }

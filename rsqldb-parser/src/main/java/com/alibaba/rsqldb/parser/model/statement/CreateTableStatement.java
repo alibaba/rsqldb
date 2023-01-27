@@ -198,9 +198,9 @@ public class CreateTableStatement extends Statement {
             GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
 
             if (windowStream != null) {
-                windowStream.sink(topicName, new JsonStringKVSer<>());
+                windowStream.sink(topicName, new JsonStringKVSer<>(serializer));
             } else if (groupedStream != null) {
-                groupedStream.sink(topicName, new JsonStringKVSer<>());
+                groupedStream.sink(topicName, new JsonStringKVSer<>(serializer));
             } else {
                 stream.sink(topicName, new JsonObjectKVSer<>(serializer));
             }

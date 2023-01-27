@@ -15,16 +15,21 @@
  */
 package com.alibaba.rsqldb.common.function;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentHashMap;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MinFunction implements SQLFunction {
     private String fieldName;
     private String asName;
 
-    public MinFunction(String fieldName, String asName) {
+    @JsonCreator
+    public MinFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
         this.fieldName = fieldName;
         this.asName = asName;
     }
