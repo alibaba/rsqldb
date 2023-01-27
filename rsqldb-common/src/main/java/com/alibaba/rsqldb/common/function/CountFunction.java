@@ -16,6 +16,7 @@
 package com.alibaba.rsqldb.common.function;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
