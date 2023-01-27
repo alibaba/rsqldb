@@ -36,12 +36,34 @@ import java.util.concurrent.ConcurrentHashMap;
  public class RSQLAccumulator implements Accumulator<JsonNode, ObjectNode> {
      private static final Logger logger = LoggerFactory.getLogger(RSQLAccumulator.class);
 
-     private List<SQLFunction> sqlFunctions;
-     private ConcurrentHashMap<String, Object> tempHolder = new ConcurrentHashMap<>();
+     private final List<SQLFunction> sqlFunctions;
+     private final ConcurrentHashMap<String/*fieldName@asName@SQLFunction.getClass.getName*/, SQLFunction> sqlFunctionMap;
+     private final ConcurrentHashMap<String, Object> tempHolder = new ConcurrentHashMap<>();
 
      @JsonCreator
      public RSQLAccumulator(@JsonProperty("sqlFunctions") List<SQLFunction> sqlFunctions) {
          this.sqlFunctions = sqlFunctions;
+         this.sqlFunctionMap = buildSQLMap();
+     }
+
+     private ConcurrentHashMap<String, SQLFunction> buildSQLMap() {
+         ConcurrentHashMap<String, SQLFunction> result = new ConcurrentHashMap<>();
+
+         if (sqlFunctions == null || sqlFunctions.size() == 0) {
+             return result;
+         }
+
+         for (SQLFunction sqlFunction : sqlFunctions) {
+             String fieldName = sqlFunction.getFieldName();
+             String asName = sqlFunction.getAsName();
+             String className = sqlFunction.getClass().getName();
+
+             String key = String.join("@", fieldName, asName, className);
+
+             result.putIfAbsent(key, sqlFunction);
+         }
+
+         return result;
      }
 
      @Override
@@ -50,7 +72,7 @@ import java.util.concurrent.ConcurrentHashMap;
              return;
          }
 
-         for (SQLFunction function : sqlFunctions) {
+         for (SQLFunction function : sqlFunctionMap.values()) {
              function.apply(value, tempHolder);
          }
      }
@@ -69,22 +91,29 @@ import java.util.concurrent.ConcurrentHashMap;
          }
 
          ObjectNode node = JsonNodeFactory.instance.objectNode();
-         for (String key : tempHolder.keySet()) {
-             Object temp = tempHolder.get(key);
+
+
+         for (SQLFunction sqlFunction : sqlFunctions) {
+             String asName = sqlFunction.getAsName();
+
+             Object temp = tempHolder.get(asName);
+
              if (temp instanceof Number) {
                  BigDecimal value = new BigDecimal(String.valueOf(temp));
 
                  String valueStr = value.toString();
                  if (valueStr.contains(".")) {
-                     node.put(key, value.doubleValue());
+                     node.put(asName, value.doubleValue());
                  } else {
-                     node.put(key, value.longValue());
+                     node.put(asName, value.longValue());
                  }
 
              } else if (temp instanceof String) {
-                 node.put(key, (String) temp);
+                 node.put(asName, (String) temp);
              } else if (temp instanceof JsonNode) {
-                 node.set(key, (JsonNode) temp);
+                 node.set(asName, (JsonNode) temp);
+             } else if (temp == null) {
+                 node.set(asName, null);
              } else {
                  logger.error("unsupported type: " + temp.getClass());
                  throw new UnsupportedOperationException();
@@ -98,16 +127,8 @@ import java.util.concurrent.ConcurrentHashMap;
          return sqlFunctions;
      }
 
-     public void setSqlFunctions(List<SQLFunction> sqlFunctions) {
-         this.sqlFunctions = sqlFunctions;
-     }
-
      public ConcurrentHashMap<String, Object> getTempHolder() {
          return tempHolder;
-     }
-
-     public void setTempHolder(ConcurrentHashMap<String, Object> tempHolder) {
-         this.tempHolder = tempHolder;
      }
 
      @Override

@@ -45,12 +45,12 @@
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-common</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>rsqldb-parser</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
