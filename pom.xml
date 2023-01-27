@@ -24,6 +24,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <rocketmq-streams.version>1.1.1-SNAPSHOT</rocketmq-streams.version>
         <antlr.version>4.9.2</antlr.version>
+        <slf4j-api.version>1.7.26</slf4j-api.version>
         <logback.version>1.2.10</logback.version>
         <jackson.version>2.13.4.1</jackson.version>
     </properties>
@@ -56,6 +57,12 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-api.version}</version>
             </dependency>
 
             <dependency>
@@ -95,7 +102,21 @@
         </dependencies>
     </dependencyManagement>
 
-  
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <compilerVersion>${maven.compiler.source}</compilerVersion>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

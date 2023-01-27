@@ -56,6 +56,10 @@ public class SingleValueExpression extends SingleExpression {
     @Override
     public boolean isTrue(JsonNode jsonNode) {
         String fieldName = this.getField().getFieldName();
+        return isTrue(jsonNode, fieldName);
+    }
+
+    protected boolean isTrue(JsonNode jsonNode, String fieldName) {
         JsonNode node = jsonNode.get(fieldName);
         if (node == null || StringUtils.isBlank(node.asText()) || stringNull.equalsIgnoreCase(node.asText())) {
             return this.value == null;

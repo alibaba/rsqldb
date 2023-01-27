@@ -46,6 +46,7 @@ public class JointGroupByHavingStatement extends JointGroupByStatement {
                                        @JsonProperty("joinCondition") JoinCondition joinCondition, @JsonProperty("groupByField") List<Field> groupByField,
                                        @JsonProperty("havingExpression") Expression havingExpression) {
         super(content, tableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName, joinCondition, groupByField);
+        super.validAndPrePareHavingExpression(havingExpression);
         this.havingExpression = havingExpression;
     }
 

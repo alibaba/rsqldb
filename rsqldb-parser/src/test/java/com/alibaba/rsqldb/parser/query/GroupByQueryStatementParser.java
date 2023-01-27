@@ -1,20 +1,21 @@
- /*
-  * Copyright 1999-2018 Alibaba Group Holding Ltd.
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *      http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
+/*
+ * Copyright 1999-2018 Alibaba Group Holding Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alibaba.rsqldb.parser.query;
 
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.SerDer;
 import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Field;
@@ -32,11 +33,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public class GroupByQueryStatementParser  extends SerDer {
+public class GroupByQueryStatementParser extends SerDer {
 
     @Test
     public void test0() throws Throwable {
@@ -64,7 +66,7 @@ public class GroupByQueryStatementParser  extends SerDer {
                 String asFieldName = field.getAsFieldName();
                 assertNull(tableName);
                 assertNull(asFieldName);
-            } else if(field.getFieldName().equals("num")) {
+            } else if (field.getFieldName().equals("num")) {
                 String tableName = field.getTableName();
                 String asFieldName = field.getAsFieldName();
 
@@ -109,7 +111,7 @@ public class GroupByQueryStatementParser  extends SerDer {
             assertSame(Operator.LESS_EQUAL, operator);
 
             assertTrue(value instanceof NumberType);
-            assertEquals(100, ((NumberType)value).getNumber());
+            assertEquals(100, ((NumberType) value).getNumber());
         }
 
         {
@@ -124,7 +126,7 @@ public class GroupByQueryStatementParser  extends SerDer {
             assertEquals(Operator.LESS, operator);
 
             assertTrue(value instanceof NumberType);
-            assertEquals(50, ((NumberType)value).getNumber());
+            assertEquals(50, ((NumberType) value).getNumber());
         }
 
     }
@@ -155,7 +157,7 @@ public class GroupByQueryStatementParser  extends SerDer {
         {
             SingleValueCalcuExpression valueExpression = (SingleValueCalcuExpression) leftExpression;
             assertEquals("num", valueExpression.getField().getFieldName());
-            assertEquals(50, ((NumberType)valueExpression.getValue()).getNumber());
+            assertEquals(50, ((NumberType) valueExpression.getValue()).getNumber());
             assertEquals(Operator.LESS, valueExpression.getOperator());
             assertEquals(Calculator.AVG, valueExpression.getCalculator());
         }
@@ -163,10 +165,29 @@ public class GroupByQueryStatementParser  extends SerDer {
         {
             SingleValueCalcuExpression valueExpression = (SingleValueCalcuExpression) rightExpression;
             assertEquals("num", valueExpression.getField().getFieldName());
-            assertEquals(500, ((NumberType)valueExpression.getValue()).getNumber());
+            assertEquals(500, ((NumberType) valueExpression.getValue()).getNumber());
             assertEquals(Operator.GREATER, valueExpression.getOperator());
             assertEquals(Calculator.SUM, valueExpression.getCalculator());
         }
+    }
+
+    @Test
+    public void test3() throws Throwable {
+        String sql = "SELECT `position`, avg(num_1) AS nums, sum(num) AS countNum\n" +
+                "FROM sourceTable\n" +
+                "GROUP BY position " +
+                "HAVING avg(num) < 50 and sum(num) > 500";
+
+        Throwable error = null;
+        try {
+            GroupByQueryStatement groupStatement = parser(sql, GroupByQueryStatement.class);
+        } catch (Throwable t) {
+            error = t;
+        }
+
+        assertNotNull(error);
+        assertTrue(error instanceof SyntaxErrorException);
+        assertTrue(error.getMessage().startsWith("field in having but not in select."));
     }
 
 }

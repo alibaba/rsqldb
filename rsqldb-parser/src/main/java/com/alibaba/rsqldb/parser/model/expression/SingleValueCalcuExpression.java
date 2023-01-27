@@ -23,12 +23,21 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 //一定会和groupby一起使用
 // HAVING aggregate_function(column_name) operator value;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SingleValueCalcuExpression extends SingleValueExpression {
+    private static final Logger logger = LoggerFactory.getLogger(SingleValueCalcuExpression.class);
+
     private Calculator calculator;
+    private Map<String/*tableName@fieldName@asFieldName*/, String/*asName*/> field2AsName = new HashMap<>();
 
     @JsonCreator
     public SingleValueCalcuExpression(@JsonProperty("content") String content, @JsonProperty("field") Field field,
@@ -44,5 +53,21 @@ public class SingleValueCalcuExpression extends SingleValueExpression {
 
     public void setCalculator(Calculator calculator) {
         this.calculator = calculator;
+    }
+
+    @Override
+    public boolean isTrue(JsonNode jsonNode) {
+        if (jsonNode == null) {
+            return false;
+        }
+
+        Field field = super.getField();
+        String asFieldName = field.getAsFieldName();
+        if (StringUtils.isBlank(asFieldName)) {
+            logger.error("the asName can not be empty, it can not judge the having sentence.");
+            return false;
+        }
+
+        return isTrue(jsonNode, asFieldName);
     }
 }

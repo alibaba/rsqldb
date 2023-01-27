@@ -69,7 +69,7 @@ public class GroupByQueryStatement extends QueryStatement {
         }
         this.groupByField = groupByField;
         validate();
-        super.validate(havingExpression);
+        super.validAndPrePareHavingExpression(havingExpression);
     }
 
     @JsonCreator
@@ -84,13 +84,14 @@ public class GroupByQueryStatement extends QueryStatement {
         this.havingExpression = havingExpression;
         this.groupByField = groupByField;
         validate();
-        super.validate(havingExpression);
+        super.validAndPrePareHavingExpression(havingExpression);
     }
 
     /**
      * 【否】groupBy字段包含于select字段
      * groupBy字段的表名 = tableName
      * 【否】select上的字段，如果没有计算符，必须在groupBy上
+     * having 的字段必须出现在select上
      */
     private void validate() {
         if (groupByField == null || groupByField.size() == 0) {

@@ -28,9 +28,15 @@ import com.alibaba.rsqldb.parser.model.statement.query.GroupByQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.QueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.WindowQueryStatement;
 import com.alibaba.rsqldb.parser.model.statement.query.join.JointStatement;
+import com.alibaba.rsqldb.parser.serialization.json.JsonObjectKVSer;
+import com.alibaba.rsqldb.parser.serialization.json.JsonStringKVSer;
 import com.alibaba.rsqldb.rest.service.RSQLConfig;
 import com.alibaba.rsqldb.rest.service.RSQLConfigBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.streams.core.rstream.GroupedStream;
+import org.apache.rocketmq.streams.core.rstream.RStream;
+import org.apache.rocketmq.streams.core.rstream.WindowStream;
 import org.springframework.stereotype.Service;
 
 import java.io.SyncFailedException;
@@ -87,7 +93,8 @@ public class TaskFactory {
             context = build((QueryStatement) statement, context);
 
             //todo 没有输出目的地的select（来自CLI命令行，输出到返回中），如果即没有response也米有其他返回，不能直接执行。
-            context = prepare(tableName, context, RSQLConstant.TableType.SINK);
+//            context = prepare(tableName, context, RSQLConstant.TableType.SINK);
+            print(context);
         } else {
             throw new RSQLServerException("unknown statement type=" + statement.getClass() + ".sql=" + statement.getContent());
         }
@@ -138,5 +145,18 @@ public class TaskFactory {
         return statement.build(context);
     }
 
+    private void print(BuildContext context) {
+        RStream<? extends JsonNode> stream = context.getrStreamResult();
+        WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
+        GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
+
+        if (windowStream != null) {
+            windowStream.toRStream().print();
+        } else if (groupedStream != null) {
+            groupedStream.toRStream().print();
+        } else {
+            stream.print();
+        }
+    }
 
 }
