@@ -16,8 +16,11 @@
 package com.alibaba.rsqldb.parser.impl;
 
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
@@ -56,6 +59,12 @@ public class BuildContext {
     public BuildContext(DefaultMQProducer producer, String jobId) {
         this.producer = producer;
         this.streamBuilder = new StreamBuilder(jobId);
+        this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+                .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+                .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
+                .setNodeFactory(JsonNodeFactory.withExactBigDecimals(true));
     }
 
     public StreamBuilder getStreamBuilder() {

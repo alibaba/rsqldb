@@ -19,10 +19,12 @@ import com.alibaba.rsqldb.common.exception.DeserializeException;
 import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
 import com.alibaba.rsqldb.parser.serialization.FieldKeyDeserializer;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 
@@ -34,8 +36,12 @@ public class JsonDe implements Deserializer {
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addKeyDeserializer(Field.class, new FieldKeyDeserializer());
         objectMapper.registerModule(simpleModule);
-        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+                .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+                .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
+                .setNodeFactory(JsonNodeFactory.withExactBigDecimals(true));
     }
 
     public JsonNode deserialize(byte[] source) throws DeserializeException {

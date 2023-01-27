@@ -39,11 +39,13 @@ public class CountFunction implements SQLFunction {
 
         if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
 
-            BigDecimal old = (BigDecimal)container.get(asName);
+            Object target = container.get(asName);
 
-            if (old == null) {
+            if (target == null) {
                 container.put(asName, new BigDecimal(1));
             } else {
+                Number oldNumber = (Number) target;
+                BigDecimal old = new BigDecimal(String.valueOf(oldNumber));
                 BigDecimal count = old.add(new BigDecimal(1));
 
                 container.put(asName, count);
