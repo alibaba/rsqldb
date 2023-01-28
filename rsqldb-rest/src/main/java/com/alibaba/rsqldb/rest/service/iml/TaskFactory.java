@@ -94,7 +94,7 @@ public class TaskFactory {
 
             //todo 没有输出目的地的select（来自CLI命令行，输出到返回中），如果即没有response也米有其他返回，不能直接执行。
 //            context = prepare(tableName, context, RSQLConstant.TableType.SINK);
-            print(context);
+            print(tableName, context);
         } else {
             throw new RSQLServerException("unknown statement type=" + statement.getClass() + ".sql=" + statement.getContent());
         }
@@ -145,7 +145,7 @@ public class TaskFactory {
         return statement.build(context);
     }
 
-    private void print(BuildContext context) {
+    private void print(String tableName, BuildContext context) {
         RStream<? extends JsonNode> stream = context.getrStreamResult();
         WindowStream<String, ? extends JsonNode> windowStream = context.getWindowStreamResult();
         GroupedStream<String, ? extends JsonNode> groupedStream = context.getGroupedStreamResult();
@@ -155,7 +155,12 @@ public class TaskFactory {
         } else if (groupedStream != null) {
             groupedStream.toRStream().print();
         } else {
-            stream.print();
+            if (stream == null) {
+                RStream<JsonNode> streamSource = context.getRStreamSource(tableName);
+                streamSource.print();
+            } else {
+                stream.print();
+            }
         }
     }
 
