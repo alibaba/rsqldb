@@ -44,7 +44,9 @@ public class MinFunction implements SQLFunction {
             if (!container.containsKey(asName)) {
                 container.put(asName, newValue);
             }else {
-                BigDecimal old = (BigDecimal)container.get(asName);
+                Number oldNumber = (Number)container.get(asName);
+                BigDecimal old = new BigDecimal(String.valueOf(oldNumber));
+
                 BigDecimal min = old.min(newValue);
 
                 container.put(asName, min);

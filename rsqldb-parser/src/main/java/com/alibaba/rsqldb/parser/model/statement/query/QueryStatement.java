@@ -101,7 +101,7 @@ public class QueryStatement extends Statement {
 
     private List<SQLFunction> buildFunction() {
         ArrayList<SQLFunction> result = new ArrayList<>();
-        if (isSelectAll()) {
+        if (isSelectField()) {
             return result;
         }
 
@@ -122,18 +122,30 @@ public class QueryStatement extends Statement {
                         break;
                     }
                     case MAX: {
+                        if (RSQLConstant.STAR.equals(fieldName)) {
+                            throw new SyntaxErrorException("syntax error: MAX(*)");
+                        }
                         function = new MaxFunction(fieldName, newName);
                         break;
                     }
                     case MIN: {
+                        if (RSQLConstant.STAR.equals(fieldName)) {
+                            throw new SyntaxErrorException("syntax error: MIN(*)");
+                        }
                         function = new MinFunction(fieldName, newName);
                         break;
                     }
                     case SUM: {
+                        if (RSQLConstant.STAR.equals(fieldName)) {
+                            throw new SyntaxErrorException("syntax error: SUM(*)");
+                        }
                         function = new SumFunction(fieldName, newName);
                         break;
                     }
                     case AVG: {
+                        if (RSQLConstant.STAR.equals(fieldName)) {
+                            throw new SyntaxErrorException("syntax error: AVG(*)");
+                        }
                         function = new AVGFunction(fieldName, newName);
                         break;
                     }

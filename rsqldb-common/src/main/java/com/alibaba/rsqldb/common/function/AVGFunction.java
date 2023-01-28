@@ -21,6 +21,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.NumberDeserializers;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import com.sun.org.slf4j.internal.Logger;
+import com.sun.org.slf4j.internal.LoggerFactory;
+import javafx.util.converter.BigDecimalStringConverter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AVGFunction implements SQLFunction {
+    private static final Logger logger = LoggerFactory.getLogger(AVGFunction.class);
     private String fieldName;
     private String asName;
 
@@ -42,42 +48,46 @@ public class AVGFunction implements SQLFunction {
     public void apply(JsonNode jsonNode, ConcurrentHashMap<String, Object> container) {
         JsonNode valueNode = jsonNode.get(fieldName);
 
-        if (valueNode == null) {
+        Number sum = (Number) container.get(sumField());
+        Number count = (Number) container.get(countField());
+        if (count == null) {
+            count = new BigDecimal(1);
+        } else {
+            BigDecimal bigDecimal = new BigDecimal(String.valueOf(count));
+            count = bigDecimal.add(new BigDecimal(1));
+        }
+        container.put(countField(), count);
+
+        if (!(valueNode instanceof NumericNode)) {
             return;
         }
 
-        BigDecimal sum = (BigDecimal) container.get(sumField());
-        BigDecimal count = (BigDecimal) container.get(countField());
+        String newValue = valueNode.asText();
+        BigDecimal value = new BigDecimal(newValue);
 
-
-        if (sum == null && count == null) {
-            container.put(countField(), new BigDecimal(1));
-            String newValue = valueNode.asText();
-            BigDecimal value = new BigDecimal(newValue);
-
-            container.put(sumField(), value);
-        } else if (sum != null && count != null) {
-            BigDecimal add = count.add(new BigDecimal(1));
-            container.put(countField(), add);
-
-            String node = valueNode.asText();
-            BigDecimal value = new BigDecimal(node);
-
-            BigDecimal newValue = sum.add(value);
-            container.put(sumField(), newValue);
+        if (sum == null) {
+            sum = value;
         } else {
-            throw new RSQLServerException();
+            BigDecimal bigDecimal = new BigDecimal(String.valueOf(sum));
+            sum = bigDecimal.add(value);
         }
+        container.put(sumField(), sum);
     }
 
     @Override
     public void secondCalcu(ConcurrentHashMap<String, Object> container, Properties context) {
-        BigDecimal sum = (BigDecimal) container.get(sumField());
-        BigDecimal count = (BigDecimal) container.get(countField());
+        Number sum = (Number) container.get(sumField());
+        Number count = (Number) container.get(countField());
 
-        container.put(asName, sum.divide(count, 2, RoundingMode.HALF_UP));
-        container.remove(sumField());
-        container.remove(countField());
+        if (count == null || "0".equals(String.valueOf(count))) {
+            logger.error("the divided is zero or empty.");
+            return;
+        }
+
+        BigDecimal sumBigDecimal = new BigDecimal(String.valueOf(sum));
+        BigDecimal countBigDecimal = new BigDecimal(String.valueOf(count));
+
+        container.put(asName, sumBigDecimal.divide(countBigDecimal, 2, RoundingMode.HALF_UP));
     }
 
     private String sumField() {

@@ -15,6 +15,7 @@
   */
  package com.alibaba.rsqldb.parser.query;
 
+ import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
  import com.alibaba.rsqldb.parser.SerDer;
  import com.alibaba.rsqldb.parser.model.Calculator;
  import com.alibaba.rsqldb.parser.model.Field;
@@ -409,6 +410,20 @@
              Calculator calculator = fieldAndCalculator.get(field);
              assertSame(Calculator.COUNT, calculator);
          }
+     }
+     @Test
+     public void query70() throws Throwable {
+         String sql = "select sum(*) as newName from rocketmq_source;";
+
+         Throwable error = null;
+         try {
+             QueryStatement queryStatement = parser(sql, QueryStatement.class);
+         }catch (Throwable t) {
+             error = t;
+         }
+
+         assertNotNull(error);
+         assertTrue(error instanceof SyntaxErrorException);
      }
 
      @Test

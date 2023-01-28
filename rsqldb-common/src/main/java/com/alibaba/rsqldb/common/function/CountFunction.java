@@ -16,6 +16,7 @@
 package com.alibaba.rsqldb.common.function;
 
 import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,11 +40,13 @@ public class CountFunction implements SQLFunction {
 
         if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
 
-            BigDecimal old = (BigDecimal)container.get(asName);
+            Object target = container.get(asName);
 
-            if (old == null) {
+            if (target == null) {
                 container.put(asName, new BigDecimal(1));
             } else {
+                Number oldNumber = (Number) target;
+                BigDecimal old = new BigDecimal(String.valueOf(oldNumber));
                 BigDecimal count = old.add(new BigDecimal(1));
 
                 container.put(asName, count);
