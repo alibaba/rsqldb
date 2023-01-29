@@ -48,6 +48,7 @@ public class JointWhereGBHavingStatement extends JointWhereGroupByStatement {
                                        List<Field> groupByField, Expression havingExpression) {
         super(content, tableName, selectFieldAndCalculator, joinType, asSourceTableName, joinTableName, asJoinTableName,
                 joinCondition, expression, before, groupByField);
+        super.validAndPrePareHavingExpression(havingExpression);
         this.havingExpression = havingExpression;
     }
 

@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -177,52 +178,48 @@ public class QueryStatement extends Statement {
         this.selectFieldAndCalculator = selectFieldAndCalculator;
     }
 
+
+
     //having 子句中的每一个元素也必须出现在select列表中
-    protected List<Pair<Field, Calculator>> validate(Expression havingExpression) {
-        List<Pair<Field, Calculator>> havingFields = new ArrayList<>();
-        collect(havingExpression, havingFields);
+    protected void validAndPrePareHavingExpression(Expression havingExpression) {
+        if (havingExpression == null) {
+            return;
+        }
 
         if (isSelectAll()) {
             //select * from...
-            return havingFields;
+            throw new SyntaxErrorException("select * can not occur in having sql, sql=" + this.getContent());
         }
 
-        for (Pair<Field, Calculator> pair : havingFields) {
-            String name = pair.getKey().getFieldName();
-            Calculator calculator = pair.getValue();
-
-            boolean calculatorInSelect = this.checkInSelect(name, calculator);
-
-            if (!inSelectField(name) || !calculatorInSelect) {
-                throw new SyntaxErrorException("field in having but not in select. sql=" + this.getContent());
-            }
-        }
-
-        return havingFields;
-    }
-
-    private void collect(Expression havingExpression, List<Pair<Field, Calculator>> fields) {
         if (havingExpression instanceof AndExpression) {
             AndExpression andExpression = (AndExpression) havingExpression;
-            collect(andExpression.getLeftExpression(), fields);
-            collect(andExpression.getRightExpression(), fields);
+            validAndPrePareHavingExpression(andExpression.getLeftExpression());
+            validAndPrePareHavingExpression(andExpression.getRightExpression());
         } else if (havingExpression instanceof OrExpression) {
             OrExpression orExpression = (OrExpression) havingExpression;
-            collect(orExpression.getLeftExpression(), fields);
-            collect(orExpression.getRightExpression(), fields);
-        } else if (havingExpression instanceof SingleExpression) {
-            SingleExpression expression = (SingleExpression) havingExpression;
-            Field fieldName = expression.getField();
-            Calculator calculator = null;
-            if (havingExpression instanceof SingleValueCalcuExpression) {
-                SingleValueCalcuExpression valueCalcuExpression = (SingleValueCalcuExpression) havingExpression;
-                calculator = valueCalcuExpression.getCalculator();
+            validAndPrePareHavingExpression(orExpression.getLeftExpression());
+            validAndPrePareHavingExpression(orExpression.getRightExpression());
+        } else if (havingExpression instanceof SingleValueCalcuExpression) {
+            SingleValueCalcuExpression calcuExpression = (SingleValueCalcuExpression) havingExpression;
+            Field havingField = calcuExpression.getField();
+            String fieldName = havingField.getFieldName();
+
+            HashMap<String, String> fieldName2AsName = this.fieldName2AsName();
+
+            String asName;
+            if (!checkInSelect(fieldName, calcuExpression.getCalculator())) {
+                throw new SyntaxErrorException("field in having but not in select. sql=" + this.getContent());
+            } else {
+                asName = fieldName2AsName.get(fieldName);
             }
 
-            Pair<Field, Calculator> pair = new Pair<>(fieldName, calculator);
-            fields.add(pair);
+            /**
+             * use to judge the truth of having sentence {@link SingleValueCalcuExpression#isTrue(JsonNode)}
+             */
+            havingField.setAsFieldName(asName);
         }
     }
+
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
@@ -251,20 +248,6 @@ public class QueryStatement extends Statement {
 
     protected Accumulator<JsonNode, ObjectNode> buildAccumulator() {
         return new RSQLAccumulator(sqlFunctions);
-    }
-
-
-    private boolean inSelectField(String fieldName) {
-        if (StringUtils.isEmpty(fieldName)) {
-            return false;
-        }
-
-        for (Field field : selectFieldAndCalculator.keySet()) {
-            if (fieldName.equals(field.getFieldName())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean checkInSelect(String fieldName, Calculator checkCalculator) {
@@ -327,4 +310,6 @@ public class QueryStatement extends Statement {
 
         return asFieldName;
     }
+
+
 }
