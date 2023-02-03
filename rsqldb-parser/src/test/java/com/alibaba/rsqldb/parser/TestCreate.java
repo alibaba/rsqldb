@@ -17,11 +17,13 @@ package com.alibaba.rsqldb.parser;
 
 
 import com.alibaba.rsqldb.common.SerializeType;
+import com.alibaba.rsqldb.parser.model.FieldType;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.parser.serialization.Deserializer;
 import com.alibaba.rsqldb.parser.serialization.SerializeTypeContainer;
 import com.alibaba.rsqldb.parser.serialization.Serializer;
+import org.apache.rocketmq.streams.core.util.Pair;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class TestCreate {
+public class TestCreate extends SerDer {
 
     @Test
     public void createTable1() throws Throwable {
@@ -59,6 +61,21 @@ public class TestCreate {
         assertEquals(SerializeType.JSON, target.getSerializeType());
     }
 
+    @Test
+    public void test1() throws Throwable {
+        String sql = CreateAndInsertSQL.createProcessTimeTable;
 
+        CreateTableStatement createTableStatement = parser(sql, CreateTableStatement.class);
+
+        List<Pair<String, FieldType>> pairList = createTableStatement.getColumns().getHolder();
+
+        assertEquals("odeum", createTableStatement.getTableName());
+        assertEquals(3, pairList.size());
+        assertEquals("rsqldb-odeum", createTableStatement.getTopicName());
+
+        Pair<String, FieldType> fieldTypePair = pairList.get(2);
+        assertEquals("time", fieldTypePair.getKey());
+        assertEquals(FieldType.PROCTIME, fieldTypePair.getValue());
+    }
 
 }

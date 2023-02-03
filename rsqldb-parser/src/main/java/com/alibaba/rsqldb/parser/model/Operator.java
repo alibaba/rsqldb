@@ -18,7 +18,10 @@ package com.alibaba.rsqldb.parser.model;
 //todo support like.
 public enum Operator {
     EQUAL("="), GREATER(">"), LESS("<"), NOT_EQUAL("!=", "<>"),
-    GREATER_EQUAL(">="), LESS_EQUAL("<="), BETWEEN_AND("between_and"), IN("in"), AND("and"), OR("or");
+    GREATER_EQUAL(">="), LESS_EQUAL("<="), BETWEEN_AND("between_and"),
+    IN("in"), AND("and"), OR("or"),
+    LIKE("like"),
+    ;
 
     private String symbol;
     private String nickName;

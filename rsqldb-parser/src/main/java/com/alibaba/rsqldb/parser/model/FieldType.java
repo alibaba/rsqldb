@@ -21,7 +21,10 @@ public enum FieldType {
     INT("int", Number.class),
     BIGINT("bigint", Number.class),
     VARCHAR("varchar", String.class),
-    TIMESTAMP("timestamp", Number.class);
+    TIMESTAMP("timestamp", Number.class),
+    PROCTIME("proctime", Number.class),
+
+    ;
 
     //type 与Literal中的T对应
     private final String type;

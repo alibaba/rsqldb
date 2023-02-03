@@ -19,6 +19,7 @@
  import com.alibaba.rsqldb.parser.model.Calculator;
  import com.alibaba.rsqldb.parser.model.Field;
  import com.alibaba.rsqldb.parser.model.Operator;
+ import com.alibaba.rsqldb.parser.model.WildcardType;
  import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
  import com.alibaba.rsqldb.parser.model.baseType.Literal;
  import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
@@ -30,6 +31,7 @@
  import com.alibaba.rsqldb.parser.model.expression.OrExpression;
  import com.alibaba.rsqldb.parser.model.expression.RangeValueExpression;
  import com.alibaba.rsqldb.parser.model.expression.SingleValueExpression;
+ import com.alibaba.rsqldb.parser.model.expression.WildcardExpression;
  import com.alibaba.rsqldb.parser.model.statement.query.FilterQueryStatement;
  import org.junit.Test;
 
@@ -37,6 +39,7 @@
  import java.util.Map;
 
  import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertFalse;
  import static org.junit.Assert.assertNull;
  import static org.junit.Assert.assertSame;
  import static org.junit.Assert.assertTrue;
@@ -449,5 +452,49 @@
              BooleanType booleanType = (BooleanType) value;
              assertTrue(booleanType.result());
          }
+     }
+
+
+     @Test
+     public void query20() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , field_2\n" +
+                 "     , field_3\n" +
+                 "     , field_4\n" +
+                 "from rocketmq_source where field_1 like '%topic-';";
+         FilterQueryStatement filterQueryStatement = super.parser(sql, FilterQueryStatement.class);
+         assertEquals("rocketmq_source", filterQueryStatement.getTableName());
+
+         Expression filter = filterQueryStatement.getFilter();
+
+         assertTrue(filter instanceof WildcardExpression);
+
+         WildcardExpression wildcardExpression = (WildcardExpression) filter;
+
+         assertEquals("topic-", wildcardExpression.getTarget());
+         assertEquals(WildcardType.PREFIX_LIKE, wildcardExpression.getType());
+         assertFalse(wildcardExpression.isCaseSensitive());
+         assertEquals(Operator.LIKE, wildcardExpression.getOperator());
+         assertEquals("field_1",wildcardExpression.getField().getFieldName());
+     }
+
+     @Test
+     public void query22() throws Throwable {
+         String sql = "select field_1\n" +
+                 "     , field_2\n" +
+                 "     , field_3\n" +
+                 "     , field_4\n" +
+                 "from rocketmq_source where field_1 like '%topic-' and field_2>1;";
+         FilterQueryStatement filterQueryStatement = super.parser(sql, FilterQueryStatement.class);
+         assertEquals("rocketmq_source", filterQueryStatement.getTableName());
+
+         Expression filter = filterQueryStatement.getFilter();
+
+         assertTrue(filter instanceof AndExpression);
+
+         AndExpression andExpression = (AndExpression) filter;
+
+         assertTrue(andExpression.getLeftExpression() instanceof WildcardExpression);
+         assertTrue(andExpression.getRightExpression() instanceof SingleValueExpression);
      }
  }

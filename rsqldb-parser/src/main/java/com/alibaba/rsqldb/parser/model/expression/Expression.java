@@ -42,7 +42,8 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = RangeValueExpression.class, name = "rangeValueExpression"),
         @JsonSubTypes.Type(value = MultiValueExpression.class, name = "multiValueExpression"),
         @JsonSubTypes.Type(value = OrExpression.class, name = "orExpression"),
-        @JsonSubTypes.Type(value = AndExpression.class, name = "andExpression")
+        @JsonSubTypes.Type(value = AndExpression.class, name = "andExpression"),
+        @JsonSubTypes.Type(value = WildcardExpression.class, name = "wildcardExpression")
 })
 public abstract class Expression extends Node {
     public Expression(String content) {

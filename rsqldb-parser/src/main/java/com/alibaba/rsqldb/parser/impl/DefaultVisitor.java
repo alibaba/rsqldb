@@ -24,12 +24,15 @@ import com.alibaba.rsqldb.parser.model.Calculator;
 import com.alibaba.rsqldb.parser.model.Columns;
 import com.alibaba.rsqldb.parser.model.ListNode;
 import com.alibaba.rsqldb.parser.model.Node;
+import com.alibaba.rsqldb.parser.model.PairNode;
 import com.alibaba.rsqldb.parser.model.TableProperties;
+import com.alibaba.rsqldb.parser.model.WildcardType;
 import com.alibaba.rsqldb.parser.model.baseType.BooleanType;
 import com.alibaba.rsqldb.parser.model.baseType.Literal;
 import com.alibaba.rsqldb.parser.model.baseType.MultiLiteral;
 import com.alibaba.rsqldb.parser.model.baseType.NumberType;
 import com.alibaba.rsqldb.parser.model.baseType.StringType;
+import com.alibaba.rsqldb.parser.model.expression.WildcardExpression;
 import com.alibaba.rsqldb.parser.model.statement.CreateViewStatement;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.Field;
@@ -83,10 +86,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -537,8 +539,7 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitColumnDescriptor(SqlParser.ColumnDescriptorContext ctx) {
-
+    public Node visitNormalColumn(SqlParser.NormalColumnContext ctx) {
         Columns columns = new Columns(ParserUtil.getText(ctx));
 
         SqlParser.IdentifierContext identifierContext = ctx.identifier();
@@ -553,6 +554,17 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
         }
 
         columns.addFieldNameAndType(columnName.result(), type);
+
+        return columns;
+    }
+
+    @Override
+    public Node visitProcessTimeColumn(SqlParser.ProcessTimeColumnContext ctx) {
+        Columns columns = new Columns(ParserUtil.getText(ctx));
+        Field field = (Field) visit(ctx.fieldName());
+        FieldType type = FieldType.PROCTIME;
+
+        columns.addFieldNameAndType(field.getFieldName(), type);
 
         return columns;
     }
@@ -853,6 +865,70 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitWildcardExpression(SqlParser.WildcardExpressionContext ctx) {
+        boolean caseSensitive = false;
+        if (ctx.BINARY() != null) {
+            caseSensitive = true;
+        }
+
+        String content = ParserUtil.getText(ctx);
+
+        Field field = (Field) visit(ctx.fieldName());
+
+        PairNode<WildcardType, String> pairNode = (PairNode<WildcardType, String>) visit(ctx.wildcard());
+
+        Pair<WildcardType, String> pair = pairNode.getPair();
+
+        Operator operator;
+        switch (pair.getKey()) {
+            case SUFFIX_LIKE:
+            case DOUBLE_LIKE:
+            case PREFIX_LIKE:{
+                operator = Operator.LIKE;
+                break;
+            }
+            default:{
+                throw new UnsupportedOperationException("unsupported type: " + pair.getKey());
+            }
+        }
+
+        return new WildcardExpression(content, field, operator, pair.getKey(), pair.getValue(), caseSensitive);
+    }
+
+    @Override
+    public Node visitLikeWildcard(SqlParser.LikeWildcardContext ctx) {
+        TerminalNode string = ctx.STRING();
+        TerminalNode quotedString = ctx.QUOTED_STRING();
+
+        String text;
+        if (string != null) {
+            text = ParserUtil.getLiteralText(string);
+        } else {
+            text = ParserUtil.getLiteralText(quotedString);
+        }
+
+        WildcardType type;
+        String target;
+
+        if (text.startsWith("%") && text.endsWith("%")) {
+            type = WildcardType.DOUBLE_LIKE;
+            target = text.substring(1, text.length() - 1);
+        } else if (text.startsWith("%") && !text.endsWith("%")) {
+            type = WildcardType.PREFIX_LIKE;
+            target = text.substring(1);
+        } else if (!text.startsWith("%") && text.endsWith("%")) {
+            type = WildcardType.SUFFIX_LIKE;
+            target = text.substring(0, text.length() -1);
+        } else {
+            //indispensable
+            throw new SyntaxErrorException("% is indispensable in like grammar.");
+        }
+
+        Pair<WildcardType, String> pair = new Pair<>(type, target);
+        return  new PairNode<WildcardType, String>(ParserUtil.getText(ctx), pair);
+    }
+
+    @Override
     public Node visitFieldName(SqlParser.FieldNameContext ctx) {
         String tableName = null;
         String fieldName = null;
@@ -960,7 +1036,6 @@ public class DefaultVisitor extends SqlParserBaseVisitor<Node> {
     public Node visitNullValue(SqlParser.NullValueContext ctx) {
         return new StringType(ParserUtil.getText(ctx), null);
     }
-
 
 
     @Override

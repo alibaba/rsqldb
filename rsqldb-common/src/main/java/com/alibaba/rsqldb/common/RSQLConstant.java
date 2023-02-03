@@ -24,6 +24,10 @@ public class RSQLConstant {
     public static final String CONFIG_PREFIX = "configKey@";
 
     public static final String TABLE_TYPE = "table.type";
+
+    public static final String VALUE_NODE_KEY = "__value";
+
+
     public enum TableType {
         SINK, SOURCE
     }

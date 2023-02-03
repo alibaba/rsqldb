@@ -55,7 +55,6 @@ LR_BRACKET:                          '(';
 RR_BRACKET:                          ')';
 COMMA:                               ',';
 SEMICOLON:                           ';';
-
 // Group function Keywords
 
 AVG:                                    'AVG'      |       'avg';
@@ -120,7 +119,9 @@ HOP_END:                                'HOP_END'           |       'hop_end';
 SESSION:                                'SESSION'           |       'session';
 SESSION_START:                          'SESSION_START'     |       'session_start';
 SESSION_END:                            'SESSION_END'       |       'session_end';
-
+PROCTIME:                               'PROCTIME'          |       'proctime';
+BINARY:                                 'BINARY'            |       'binary';
+LIKE:                                   'LIKE'              |       'like';
 
 NUMBER
     : MINUS? DECIMAL

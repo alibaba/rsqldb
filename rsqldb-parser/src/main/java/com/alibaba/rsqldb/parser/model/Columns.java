@@ -64,6 +64,18 @@ public class Columns extends Node {
         return fieldName;
     }
 
+    public Pair<String, FieldType> findProcessTimeField() {
+        for (Pair<String, FieldType> pair : holder) {
+
+            FieldType type = pair.getValue();
+            if (type == FieldType.PROCTIME) {
+                String fieldName = pair.getKey();
+                return new Pair<>(fieldName, type);
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "Columns{" +
