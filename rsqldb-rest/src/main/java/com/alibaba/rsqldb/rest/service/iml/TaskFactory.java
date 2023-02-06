@@ -118,15 +118,15 @@ public class TaskFactory {
     private BuildContext build(QueryStatement queryStatement, BuildContext context) throws Throwable {
         if (queryStatement.getClass().getName().equals(QueryStatement.class.getName())) {
             context = queryStatement.build(context);
-        }else if (queryStatement instanceof FilterQueryStatement) {
-            context = ((FilterQueryStatement)queryStatement).build(context);
+        } else if (queryStatement instanceof FilterQueryStatement) {
+            context = ((FilterQueryStatement) queryStatement).build(context);
         } else if (queryStatement.getClass().getName().equals(GroupByQueryStatement.class.getName())) {
             GroupByQueryStatement groupByQueryStatement = (GroupByQueryStatement) queryStatement;
             context = groupByQueryStatement.build(context);
         } else if (queryStatement instanceof WindowQueryStatement) {
             WindowQueryStatement windowQueryStatement = (WindowQueryStatement) queryStatement;
             windowQueryStatement.build(context);
-        } else if (queryStatement instanceof JointStatement ) {
+        } else if (queryStatement instanceof JointStatement) {
             JointStatement jointStatement = (JointStatement) queryStatement;
 
             String joinTableName = jointStatement.getJoinTableName();
@@ -138,8 +138,26 @@ public class TaskFactory {
         return context;
     }
 
+    private QueryStatement queryStatementInCreateView = null;
+
     private BuildContext prepare(String tableName, BuildContext context, RSQLConstant.TableType type) throws Throwable {
         Statement statement = function.apply(tableName);
+
+        if (statement instanceof CreateViewStatement) {
+            CreateViewStatement createViewStatement = (CreateViewStatement) statement;
+            queryStatementInCreateView = createViewStatement.getQueryStatement();
+
+            context = prepare(queryStatementInCreateView.getTableName(), context, RSQLConstant.TableType.SOURCE);
+        }
+
+        if (queryStatementInCreateView instanceof JointStatement) {
+            //prepare the join table if it is a join type query;
+            JointStatement jointStatement = (JointStatement) queryStatementInCreateView;
+
+            queryStatementInCreateView = null;
+
+            context = prepare(jointStatement.getJoinTableName(), context, RSQLConstant.TableType.SOURCE);
+        }
 
         context.putHeader(RSQLConstant.TABLE_TYPE, type);
         return statement.build(context);

@@ -32,18 +32,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AVGFunction implements SQLFunction {
     private static final Logger logger = LoggerFactory.getLogger(AVGFunction.class);
+    private String tableName;
     private String fieldName;
     private String asName;
 
     @JsonCreator
-    public AVGFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
+    public AVGFunction(@JsonProperty("tableName") String tableName,
+                       @JsonProperty("fieldName") String fieldName,
+                       @JsonProperty("asName") String asName) {
+        this.tableName = tableName;
         this.fieldName = fieldName;
         this.asName = asName;
     }
 
     @Override
     public void apply(JsonNode jsonNode, ConcurrentHashMap<String, Object> container) {
-        JsonNode valueNode = jsonNode.get(fieldName);
+        JsonNode valueNode = getValue(jsonNode, tableName, fieldName);
 
         Number sum = (Number) container.get(sumField());
         Number count = (Number) container.get(countField());
@@ -85,6 +89,15 @@ public class AVGFunction implements SQLFunction {
         BigDecimal countBigDecimal = new BigDecimal(String.valueOf(count));
 
         container.put(asName, sumBigDecimal.divide(countBigDecimal, 2, RoundingMode.HALF_UP));
+    }
+
+    @Override
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     private String sumField() {

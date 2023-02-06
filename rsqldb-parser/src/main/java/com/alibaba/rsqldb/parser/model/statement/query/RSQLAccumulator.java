@@ -54,11 +54,12 @@ import java.util.concurrent.ConcurrentHashMap;
          }
 
          for (SQLFunction sqlFunction : sqlFunctions) {
+             String tableName = sqlFunction.getTableName();
              String fieldName = sqlFunction.getFieldName();
              String asName = sqlFunction.getAsName();
              String className = sqlFunction.getClass().getName();
 
-             String key = String.join("@", fieldName, asName, className);
+             String key = String.join("@", tableName, fieldName, asName, className);
 
              result.putIfAbsent(key, sqlFunction);
          }
@@ -119,6 +120,8 @@ import java.util.concurrent.ConcurrentHashMap;
                  throw new UnsupportedOperationException();
              }
          }
+
+         tempHolder.clear();
 
          return node;
      }

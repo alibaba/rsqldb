@@ -26,25 +26,29 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SumFunction implements SQLFunction {
+    private String tableName;
     private String fieldName;
     private String asName;
 
     @JsonCreator
-    public SumFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
+    public SumFunction(@JsonProperty("tableName") String tableName,
+                       @JsonProperty("fieldName") String fieldName,
+                       @JsonProperty("asName") String asName) {
+        this.tableName = tableName;
         this.fieldName = fieldName;
         this.asName = asName;
     }
 
     @Override
     public void apply(JsonNode jsonNode, ConcurrentHashMap<String, Object> container) {
-        JsonNode valueNode = jsonNode.get(fieldName);
+        JsonNode valueNode = getValue(jsonNode, tableName, fieldName);
         if (valueNode instanceof NumericNode) {
             String value = valueNode.asText();
             BigDecimal newValue = new BigDecimal(value);
 
             if (!container.containsKey(asName)) {
                 container.put(asName, newValue);
-            }else {
+            } else {
                 Object temp = container.get(asName);
                 BigDecimal old;
                 if (temp instanceof Number) {
@@ -58,6 +62,15 @@ public class SumFunction implements SQLFunction {
                 container.put(asName, add);
             }
         }
+    }
+
+    @Override
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getFieldName() {

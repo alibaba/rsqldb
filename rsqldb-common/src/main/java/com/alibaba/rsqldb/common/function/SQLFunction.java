@@ -38,10 +38,27 @@ import java.util.concurrent.ConcurrentHashMap;
 public interface SQLFunction {
     void apply(JsonNode jsonNode, final ConcurrentHashMap<String, Object> container);
 
+    String getTableName();
+
     String getFieldName();
 
     String getAsName();
 
-    default void secondCalcu(final ConcurrentHashMap<String, Object> container, Properties context){}
+    default void secondCalcu(final ConcurrentHashMap<String, Object> container, Properties context) {
+    }
+
+    default JsonNode getValue(JsonNode jsonNode, String tableName, String fieldName) {
+        if (jsonNode == null) {
+            return null;
+        }
+
+        JsonNode result = jsonNode.get(fieldName);
+        if (result == null) {
+            String joinKey = String.join("@", tableName, fieldName);
+            result = jsonNode.get(joinKey);
+        }
+
+        return result;
+    }
 
 }
