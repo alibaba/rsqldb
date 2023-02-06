@@ -15,6 +15,7 @@
  */
 package com.alibaba.rsqldb.parser.impl;
 
+import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.parser.model.statement.CreateTableStatement;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.streams.core.metadata.StreamConfig;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.JoinedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
@@ -138,6 +140,21 @@ public class BuildContext {
 
     public Object getHeader(String key) {
         return this.header.get(key);
+    }
+
+    public Map<String, Object> getConfigSetAtBuild() {
+        HashMap<String, Object> result = new HashMap<>();
+
+        for (String key : header.keySet()) {
+            if (key.startsWith(RSQLConstant.CONFIG_PREFIX)) {
+                String configKey = key.substring(RSQLConstant.CONFIG_PREFIX.length());
+                Object value = header.get(key);
+
+                result.put(configKey, value);
+            }
+        }
+
+        return result;
     }
 
     public byte[] getInsertValueData() {

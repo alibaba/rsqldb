@@ -15,6 +15,7 @@
  */
 package com.alibaba.rsqldb.parser.model.statement.query;
 
+import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.exception.SyntaxErrorException;
 import com.alibaba.rsqldb.parser.impl.BuildContext;
 import com.alibaba.rsqldb.parser.model.Calculator;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
+import org.apache.rocketmq.streams.core.metadata.StreamConfig;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
 import org.apache.rocketmq.streams.core.rstream.WindowStream;
@@ -89,6 +91,8 @@ public class WindowQueryStatement extends GroupByQueryStatement {
 
     @Override
     public BuildContext build(BuildContext context) throws Throwable {
+        context.putHeader(RSQLConstant.CONFIG_PREFIX + StreamConfig.ALLOW_LATENESS_MILLISECOND, 10*1000);
+
         RStream<JsonNode> rStream = context.getRStreamSource(this.getTableName());
         RStream<JsonNode> stream = rStream.selectTimestamp(value -> {
             String timeField = groupByWindow.getTimeField().getFieldName();
@@ -96,7 +100,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
             try {
                 return node.asLong();
             } catch (Throwable t) {
-                logger.info("get time from value error, time field :[{}], value=[{}]", timeField, value);
+                logger.error("get time from value error, time field :[{}], value=[{}]", timeField, value);
                 throw t;
             }
         });
@@ -149,7 +153,7 @@ public class WindowQueryStatement extends GroupByQueryStatement {
                     return this.getHavingExpression().isTrue(value);
                 } catch (Throwable t) {
                     //使用错误，例如字段是string，使用>过滤；
-                    logger.info("having filter error, sql:[{}], value=[{}]", WindowQueryStatement.this.getContent(), value, t);
+                    logger.warn("having filter error, sql:[{}], value=[{}]", WindowQueryStatement.this.getContent(), value, t);
                     return false;
                 }
             });

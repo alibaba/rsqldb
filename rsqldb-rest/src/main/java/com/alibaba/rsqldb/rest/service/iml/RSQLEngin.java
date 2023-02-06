@@ -35,6 +35,7 @@ import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.ThreadFactoryImpl;
 import org.apache.rocketmq.streams.core.RocketMQStream;
 import org.apache.rocketmq.streams.core.common.Constant;
+import org.apache.rocketmq.streams.core.metadata.StreamConfig;
 import org.apache.rocketmq.streams.core.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,7 +213,7 @@ public class RSQLEngin implements Engin {
 
             Properties properties = new Properties();
             properties.put(MixAll.NAMESRV_ADDR_PROPERTY, rsqlConfig.getNamesrvAddr());
-            properties.put(Constant.SKIP_DATA_ERROR, true);
+            properties.putAll(dispatch.getConfigSetAtBuild());
 
             RocketMQStream rocketMQStream = new RocketMQStream(topologyBuilder, properties);
             RocketMQStream previous = rStreams.put(jobId, rocketMQStream);

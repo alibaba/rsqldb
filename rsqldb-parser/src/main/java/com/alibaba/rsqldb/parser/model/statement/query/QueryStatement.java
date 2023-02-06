@@ -32,7 +32,6 @@ import com.alibaba.rsqldb.parser.model.Field;
 import com.alibaba.rsqldb.parser.model.expression.AndExpression;
 import com.alibaba.rsqldb.parser.model.expression.Expression;
 import com.alibaba.rsqldb.parser.model.expression.OrExpression;
-import com.alibaba.rsqldb.parser.model.expression.SingleExpression;
 import com.alibaba.rsqldb.parser.model.expression.SingleValueCalcuExpression;
 import com.alibaba.rsqldb.parser.model.statement.Statement;
 import com.alibaba.rsqldb.parser.model.statement.query.join.JointGroupByHavingStatement;
@@ -53,7 +52,6 @@ import org.apache.rocketmq.streams.core.common.Constant;
 import org.apache.rocketmq.streams.core.function.accumulator.Accumulator;
 import org.apache.rocketmq.streams.core.rstream.GroupedStream;
 import org.apache.rocketmq.streams.core.rstream.RStream;
-import org.apache.rocketmq.streams.core.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +59,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 

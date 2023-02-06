@@ -21,7 +21,7 @@ public class RSQLConstant {
 
     public static final String BODY_TYPE = "body.type";
 
-    public static final String COMMAND_OPERATOR = "command_operator";
+    public static final String CONFIG_PREFIX = "configKey@";
 
     public static final String TABLE_TYPE = "table.type";
     public enum TableType {
