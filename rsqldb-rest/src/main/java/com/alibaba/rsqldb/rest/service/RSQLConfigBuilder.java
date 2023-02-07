@@ -15,39 +15,35 @@
  */
 package com.alibaba.rsqldb.rest.service;
 
+import com.alibaba.rsqldb.common.RSQLConstant;
 import com.alibaba.rsqldb.common.exception.RSQLServerException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.Enumeration;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 @Service
 public class RSQLConfigBuilder {
     private static final Logger logger = LoggerFactory.getLogger(RSQLConfigBuilder.class);
-
+    private static final String relativePath = "/distribution/conf/";
     private static final String configFile = "rsqldb.conf";
     private final Properties properties;
 
     private RSQLConfig config;
 
     public RSQLConfigBuilder() {
-        try {
-            Enumeration<URL> enumeration = ClassLoader.getSystemResources(configFile);
-            URL url = enumeration.nextElement();
-            InputStream in = url.openStream();
-            this.properties = new Properties();
-            this.properties.load(in);
-            in.close();
-        } catch (IOException e) {
-            logger.error("load rsqldb.conf file error.", e);
-            throw new RSQLServerException(e);
-        }
+        properties = new Properties();
+
+        String configPath = System.getProperty(RSQLConstant.CONFIG_PATH);
+        loadConfig(configPath);
     }
 
     public synchronized RSQLConfig build() {
@@ -61,6 +57,25 @@ public class RSQLConfigBuilder {
 
     public Properties getProperties() {
         return new Properties(properties);
+    }
+
+    private void loadConfig(String path) {
+        try {
+            if (StringUtils.isBlank(path)) {
+                File file = new File("");
+                path = file.getCanonicalFile() + relativePath + configFile;
+            }
+            logger.info("path of rsqldb.conf:{}", path);
+
+
+            InputStream in = new BufferedInputStream(Files.newInputStream(Paths.get(path)));
+            properties.load(in);
+
+            in.close();
+        } catch (Throwable e) {
+            logger.error("load rsqldb.conf file error.", e);
+            throw new RSQLServerException(e);
+        }
     }
 
     private void properties2Object(final Properties p, final Object object) {

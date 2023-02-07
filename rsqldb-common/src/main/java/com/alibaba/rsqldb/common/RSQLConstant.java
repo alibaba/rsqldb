@@ -25,6 +25,8 @@ public class RSQLConstant {
 
     public static final String TABLE_TYPE = "table.type";
 
+    public static final String CONFIG_PATH ="configPath";
+
     public static final String VALUE_NODE_KEY = "__value";
 
 

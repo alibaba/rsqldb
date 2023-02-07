@@ -7,7 +7,10 @@
 ## 启动步骤
 
 - **本地安装RocketMQ 5.0版本，并启动**
+
+    安装文档见[quick start](https://rocketmq.apache.org/zh/docs/quickStart/02quickstart);
 - **下载RSQLDB安装包到本地，并配置**
+
 - **创建数据源topic**
 - **启动RSQLDB**
 - **提交SQL任务**

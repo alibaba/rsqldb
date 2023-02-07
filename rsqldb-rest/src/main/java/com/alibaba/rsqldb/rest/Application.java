@@ -15,6 +15,10 @@
  */
 package com.alibaba.rsqldb.rest;
 
+import com.alibaba.rsqldb.common.RSQLConstant;
+import com.alibaba.rsqldb.rest.service.RSQLConfigBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -22,6 +26,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Application {
     public static void main(String[] args) {
         try {
+            if (args != null && args.length == 1) {
+                System.setProperty(RSQLConstant.CONFIG_PATH, args[0]);
+            }
+
             SpringApplication.run(Application.class, args);
         } catch (Throwable t) {
             System.exit(1);
