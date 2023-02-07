@@ -83,7 +83,7 @@
                 <configuration>
                     <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <finalName>rsqldb-${project.version}</finalName>
+                    <finalName>rsqldb</finalName>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>

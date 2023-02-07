@@ -28,7 +28,7 @@ limitations under the License.
     </fileSets>
     <files>
         <file>
-            <source>../rsqldb-rest/target/rsqldb-1.0.0-SNAPSHOT.jar</source>
+            <source>../rsqldb-rest/target/rsqldb.jar</source>
             <outputDirectory>server</outputDirectory>
         </file>
     </files>
