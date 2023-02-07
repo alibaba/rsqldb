@@ -20,9 +20,7 @@
   ```shell
   mvn clean compile -DskipTests
   ```
-  - 启动
-  
-  启动程序入口方法
+  - 启动程序入口方法
   ```xml
   com.alibaba.rsqldb.rest.Application
   ```
