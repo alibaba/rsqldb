@@ -25,13 +25,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WindowBoundaryTimeFunction implements SQLFunction {
+    private String tableName;
     private String fieldName;
     private String asName;
 
     @JsonCreator
-    public WindowBoundaryTimeFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
+    public WindowBoundaryTimeFunction(@JsonProperty("tableName") String tableName,
+                                      @JsonProperty("fieldName") String fieldName,
+                                      @JsonProperty("asName") String asName) {
+        this.tableName = tableName;
         this.fieldName = fieldName;
         this.asName = asName;
+    }
+
+    @Override
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getAsName() {

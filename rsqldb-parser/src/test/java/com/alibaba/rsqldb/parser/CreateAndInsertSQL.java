@@ -18,6 +18,15 @@ package com.alibaba.rsqldb.parser;
 public interface CreateAndInsertSQL {
     String createTable = "create table odeum(`id` INT,`name` VARCHAR, `gmt_modified` TIMESTAMP) WITH (topic = 'rsqldb-odeum', data_format='JSON');";
 
+    String createProcessTimeTable = "create table odeum(" +
+                "`id` INT," +
+                "`name` VARCHAR, " +
+                "`time` as PROCTIME()" +
+            ") WITH (" +
+                "topic = 'rsqldb-odeum', " +
+                "data_format='JSON'" +
+            ");";
+
     String createViewJoin = "CREATE VIEW result_view AS\n" +
             "SELECT\n" +
             "    a.ticket_id     AS ticket_id,\n" +

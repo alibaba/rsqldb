@@ -102,57 +102,58 @@ public class QueryStatement extends Statement {
         if (isSelectField()) {
             return result;
         }
-
+        //todo field的tableName字段在Join场景下来自多张表
         for (Field field : selectFieldAndCalculator.keySet()) {
             Calculator calculator = selectFieldAndCalculator.get(field);
 
+            String tableName = field.getTableName();
             String fieldName = field.getFieldName();
             String asName = getAsName(field);
             String newName = !StringUtils.isEmpty(asName) ? asName : field.getFieldName();
 
             SQLFunction function;
             if (calculator == null) {
-                function = new EmptyFunction(fieldName, newName);
+                function = new EmptyFunction(tableName, fieldName, newName);
             } else {
                 switch (calculator) {
                     case COUNT: {
-                        function = new CountFunction(fieldName, newName);
+                        function = new CountFunction(tableName, fieldName, newName);
                         break;
                     }
                     case MAX: {
                         if (RSQLConstant.STAR.equals(fieldName)) {
                             throw new SyntaxErrorException("syntax error: MAX(*)");
                         }
-                        function = new MaxFunction(fieldName, newName);
+                        function = new MaxFunction(tableName, fieldName, newName);
                         break;
                     }
                     case MIN: {
                         if (RSQLConstant.STAR.equals(fieldName)) {
                             throw new SyntaxErrorException("syntax error: MIN(*)");
                         }
-                        function = new MinFunction(fieldName, newName);
+                        function = new MinFunction(tableName, fieldName, newName);
                         break;
                     }
                     case SUM: {
                         if (RSQLConstant.STAR.equals(fieldName)) {
                             throw new SyntaxErrorException("syntax error: SUM(*)");
                         }
-                        function = new SumFunction(fieldName, newName);
+                        function = new SumFunction(tableName, fieldName, newName);
                         break;
                     }
                     case AVG: {
                         if (RSQLConstant.STAR.equals(fieldName)) {
                             throw new SyntaxErrorException("syntax error: AVG(*)");
                         }
-                        function = new AVGFunction(fieldName, newName);
+                        function = new AVGFunction(tableName, fieldName, newName);
                         break;
                     }
                     case WINDOW_START: {
-                        function = new WindowBoundaryTimeFunction(Constant.WINDOW_START_TIME, newName);
+                        function = new WindowBoundaryTimeFunction(tableName, Constant.WINDOW_START_TIME, newName);
                         break;
                     }
                     case WINDOW_END: {
-                        function = new WindowBoundaryTimeFunction(Constant.WINDOW_END_TIME, newName);
+                        function = new WindowBoundaryTimeFunction(tableName, Constant.WINDOW_END_TIME, newName);
                         break;
                     }
                     default: {

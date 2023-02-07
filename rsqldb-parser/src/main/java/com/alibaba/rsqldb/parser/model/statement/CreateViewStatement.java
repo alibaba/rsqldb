@@ -44,4 +44,11 @@ public class CreateViewStatement extends Statement {
     public BuildContext build(BuildContext context) throws Throwable {
         return queryStatement.build(context);
     }
+
+    @Override
+    public String toString() {
+        return "CreateViewStatement{" +
+                "queryStatement=" + queryStatement +
+                '}';
+    }
 }

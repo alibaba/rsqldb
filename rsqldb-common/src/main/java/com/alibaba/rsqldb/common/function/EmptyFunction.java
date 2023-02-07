@@ -24,21 +24,34 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EmptyFunction implements SQLFunction {
+    private String tableName;
     private String fieldName;
     private String asName;
 
     @JsonCreator
-    public EmptyFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
+    public EmptyFunction(@JsonProperty("tableName") String tableName,
+                         @JsonProperty("fieldName") String fieldName,
+                         @JsonProperty("asName") String asName) {
+        this.tableName = tableName;
         this.fieldName = fieldName;
         this.asName = asName;
     }
 
     @Override
     public void apply(JsonNode jsonNode, ConcurrentHashMap<String, Object> container) {
-        JsonNode node = jsonNode.get(fieldName);
+        JsonNode node = getValue(jsonNode, tableName, fieldName);
         if (node != null) {
             container.put(asName, node);
         }
+    }
+
+    @Override
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getFieldName() {

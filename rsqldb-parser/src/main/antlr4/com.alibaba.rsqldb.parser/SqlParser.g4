@@ -27,7 +27,8 @@ tableDescriptor
     ;
 
 columnDescriptor
-    : identifier (dataType)?
+    : identifier (dataType)?                                                            #normalColumn
+    | fieldName AS PROCTIME LR_BRACKET RR_BRACKET                                       #processTimeColumn
 //    columnConstraint?
 //    | (columnConstraint LR_BRACKET identifier RR_BRACKET)?
 //    | asField
@@ -88,6 +89,7 @@ booleanExpression
     | fieldName BETWEEN NUMBER AND NUMBER                               #betweenExpression
     | fieldName IN values                                               #inExpression
     | function operator value                                         #functionExpression
+    | (BINARY)? fieldName LIKE wildcard                                #wildcardExpression
     ;
 
 value
@@ -140,7 +142,9 @@ timeunit
     : DAY | HOUR | MINUTE | SECOND | MILLISECOND
     ;
 
-
+wildcard
+    : (STRING | QUOTED_STRING)                          #likeWildcard
+    ;
 
 values
     : LR_BRACKET value (COMMA value)* RR_BRACKET

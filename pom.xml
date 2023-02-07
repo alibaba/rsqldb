@@ -16,6 +16,7 @@
         <module>rsqldb-parser</module>
         <module>rsqldb-common</module>
         <module>rsqldb-storage</module>
+        <module>distribution</module>
     </modules>
 
 

@@ -26,17 +26,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CountFunction implements SQLFunction {
+    private String tableName;
     private String fieldName;
     private String asName;
 
-    public CountFunction(@JsonProperty("fieldName")String fieldName, @JsonProperty("asName")String asName) {
+    public CountFunction(@JsonProperty("tableName") String tableName,
+                         @JsonProperty("fieldName") String fieldName,
+                         @JsonProperty("asName") String asName) {
+        this.tableName = tableName;
         this.fieldName = fieldName;
         this.asName = asName;
     }
 
     @Override
     public void apply(JsonNode jsonNode, final ConcurrentHashMap<String, Object> container) {
-        JsonNode valueNode = jsonNode.get(fieldName);
+        JsonNode valueNode = getValue(jsonNode, tableName, fieldName);
 
         if (valueNode != null || RSQLConstant.STAR.equals(fieldName)) {
 
@@ -54,6 +58,14 @@ public class CountFunction implements SQLFunction {
         }
     }
 
+    @Override
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 
     public String getFieldName() {
         return fieldName;

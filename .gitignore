@@ -22,7 +22,7 @@ target/
 nbproject/private/
 build/
 nbbuild/
-dist/
+log/
 nbdist/
 
 ### TQ ###

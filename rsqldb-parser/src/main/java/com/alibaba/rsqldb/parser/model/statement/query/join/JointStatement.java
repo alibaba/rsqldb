@@ -204,8 +204,7 @@ public class JointStatement extends QueryStatement {
                     }
 
                     return result;
-                }).window(WindowBuilder.tumblingWindow(Time.seconds(30)))
-                .apply((value1, value2) -> {
+                }).apply((value1, value2) -> {
                     ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                     //新建临时表
 
@@ -225,14 +224,19 @@ public class JointStatement extends QueryStatement {
                             throw new SyntaxErrorException("can not find a match table name.tableName=" + tableName + ", sql=" + JointStatement.this.getContent());
                         }
 
-                        objectNode.set(fieldName, node);
+                        objectNode.set(buildKey(tableName, fieldName), node);
 
                         //使用临时表名代替Field中的tableName,防止误用
-                        field.setTableName(ParserConstant.JOIN_TEMPORARY);
+//                        field.setTableName(ParserConstant.JOIN_TEMPORARY);
                     }
 
                     //父类中再做最后计算；
                     return objectNode;
                 });
+
+    }
+
+    private String buildKey(String tableName, String fieldName) {
+        return String.join("@", tableName, fieldName);
     }
 }
