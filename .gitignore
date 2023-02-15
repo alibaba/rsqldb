@@ -16,6 +16,7 @@ target/
 *.iml
 *.ipr
 *.gz
+*.zip
 
 
 ### NetBeans ###

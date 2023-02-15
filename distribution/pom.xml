@@ -49,7 +49,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/rsqldb-distribution.tar.gz" tofile="${project.basedir}/rsqldb-distribution.tar.gz" overwrite="true" />
+                                <copy file="${project.build.directory}/rsqldb-distribution.zip" tofile="${project.basedir}/rsqldb-distribution.zip" overwrite="true" />
                             </target>
                         </configuration>
                     </execution>
