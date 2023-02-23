@@ -204,7 +204,8 @@ public class JointStatement extends QueryStatement {
                     }
 
                     return result;
-                }).apply((value1, value2) -> {
+                }).window(WindowBuilder.tumblingWindow(Time.seconds(10)))
+                .apply((value1, value2) -> {
                     ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                     //新建临时表
 

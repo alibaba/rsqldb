@@ -17,13 +17,19 @@ limitations under the License.
 <assembly>
     <id>distribution</id>
     <formats>
-        <format>tar.gz</format>
+        <format>zip</format>
     </formats>
     <fileSets>
         <fileSet>
             <fileMode>0775</fileMode>
             <directory>conf</directory>
             <outputDirectory>/conf</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <fileMode>0775</fileMode>
+            <directory>bin</directory>
+            <outputDirectory>/bin</outputDirectory>
         </fileSet>
     </fileSets>
     <files>
