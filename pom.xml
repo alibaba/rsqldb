@@ -6,12 +6,11 @@
 
     <groupId>com.alibaba</groupId>
     <artifactId>rsqldb</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2</version>
     <name>rsqldb</name>
     <packaging>pom</packaging>
 
     <modules>
-
         <module>rsqldb-rest</module>
         <module>rsqldb-parser</module>
         <module>rsqldb-common</module>
@@ -19,6 +18,46 @@
         <module>distribution</module>
     </modules>
 
+    <scm>
+        <url>git@github.com:alibaba/rsqldb.git</url>
+        <connection>scm:git@github.com:alibaba/rsqldb.git</connection>
+        <developerConnection>scm:git@github.com:alibaba/rsqldb.git</developerConnection>
+    </scm>
+    <developers>
+        <developer>
+            <id>nize</id>
+            <name>nize</name>
+            <email>unclerangoo(at)gmail.com</email>
+            <timezone>+8</timezone>
+            <url>https://github.com/ni-ze</url>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>Alibaba Group</name>
+        <url>https://github.com/alibaba</url>
+    </organization>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <!-- The ID here must be exactly the same as the value
+             of the server element id in the settings.xml file of MAVEN -->
+            <id>sona</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>sona</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -115,6 +154,50 @@
                     <compilerVersion>${maven.compiler.source}</compilerVersion>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+            <!--生成Javadoc，关闭doclint,避免注解检查不通过-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--Maven GPG插件用于使用以下配置对组件进行签名-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--Nexus Staging Maven插件是将组件部署到sona并将其发布到Central Repository的推荐方法-->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <!-- autoReleaseAfterClose的值为true，则脚本会自动完成在平台上close、release的操作，至此你将成功发布了 -->
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>sona</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
         </plugins>
