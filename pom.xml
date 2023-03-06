@@ -6,7 +6,7 @@
 
     <groupId>com.alibaba</groupId>
     <artifactId>rsqldb</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2</version>
     <name>rsqldb</name>
     <packaging>pom</packaging>
 
