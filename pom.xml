@@ -8,7 +8,11 @@
     <artifactId>rsqldb</artifactId>
     <version>0.2</version>
     <name>rsqldb</name>
+
     <packaging>pom</packaging>
+
+    <description>Top RSQLDB project pom.xml file</description>
+    <url>https://github.com/alibaba/rsqldb</url>
 
     <modules>
         <module>rsqldb-rest</module>
@@ -155,6 +159,19 @@
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!--生成Javadoc，关闭doclint,避免注解检查不通过-->
             <plugin>
