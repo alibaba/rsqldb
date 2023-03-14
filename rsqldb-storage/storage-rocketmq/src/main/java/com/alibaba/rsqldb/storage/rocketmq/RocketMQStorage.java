@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
 
 public class RocketMQStorage implements CommandQueue {
     private static final Logger logger = LoggerFactory.getLogger(RocketMQStorage.class);
+    private static final String LOCAL_IP = UtilAll.ipToIPv4Str(UtilAll.getIP());
 
     private RocketMQClient rocketMQClient;
     private String topicName;
@@ -84,15 +86,8 @@ public class RocketMQStorage implements CommandQueue {
             throw new RSQLServerException("namesrv can not be blank.");
         }
 
-        String groupName = RSQLConstant.RocketMQ.SQL_GROUP_NAME;
-        if (StringUtils.isBlank(groupName)) {
-            throw new RSQLServerException("groupName can not be blank.");
-        }
-
+        String groupName = String.join(Constant.SPLIT, RSQLConstant.RocketMQ.SQL_GROUP_NAME, LOCAL_IP);
         topicName = RSQLConstant.RocketMQ.SQL_TOPIC_NAME;
-        if (StringUtils.isBlank(topicName)) {
-            throw new RSQLServerException("topicName can not be blank.");
-        }
 
         build(namesrv, groupName);
 
@@ -118,7 +113,7 @@ public class RocketMQStorage implements CommandQueue {
 
         pullConsumer = new DefaultLitePullConsumer(groupName);
         pullConsumer.setNamesrvAddr(namesrv);
-        pullConsumer.setMessageModel(MessageModel.BROADCASTING);
+        pullConsumer.setMessageModel(MessageModel.CLUSTERING);
         pullConsumer.setAutoCommit(false);
 
         producer = rocketMQClient.producer(groupName);
