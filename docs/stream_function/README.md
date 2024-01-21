@@ -4,7 +4,6 @@
 - Dipper提供的udf/udtf/udaf规范，按Dipper规范书写udf
 - 用户已有的java代码，可以发布成udf函数
 
-
 # 语法：
 
 ```sql

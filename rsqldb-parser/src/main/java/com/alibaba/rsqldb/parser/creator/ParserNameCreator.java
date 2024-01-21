@@ -30,7 +30,7 @@ public class ParserNameCreator {
      */
     public static String createName(String functionName, String... names) {
         if (names == null || names.length == 0) {
-            return NameCreatorContext.get().createNewName(INNER_VAR_NAME_PREFIX, functionName);
+            return NameCreatorContext.get().createName(INNER_VAR_NAME_PREFIX, functionName);
         }
         String[] values = new String[names.length + 2];
         values[0] = INNER_VAR_NAME_PREFIX;
@@ -38,6 +38,6 @@ public class ParserNameCreator {
         for (int i = 2; i < values.length; i++) {
             values[i] = names[i - 2];
         }
-        return NameCreatorContext.get().createNewName(values);
+        return NameCreatorContext.get().createName(values);
     }
 }

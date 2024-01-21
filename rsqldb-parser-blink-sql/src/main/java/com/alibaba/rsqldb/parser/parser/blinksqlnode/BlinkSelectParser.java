@@ -16,8 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.parser.blinksqlnode;
 
-
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSelectParser;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractSelectParser;
 
 public class BlinkSelectParser extends AbstractSelectParser {
 

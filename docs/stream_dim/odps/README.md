@@ -24,23 +24,24 @@ create table odps_dim
 
 **字段说明：**
 
-| 字段名 | 是否必须 | 说明 | 默认值 |  |
-| --- | --- | --- | --- | --- |
-| type | Y | 固定值odps |  |  |
-| endPoint | Y |  |  |  |
-| project | Y |  |  |  |
-| tableName | Y |  |  |  |
-| accessId | Y |  |  |  |
-| accessKey | Y |  |  |  |
-| cacheTTLMs | N |  | 30*1000*60 |  |
-| partition | N |  | 默认无分区 |  |
-| fileSize | N |  | 1G |  |
-| filePath | N |  | /tmp/${project_name}_${tableName} |  |
-| isLarge | N | 是否开启内存映射模式 | false |  |
+| 字段名        | 是否必须 | 说明         | 默认值                               |  |
+|------------|------|------------|-----------------------------------|--|
+| type       | Y    | 固定值odps    |                                   |  |
+| endPoint   | Y    |            |                                   |  |
+| project    | Y    |            |                                   |  |
+| tableName  | Y    |            |                                   |  |
+| accessId   | Y    |            |                                   |  |
+| accessKey  | Y    |            |                                   |  |
+| cacheTTLMs | N    |            | 30*1000*60                        |  |
+| partition  | N    |            | 默认无分区                             |  |
+| fileSize   | N    |            | 1G                                |  |
+| filePath   | N    |            | /tmp/${project_name}_${tableName} |  |
+| isLarge    | N    | 是否开启内存映射模式 | false                             |  |
 
 # 数据量说明
 
-meta数据 ：对加载的数据做了二进制的压缩，每一行添加行的长度，最多占2个字节，每一列添加一个列长度，最多占用2个字节。 其他同文件维表 ​
+meta数据 ：对加载的数据做了二进制的压缩，每一行添加行的长度，最多占2个字节，每一列添加一个列长度，最多占用2个字节。 其他同文件维表
+​
 
 # 示例
 

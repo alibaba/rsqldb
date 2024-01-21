@@ -20,8 +20,8 @@ VARCHAR MD5(VARCHAR str)
 - 测试数据
 
 | str1(VARCHAR) | str2(VARCHAR) | 
-| --- | --- | 
-| k1=v1;k2=v2 | null |
+|---------------|---------------| 
+| k1=v1;k2=v2   | null          |
 
 - 测试案例
 
@@ -33,7 +33,7 @@ FROM T1
 
 - 测试结果
 
-| var1(VARCHAR) | var2(VARCHAR) |
-| --- | --- |
-| 19c17f42b4d6a90f7f9ffc2ea9bdd775 | null |
+| var1(VARCHAR)                    | var2(VARCHAR) |
+|----------------------------------|---------------|
+| 19c17f42b4d6a90f7f9ffc2ea9bdd775 | null          |
 

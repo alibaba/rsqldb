@@ -1,4 +1,5 @@
-这里的数据源是基于消息队列的push模式的实现类，由消息队列的client实现负载均衡和容错。如果需要自定义分片的负载均衡，容错，需要实现自定义数据源(pull)部分。
+这里的数据源是基于消息队列的push模式的实现类，由消息队列的client实现负载均衡和容错。如果需要自定义分片的负载均衡，容错，需要实现自定义数据源(
+pull)部分。
 
 # 引入Maven依赖
 
@@ -55,8 +56,8 @@ public void removeSplit(Set<String> splitIds)
 ```java
   @Override
 protected boolean isNotDataSplit(String queueId){
-    return queueId.toUpperCase().startsWith("%RETRY%");
-    }
+        return queueId.toUpperCase().startsWith("%RETRY%");
+        }
 ```
 
 # 实现startSource方法
@@ -108,12 +109,12 @@ public AbstractContext executeMessage(Message channelMessage)
 
 ```java
     String getQueueId();
-    /**
-     * 获取具体的队列 获取具体的队列
-     *
-     * @return
-     */
-    Q getQueue();
+        /**
+         * 获取具体的队列 获取具体的队列
+         *
+         * @return
+         */
+        Q getQueue();
 ```
 
 - getQueueId：需要返回唯一的分片编号，对于metaq这种来说，返回值应该是brokename+topic+queueid。
@@ -137,15 +138,15 @@ public void sendCheckpoint(Set<String> queueIds)
 ```java
         @Override
 public void persistAll(Set<MessageQueue> mqs){
-    if(mqs.size()==0){
-    return;
-    }
-    Set<String> queueIds=new HashSet<>();
-    for(MessageQueue mq:mqs){
-    MetaqMessageQueue metaqMessageQueue=new MetaqMessageQueue(mq);
-    queueIds.add(metaqMessageQueue.getQueueId());
-    }
-    metaqSource.sendCheckpoint(queueIds);
-    offsetStore.persistAll(mqs);
-    }
+        if(mqs.size()==0){
+        return;
+        }
+        Set<String> queueIds=new HashSet<>();
+        for(MessageQueue mq:mqs){
+        MetaqMessageQueue metaqMessageQueue=new MetaqMessageQueue(mq);
+        queueIds.add(metaqMessageQueue.getQueueId());
+        }
+        metaqSource.sendCheckpoint(queueIds);
+        offsetStore.persistAll(mqs);
+        }
 ```

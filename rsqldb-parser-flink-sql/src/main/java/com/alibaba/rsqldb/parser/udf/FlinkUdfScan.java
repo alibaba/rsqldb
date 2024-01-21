@@ -19,6 +19,7 @@ package com.alibaba.rsqldb.parser.udf;
 import com.alibaba.rsqldb.parser.udf.udaf.FlinkUDAFScript;
 import com.alibaba.rsqldb.parser.udf.udf.FlinkUDFScript;
 import com.alibaba.rsqldb.parser.udf.udtf.FlinkUDTFScript;
+
 import com.google.auto.service.AutoService;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -30,7 +31,8 @@ import org.apache.rocketmq.streams.script.service.udf.UDFScript;
 @AutoService(IUDFScan.class)
 @ServiceName("flink")
 public class FlinkUdfScan implements IUDFScan {
-    @Override public UDFScript create(Class clazz, String functionName) {
+    @Override
+    public UDFScript create(Class clazz, String functionName) {
         UDFScript script = null;
         if (TableFunction.class.isAssignableFrom(clazz)) {
             script = new FlinkUDTFScript();
@@ -42,7 +44,8 @@ public class FlinkUdfScan implements IUDFScan {
         return script;
     }
 
-    @Override public boolean isSupport(Class clazz) {
+    @Override
+    public boolean isSupport(Class clazz) {
         if (ScalarFunction.class.isAssignableFrom(clazz) || TableFunction.class.isAssignableFrom(clazz) || AggregateFunction.class.isAssignableFrom(clazz)) {
             return true;
         }

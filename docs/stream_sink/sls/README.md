@@ -35,19 +35,19 @@ create table sls_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值      |
-| --- | --- | --- |----------|
-| type | 是 | 固定值，必须是sls |          |
-| endPoint | 是 | 消费端点信息 |          |
-| accessId | 是 | sls读取的accessKey |          |
-| accessKey | 是 | accessKey | sls读取的密钥 |
-| project | 是 | 读取的sls项目 ||
-| logStore | 是 | project下的具体的logStore ||
-| producerGroup | 否 | 消费组名 ||
-| maxThread | 否 | 一个并发任务启动几个线程 |          |
-| batchSize | 否 | 消息缓存输出，缓存的大小 | 1000     |
-| autoFlushSize | 否 | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存 | 300      |
-| autoFlushTimeGap | 否 | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000     |
+| 参数名              | 是否必填 | 字段说明                                 | 默认值      |
+|------------------|------|--------------------------------------|----------|
+| type             | 是    | 固定值，必须是sls                           |          |
+| endPoint         | 是    | 消费端点信息                               |          |
+| accessId         | 是    | sls读取的accessKey                      |          |
+| accessKey        | 是    | accessKey                            | sls读取的密钥 |
+| project          | 是    | 读取的sls项目                             |          |
+| logStore         | 是    | project下的具体的logStore                 |          |
+| producerGroup    | 否    | 消费组名                                 |          |
+| maxThread        | 否    | 一个并发任务启动几个线程                         |          |
+| batchSize        | 否    | 消息缓存输出，缓存的大小                         | 1000     |
+| autoFlushSize    | 否    | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存          | 300      |
+| autoFlushTimeGap | 否    | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000     |
 
 输出的消息默认是json格式，key是输出表的字段名，value是输出的字段值，metaq刷新用的接口是sendOneway。如果系统崩溃，可能会有数据的丢失
 

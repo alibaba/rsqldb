@@ -12,10 +12,10 @@ END
 # 测试数据
 
 | device_type(VARCHAR) |
-| --- |
-| android |
-| ios |
-| win |
+|----------------------|
+| android              |
+| ios                  |
+| win                  |
 
 # 测试案例
 
@@ -53,9 +53,9 @@ from (
 # 测试结果
 
 | os(VARCHAR) | length(INT) |
-| --- | --- |
-| android | 7 |
-| ios | 3 |
-| ios | 3 |
+|-------------|-------------|
+| android     | 7           |
+| ios         | 3           |
+| ios         | 3           |
 
 

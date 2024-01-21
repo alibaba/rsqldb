@@ -17,7 +17,9 @@
 package com.alibaba.rsqldb.parser.creator;
 
 import java.util.Properties;
+
 import org.apache.rocketmq.streams.common.channel.builder.IChannelBuilder;
+import org.apache.rocketmq.streams.common.channel.sink.AbstractSink;
 import org.apache.rocketmq.streams.common.channel.sink.ISink;
 import org.apache.rocketmq.streams.common.channel.source.AbstractSource;
 import org.apache.rocketmq.streams.common.channel.source.ISource;
@@ -34,24 +36,23 @@ public class ChannelCreatorFactory {
         if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("TYPE");
         }
-        if(StringUtil.isEmpty(type)){
+        if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("connector");
         }
-        if(StringUtil.isEmpty(type)){
+        if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("CONNECTOR");
         }
         if (ContantsUtil.isContant(type)) {
             type = type.substring(1, type.length() - 1);
         }
         ServiceLoaderComponent<?> serviceLoaderComponent = ComponentCreator.getComponent(IChannelBuilder.class.getName(), ServiceLoaderComponent.class);
-        IChannelBuilder builder = (IChannelBuilder) serviceLoaderComponent.loadService(type.toLowerCase());
+        IChannelBuilder builder = (IChannelBuilder)serviceLoaderComponent.loadService(type.toLowerCase());
 
         if (builder == null) {
-            throw new RuntimeException(
-                "expect channel creator for " + properties.getProperty("type") + ". but not found");
+            throw new RuntimeException("expect channel creator for " + properties.getProperty("type") + ". but not found");
         }
-        ISource<?> source= builder.createSource(namespace, name, properties, metaData);
-        if(source instanceof AbstractSource){
+        ISource<?> source = builder.createSource(namespace, name, properties, metaData);
+        if (source instanceof AbstractSource) {
             ((AbstractSource)source).setMetaData(metaData);
         }
         return source;
@@ -62,22 +63,27 @@ public class ChannelCreatorFactory {
         if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("TYPE");
         }
-        if(StringUtil.isEmpty(type)){
+        if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("connector");
         }
-        if(StringUtil.isEmpty(type)){
+        if (StringUtil.isEmpty(type)) {
             type = properties.getProperty("CONNECTOR");
-        }if (ContantsUtil.isContant(type)) {
+        }
+        if (ContantsUtil.isContant(type)) {
             type = type.substring(1, type.length() - 1);
         }
         ServiceLoaderComponent<?> serviceLoaderComponent = ComponentCreator.getComponent(IChannelBuilder.class.getName(), ServiceLoaderComponent.class);
-        IChannelBuilder builder = (IChannelBuilder) serviceLoaderComponent.loadService(type.toLowerCase());
+        IChannelBuilder builder = (IChannelBuilder)serviceLoaderComponent.loadService(type.toLowerCase());
 
         if (builder == null) {
             throw new RuntimeException(
                 "expect channel creator for " + properties.getProperty("type") + ". but not found");
         }
-        return builder.createSink(namespace, name, properties, metaData);
+        ISink sink= builder.createSink(namespace, name, properties, metaData);
+        if (sink instanceof AbstractSink) {
+            ((AbstractSink)sink).setMetaData(metaData);
+        }
+        return sink;
     }
 
 }

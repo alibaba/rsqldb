@@ -17,25 +17,21 @@
 package com.alibaba.rsqldb.parser.sql;
 
 import java.util.List;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
+
 import org.apache.rocketmq.streams.serviceloader.ServiceLoaderComponent;
 
 public class SqlParserProvider {
 
-    public static ISqlParser create(String namespace, String name, String sql) {
-        return create(namespace, name, sql, null);
-    }
-
     /**
      * Find provider from jars
      */
-    public static ISqlParser create(String namespace, String name, String sql, ConfigurableComponent component) {
-        ServiceLoaderComponent<IParserProvider> serviceLoaderComponent = (ServiceLoaderComponent<IParserProvider>) ServiceLoaderComponent.getInstance(IParserProvider.class);
+    public static ISqlParser create() {
+        ServiceLoaderComponent<IParserProvider> serviceLoaderComponent = (ServiceLoaderComponent<IParserProvider>)ServiceLoaderComponent.getInstance(IParserProvider.class);
         List<IParserProvider> parserProviders = serviceLoaderComponent.loadService();
         if (parserProviders == null) {
             throw new RuntimeException("can not find SQLParserProvider interface's impl, please check if exist");
         }
         IParserProvider parserProvider = parserProviders.get(0);
-        return parserProvider.createSqlParser(namespace, name, sql, component);
+        return parserProvider.createSqlParser();
     }
 }

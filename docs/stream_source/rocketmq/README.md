@@ -24,29 +24,30 @@ create table metaq_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值   |
-| --- | --- | --- |---|
-| type | 是 | 固定值，必须是rocketmq |       |
-| topic | 是 | 队列的Topic |       |
-| consumerGroup | 是 | 消费组名称，可以按规范自取 |       |
-| namesrvAddr | 否 | nameserver 地址，如果配置了[http://jmenv.tbsite.net/](http://jmenv.tbsite.net/)可以不输入 |       |
-| tag | 否 |  | *     |
-| isJsonData | 否 | 消息是否是json格式 | true  |
-| msgIsJsonArray | 否 | 如果消息是jsonarray，设置这个值为true，和isJsonData互斥，isJsonData需要设置成false | false |
-| maxThread | 否 | 每个并发用几个线程处理数据 | 1     |
-| maxFetchLogGroupSize | 否 | 每次拉取消息的条数 | 100   |
-| fieldDelimiter | 否 | 把读到的byte[]数组转换成一个string，然后按照行分隔符切分后，再对每一行数据按列分隔符进行分割，按字段顺序来匹配。 |       |
-| encoding | 否 | 字节数组转化成字符串的编码方式 | UTF-8 |
+| 参数名                  | 是否必填 | 字段说明                                                                         | 默认值   |
+|----------------------|------|------------------------------------------------------------------------------|-------|
+| type                 | 是    | 固定值，必须是rocketmq                                                              |       |
+| topic                | 是    | 队列的Topic                                                                     |       |
+| consumerGroup        | 是    | 消费组名称，可以按规范自取                                                                |       |
+| namesrvAddr          | 否    | nameserver 地址，如果配置了[http://jmenv.tbsite.net/](http://jmenv.tbsite.net/)可以不输入 |       |
+| tag                  | 否    |                                                                              | *     |
+| isJsonData           | 否    | 消息是否是json格式                                                                  | true  |
+| msgIsJsonArray       | 否    | 如果消息是jsonarray，设置这个值为true，和isJsonData互斥，isJsonData需要设置成false                 | false |
+| maxThread            | 否    | 每个并发用几个线程处理数据                                                                | 1     |
+| maxFetchLogGroupSize | 否    | 每次拉取消息的条数                                                                    | 100   |
+| fieldDelimiter       | 否    | 把读到的byte[]数组转换成一个string，然后按照行分隔符切分后，再对每一行数据按列分隔符进行分割，按字段顺序来匹配。               |       |
+| encoding             | 否    | 字节数组转化成字符串的编码方式                                                              | UTF-8 |
 
-解析的数据来源是拉取的MessageExt的消息 getBody() 内容，目前是对byte[]数组进行解析，默认会基于UTF8转化成字符串，如果isJsonData=true，会再解析成json。 如果要获取到MessageExt.getProperties里面的内容，需要使用header关键字进行标识， 假如用户在MessageExt的成员。
+解析的数据来源是拉取的MessageExt的消息 getBody() 内容，目前是对byte[]数组进行解析，默认会基于UTF8转化成字符串，如果isJsonData=true，会再解析成json。
+如果要获取到MessageExt.getProperties里面的内容，需要使用header关键字进行标识， 假如用户在MessageExt的成员。
 
 # 属性字段
 
-| 属性字段 | 说明 |
-| --- | --- |
-| TAGS  | 订阅标签 |
-| __store_timestamp__ | 消息在broker存储时间 |
-| __born_timestamp__ | 消息产生端(producer)的时间戳 |
+| 属性字段                | 说明                  |
+|---------------------|---------------------|
+| TAGS                | 订阅标签                |
+| __store_timestamp__ | 消息在broker存储时间       |
+| __born_timestamp__  | 消息产生端(producer)的时间戳 |
 
 # 消息堆积&能力扩展
 

@@ -18,13 +18,13 @@ create table file_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值   |
-| --- | --- | --- |---|
-| type | 是 | 固定值，必须是rocketmq |       |
-| filePath | 是 | 文件路径，文件必须是文本文件，系统默认按行分割 |       |
-| isJsonData | 否 | 消息是否是json格式 | true  |
-| msgIsJsonArray | 否 | 如果消息是jsonarray，设置这个值为true，和isJsonData互斥，isJsonData需要设置成false | false |
-| fieldDelimiter | 否 | 把读到的byte[]数组转换成一个string，然后按照行分隔符切分后，再对每一行数据按列分隔符进行分割，按字段顺序来匹配。 |       |
+| 参数名            | 是否必填 | 字段说明                                                           | 默认值   |
+|----------------|------|----------------------------------------------------------------|-------|
+| type           | 是    | 固定值，必须是rocketmq                                                |       |
+| filePath       | 是    | 文件路径，文件必须是文本文件，系统默认按行分割                                        |       |
+| isJsonData     | 否    | 消息是否是json格式                                                    | true  |
+| msgIsJsonArray | 否    | 如果消息是jsonarray，设置这个值为true，和isJsonData互斥，isJsonData需要设置成false   | false |
+| fieldDelimiter | 否    | 把读到的byte[]数组转换成一个string，然后按照行分隔符切分后，再对每一行数据按列分隔符进行分割，按字段顺序来匹配。 |       |
 
 文件必须是文本文件，一行一条数据，文件大小不限，系统会分批读取，有内存保护，不会outofmemory。文件source不支持并发，都是单任务执行，可以用来做测试。
 

@@ -88,10 +88,9 @@ CREATE TABLE `data_model`
 
 insert into data_model
 select time_function() AS _dm_timestamp
-    ,_source AS _dm_source
-    ,_type AS _dm_type
-from
-    source_data
+     , _source         AS _dm_source
+     , _type           AS _dm_type
+from source_data
 
 ```
 
@@ -102,7 +101,8 @@ from
 - 必须有无参构造函数
 - 函数名必须是eval
 - 函数的参数类型，必须是Java的类型
-- 函数的返回值，必须是List<Map<String,Object>类型，返回的是拆分后的多行数据，包含多列，每列是一个<key，value>数据，如果没有key的值，请用f0，f1，f2，fn来当作默认的字段名
+- 函数的返回值，必须是List<Map<String,Object>类型，返回的是拆分后的多行数据，包含多列，每列是一个<key，value>
+  数据，如果没有key的值，请用f0，f1，f2，fn来当作默认的字段名
 - 如果需要对函数进行初始化，可以加一个open 方法，无参数，无返回值，如果不需要可以不加
 - 如果需要对函数进行清理，可以加一个close，无参数，无返回值，如果不需要可以不加
 - 参考代码
@@ -178,12 +178,11 @@ CREATE TABLE `data_model`
 
 insert into data_model
 select time_function() AS _dm_timestamp
-    ,_source AS _dm_source
-    ,_type AS _dm_type
-    ,pk_label as _dm_lable
-from
-    source_data,
-    LATERAL TABLE (STRING_SPLIT(_ source, ',')) AS T(pk_label)
+     , _source         AS _dm_source
+     , _type           AS _dm_type
+     , pk_label        as _dm_lable
+from source_data,
+     LATERAL TABLE (STRING_SPLIT(_ source, ',')) AS T(pk_label)
 
 ```
 

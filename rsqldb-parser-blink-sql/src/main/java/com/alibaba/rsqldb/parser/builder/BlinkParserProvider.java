@@ -16,29 +16,29 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.alibaba.rsqldb.parser.sql.AbstractSqlParser;
 import com.alibaba.rsqldb.parser.sql.IParserProvider;
 import com.alibaba.rsqldb.parser.sql.ISqlParser;
+
 import com.google.auto.service.AutoService;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlNodeInfo;
 import org.apache.flink.sql.parser.util.SqlContextUtils;
 import org.apache.rocketmq.streams.common.model.ServiceName;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
 @AutoService(IParserProvider.class)
 @ServiceName("blink")
 public class BlinkParserProvider implements IParserProvider {
-    @Override public ISqlParser createSqlParser(String namespace, String pipelineName, String sql) {
-        return createSqlParser(namespace, pipelineName, sql, null);
-    }
 
-    @Override public ISqlParser createSqlParser(String namespace, String pipelineName, String sql, ConfigurableComponent component) {
-        return new AbstractSqlParser(namespace, pipelineName, sql, component) {
+    @Override
+    public ISqlParser createSqlParser() {
+        return new AbstractSqlParser() {
 
-            @Override protected List<SqlNode> parseSql(String sql) {
+            @Override
+            protected List<SqlNode> parseSql(String sql) {
                 try {
                     List<SqlNodeInfo> sqlNodeInfoList = SqlContextUtils.parseContext(sql);
                     List<SqlNode> sqlNodeList = new ArrayList<>();
@@ -54,7 +54,8 @@ public class BlinkParserProvider implements IParserProvider {
         };
     }
 
-    @Override public String getName() {
+    @Override
+    public String getName() {
         return "blink";
     }
 }

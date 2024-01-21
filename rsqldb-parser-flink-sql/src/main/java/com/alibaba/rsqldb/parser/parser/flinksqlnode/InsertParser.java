@@ -16,16 +16,15 @@
  */
 package com.alibaba.rsqldb.parser.parser.flinksqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.InsertSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractInsertParser;
+import com.alibaba.rsqldb.parser.builder.InsertSqlBuilder;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractInsertParser;
 
 import org.apache.calcite.sql.SqlInsert;
 
-public class InsertParser  extends AbstractInsertParser {
+public class InsertParser extends AbstractInsertParser {
 
     @Override
     protected void parseEmit(InsertSqlBuilder builder, SqlInsert insert) {
-
 
     }
 

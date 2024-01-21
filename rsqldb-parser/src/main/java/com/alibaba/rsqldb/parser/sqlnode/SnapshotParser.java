@@ -1,0 +1,55 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.alibaba.rsqldb.parser.sqlnode;
+
+import java.util.Properties;
+
+import com.alibaba.rsqldb.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.SnapshotBuilder;
+import com.alibaba.rsqldb.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.result.IParseResult;
+
+import org.apache.calcite.sql.SqlSnapshot;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+public class SnapshotParser extends AbstractSqlNodeNodeParser<SqlSnapshot, SnapshotBuilder> {
+
+    private static final Log LOG = LogFactory.getLog(SelectSqlBuilder.class);
+
+    @Override
+    public IParseResult parse(SnapshotBuilder builder, SqlSnapshot sqlNode) {
+        builder.setSqlNode(sqlNode);
+        builder.setTableName(sqlNode.getTableRef().toString());
+        return new BuilderParseResult(builder);
+    }
+
+    @Override
+    public boolean support(Object sqlNode) {
+        if (sqlNode instanceof SqlSnapshot) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public SnapshotBuilder create(Properties configuration) {
+        SnapshotBuilder snapshotBuilder = new SnapshotBuilder();
+        snapshotBuilder.setConfiguration(configuration);
+        return snapshotBuilder;
+    }
+}

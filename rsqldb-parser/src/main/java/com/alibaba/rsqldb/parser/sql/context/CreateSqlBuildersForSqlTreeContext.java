@@ -16,24 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.sql.context;
 
-import com.alibaba.rsqldb.parser.parser.builder.CreateSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.ISqlNodeBuilder;
 import java.util.List;
 import java.util.Map;
 
+import com.alibaba.rsqldb.parser.builder.CreateSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.ISqlNodeBuilder;
+
 public class CreateSqlBuildersForSqlTreeContext extends ThreadLocal<Map<String, CreateSqlBuilder>> {
-    protected List<ISqlNodeBuilder> createSqlBuilders;
     private static final CreateSqlBuildersForSqlTreeContext INSTANCE = new CreateSqlBuildersForSqlTreeContext();
+    protected List<ISqlNodeBuilder> createSqlBuilders;
 
     private CreateSqlBuildersForSqlTreeContext() {
-    }
-
-    protected void setCreateSqlBuilders(List<ISqlNodeBuilder> createSqlBuilders) {
-        this.createSqlBuilders = createSqlBuilders;
-    }
-
-    public List<ISqlNodeBuilder> getCreateSqlBuilders() {
-        return createSqlBuilders;
     }
 
     public static void setParserCreateSqlBuilder(List<ISqlNodeBuilder> createSqlBuilders) {
@@ -42,5 +35,13 @@ public class CreateSqlBuildersForSqlTreeContext extends ThreadLocal<Map<String, 
 
     public static CreateSqlBuildersForSqlTreeContext getInstance() {
         return INSTANCE;
+    }
+
+    public List<ISqlNodeBuilder> getCreateSqlBuilders() {
+        return createSqlBuilders;
+    }
+
+    protected void setCreateSqlBuilders(List<ISqlNodeBuilder> createSqlBuilders) {
+        this.createSqlBuilders = createSqlBuilders;
     }
 }

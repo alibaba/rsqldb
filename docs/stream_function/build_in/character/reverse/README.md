@@ -17,8 +17,8 @@ VARCHAR REVERSE(VARCHAR str)
 - 测试数据
 
 | str1(VARCHAR) | str2(VARCHAR) | str3(VARCHAR) | str4(VARCHAR) | 
-| --- | --- | --- | --- | 
-| iPhoneX | Alibaba | World | null |
+|---------------|---------------|---------------|---------------| 
+| iPhoneX       | Alibaba       | World         | null          |
 
 - 测试案例
 
@@ -33,6 +33,6 @@ FROM T1
 - 测试结果
 
 | var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | var4(VARCHAR) |
-| --- | --- | --- | --- |
-| XenohPi | ababilA | dlroW | null |
+|---------------|---------------|---------------|---------------|
+| XenohPi       | ababilA       | dlroW         | null          |
 

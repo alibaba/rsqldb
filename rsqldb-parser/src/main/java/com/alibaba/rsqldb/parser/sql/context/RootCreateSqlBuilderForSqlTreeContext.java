@@ -16,7 +16,7 @@
  */
 package com.alibaba.rsqldb.parser.sql.context;
 
-import com.alibaba.rsqldb.parser.parser.builder.CreateSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.CreateSqlBuilder;
 
 public class RootCreateSqlBuilderForSqlTreeContext extends ThreadLocal<CreateSqlBuilder> {
 

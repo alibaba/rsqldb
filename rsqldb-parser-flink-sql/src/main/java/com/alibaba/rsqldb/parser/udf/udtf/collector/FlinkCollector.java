@@ -17,8 +17,8 @@
 package com.alibaba.rsqldb.parser.udf.udtf.collector;
 
 import com.alibaba.fastjson.JSONObject;
-
 import com.alibaba.rsqldb.parser.udf.udtf.FlinkUDTFScript;
+
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;

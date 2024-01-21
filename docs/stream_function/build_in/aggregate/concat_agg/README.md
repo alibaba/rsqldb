@@ -18,17 +18,17 @@ CONCAT_AGG
 - 测试数据
 
 | b(VARCHAR) | c(VARCHAR) |
-|---|---| 
-| Hi | milk | 
-| Hi | milk | 
-| Hi | milk | 
-| Hi | milk | 
-| Hi | milk | 
-| Hi | milk | 
-| Hello | cola | 
-| Hello | cola | 
-| Happy | suda | 
-| Happy | suda |
+|------------|------------| 
+| Hi         | milk       | 
+| Hi         | milk       | 
+| Hi         | milk       | 
+| Hi         | milk       | 
+| Hi         | milk       | 
+| Hi         | milk       | 
+| Hello      | cola       | 
+| Hello      | cola       | 
+| Happy      | suda       | 
+| Happy      | suda       |
 
 - 测试案例
 
@@ -42,9 +42,9 @@ GROUP BY b
 
 测试结果
 
-| b (VARCHAR) | var1(VARCHAR) | var2(VARCHAR) |
-| --- | --- | --- |
-| Hi | milk\nmilk\nmilk\nmilk\nmilk\nmilk\n | milk-milk-milk-milk-milk-milk |
-| Hello | cola\ncola\n | cola-cola |
-| Happy | suda\nsuda\n | suda-suda |
+| b (VARCHAR) | var1(VARCHAR)                        | var2(VARCHAR)                 |
+|-------------|--------------------------------------|-------------------------------|
+| Hi          | milk\nmilk\nmilk\nmilk\nmilk\nmilk\n | milk-milk-milk-milk-milk-milk |
+| Hello       | cola\ncola\n                         | cola-cola                     |
+| Happy       | suda\nsuda\n                         | suda-suda                     |
 

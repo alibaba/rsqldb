@@ -16,25 +16,27 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
+import java.util.List;
+
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.rsqldb.parser.udf.udtf.FlinkUDTFScript;
-import java.util.List;
+
 import org.apache.rocketmq.streams.common.context.IMessage;
 import org.apache.rocketmq.streams.script.ScriptComponent;
 import org.junit.Test;
 
 public class UDTFTest {
     @Test
-    public void testUDTF(){
-        FlinkUDTFScript udtfScript=new FlinkUDTFScript();
+    public void testUDTF() {
+        FlinkUDTFScript udtfScript = new FlinkUDTFScript();
         udtfScript.setFullClassName(UDTFFunction.class.getName());
         udtfScript.setFunctionName("abc");
         udtfScript.init();
-        JSONObject msg=new JSONObject();
-        msg.put("name","chris");
-       List<IMessage>  messageList=ScriptComponent.getInstance().getService().executeScript(msg,"abc()");
-       for(IMessage message:messageList){
-           System.out.println(message.getMessageBody());
-       }
+        JSONObject msg = new JSONObject();
+        msg.put("name", "chris");
+        List<IMessage> messageList = ScriptComponent.getInstance().getService().executeScript(msg, "abc()");
+        for (IMessage message : messageList) {
+            System.out.println(message.getMessageBody());
+        }
     }
 }

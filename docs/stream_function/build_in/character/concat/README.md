@@ -18,11 +18,11 @@
 - 测试数据
 
 | var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | 
-| --- | --- | --- | 
-| Hello | My | World | 
-| Hello | null | World | 
-| null | null | World | 
-| null | null | null |
+|---------------|---------------|---------------| 
+| Hello         | My            | World         | 
+| Hello         | null          | World         | 
+| null          | null          | World         | 
+| null          | null          | null          |
 
 - 测试案例
 
@@ -34,9 +34,9 @@ FROM T1
 - 测试结果
 
 | var(VARCHAR) |
-| --- |
+|--------------|
 | HelloMyWorld |
-| HelloWorld |
-| World |
-| “” |
+| HelloWorld   |
+| World        |
+| “”           |
 

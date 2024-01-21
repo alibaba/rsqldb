@@ -34,7 +34,7 @@ import org.apache.flink.table.functions.TableFunction;
 )
 public class UDTFFunction extends TableFunction {
 
-    public void eval(){
+    public void eval() {
         collect("abd");
         collect(13434);
         collect(true);

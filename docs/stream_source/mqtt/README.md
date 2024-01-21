@@ -22,19 +22,19 @@ CREATE TABLE mqtt_content
       automaticReconnect = '连接断开时，是否自动重连');
 ```
 
-| 参数名                   | 是否必填 | 字段说明                                                                                  | 默认值   |
-|-----------------------|------|---------------------------------------------------------------------------------------|-------|
-| type                  | 是    | 固定值，必须是mqtt                                                                           |       |
-| url                   | 是    | mqtt broker的地址， 格式为: 协议://IP:port                                                     |       |
-| clientId              | 是    | 客户度ID                                                                                 |       |
-| topic                 | 是    | 需要订阅的topic信息                                                                          |       |
-| username              | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
-| password              | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
-| isJsonData            | 否    | 消息是否是json格式                                                                           | true  |
-| cleanSession          | 否    | 当客户端连接重新建立时，原来的session信息是否保留，为true则保留，客户端可以从连接断开的时间点继续消费信息，否则则从当前时间点消费，连接断开这段时间的数据将丢失 | true  |
-| connectionTimeout     | 否    | 连接超时时间                                                                                | 10(s) |
-| aliveInterval         | 否    | 心跳的额间隔时间                                                                              | 60(s) |
-| automaticReconnect    | 否    | 当连接异常时，是否自动重连                                                                         | true  |
+| 参数名                | 是否必填 | 字段说明                                                                                  | 默认值   |
+|--------------------|------|---------------------------------------------------------------------------------------|-------|
+| type               | 是    | 固定值，必须是mqtt                                                                           |       |
+| url                | 是    | mqtt broker的地址， 格式为: 协议://IP:port                                                     |       |
+| clientId           | 是    | 客户度ID                                                                                 |       |
+| topic              | 是    | 需要订阅的topic信息                                                                          |       |
+| username           | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
+| password           | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
+| isJsonData         | 否    | 消息是否是json格式                                                                           | true  |
+| cleanSession       | 否    | 当客户端连接重新建立时，原来的session信息是否保留，为true则保留，客户端可以从连接断开的时间点继续消费信息，否则则从当前时间点消费，连接断开这段时间的数据将丢失 | true  |
+| connectionTimeout  | 否    | 连接超时时间                                                                                | 10(s) |
+| aliveInterval      | 否    | 心跳的额间隔时间                                                                              | 60(s) |
+| automaticReconnect | 否    | 当连接异常时，是否自动重连                                                                         | true  |
 
 # 自定义解析
 

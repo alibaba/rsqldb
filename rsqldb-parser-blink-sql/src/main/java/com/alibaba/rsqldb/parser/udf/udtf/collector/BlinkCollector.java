@@ -17,8 +17,8 @@
 package com.alibaba.rsqldb.parser.udf.udtf.collector;
 
 import com.alibaba.fastjson.JSONObject;
-
 import com.alibaba.rsqldb.parser.udf.udtf.BlinkUDTFScript;
+
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
@@ -39,9 +39,9 @@ public class BlinkCollector implements Collector {
     @Override
     public void collect(Object o) {
         if (Row.class.isInstance(o)) {
-            blinkRowCollector.collect((Row) o);
+            blinkRowCollector.collect((Row)o);
         } else if (Tuple.class.isInstance(o)) {
-            blinkTupleCollector.collect((Tuple) o);
+            blinkTupleCollector.collect((Tuple)o);
         } else {
             FunctionContext context = loadContext();
             IMessage message = context.getMessage();
@@ -59,7 +59,7 @@ public class BlinkCollector implements Collector {
 
     private FunctionContext loadContext() {
         ThreadContext threadContext = ThreadContext.getInstance();
-        return (FunctionContext) threadContext.get();
+        return (FunctionContext)threadContext.get();
     }
 
     @Override

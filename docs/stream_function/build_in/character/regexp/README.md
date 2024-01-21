@@ -18,13 +18,13 @@ REGEXP(VARCHAR str, VARCHAR pattern)
 
 - 测试数据
 
-| str1(VARCHAR) | pattern1(VARCHAR) | 
-|--------------| --- | 
-| k1=v1;k2=v2  | k2* | 
-| k1:v1&#124;k2:v2 | k3 | 
-| null         | k3 | 
-| k1:v1&#124;k2:v2 | null | 
-| k1:v1&#124;k2:v2 | ( |
+| str1(VARCHAR)    | pattern1(VARCHAR) | 
+|------------------|-------------------| 
+| k1=v1;k2=v2      | k2*               | 
+| k1:v1&#124;k2:v2 | k3                | 
+| null             | k3                | 
+| k1:v1&#124;k2:v2 | null              | 
+| k1:v1&#124;k2:v2 | (                 |
 
 - 测试案例
 
@@ -36,10 +36,10 @@ FROM T1
 - 测试结果
 
 | result(BOOLEAN) |
-| --- |
-| true |
-| false |
-| null |
-| null |
-| false |
+|-----------------|
+| true            |
+| false           |
+| null            |
+| null            |
+| false           |
 

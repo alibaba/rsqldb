@@ -18,9 +18,9 @@ STRING_SPLIT
 - 测试数据
 
 | d(VARCHAR) | s(VARCHAR) |
-| --- | --- |
-| abc-bcd | - |
-| hhh | - |
+|------------|------------|
+| abc-bcd    | -          |
+| hhh        | -          |
 
 - 测试案例
 
@@ -34,7 +34,7 @@ as T(v)
 - 测试结果
 
 | d(VARCHAR) | v(VARCHAR) |
-| --- | --- |
-| abc-bcd | abc |
-| abc-bcd | bcd |
-| hhh | hhh |
+|------------|------------|
+| abc-bcd    | abc        |
+| abc-bcd    | bcd        |
+| hhh        | hhh        |

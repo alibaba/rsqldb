@@ -27,8 +27,8 @@ BIGINT UNIX_TIMESTAMP(VARCHAR date, VARCHAR format)
 - 测试数据
 
 | nullstr(VARCHAR) |
-| --- |
-| null |
+|------------------|
+| null             |
 
 - 测试案例
 
@@ -41,6 +41,6 @@ FROM T1
 - 测试结果
 
 | big1(BIGINT) | big2(BIGINT) |
-| --- | --- |
-| 1403006911 | null |
+|--------------|--------------|
+| 1403006911   | null         |
 

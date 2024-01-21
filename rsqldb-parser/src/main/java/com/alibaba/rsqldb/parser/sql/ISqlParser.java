@@ -16,36 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.sql;
 
-import java.util.List;
-import org.apache.rocketmq.streams.common.configurable.IConfigurable;
-import org.apache.rocketmq.streams.common.topology.ChainPipeline;
-import org.apache.rocketmq.streams.tasks.StreamTask;
+import java.util.Properties;
+
+import org.apache.rocketmq.streams.common.topology.graph.JobGraph;
 
 public interface ISqlParser {
 
     /**
      * generate ISqlParser
      *
-     * @param isBuild boolean
      * @return sql parser
      */
-    ISqlParser parse(boolean isBuild);
-
-    /**
-     * pipelines
-     *
-     * @return pipelines
-     */
-    List<ChainPipeline<?>> pipelines();
-
-    /**
-     * configurations
-     *
-     * @return configurations
-     */
-    List<IConfigurable> configurables();
-
-
-    StreamTask streamTask();
+    JobGraph parse(String namespace, String jobName, String sql, Properties jobConfiguration);
 
 }

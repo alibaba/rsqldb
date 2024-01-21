@@ -17,12 +17,12 @@ CREATE TABLE mqtt_result
       password = '密码');
 ```
 
-| 参数名                   | 是否必填 | 字段说明                                                                                  | 默认值   |
-|-----------------------|------|---------------------------------------------------------------------------------------|-------|
-| type                  | 是    | 固定值，必须是mqtt                                                                           |       |
-| url                   | 是    | mqtt broker的地址， 格式为: 协议://IP:port                                                     |       |
-| clientId              | 是    | 客户度ID                                                                                 |       |
-| topic                 | 是    | 需要订阅的topic信息                                                                          |       |
-| username              | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
-| password              | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数                                                  |       |
+| 参数名      | 是否必填 | 字段说明                                 | 默认值 |
+|----------|------|--------------------------------------|-----|
+| type     | 是    | 固定值，必须是mqtt                          |     |
+| url      | 是    | mqtt broker的地址， 格式为: 协议://IP:port    |     |
+| clientId | 是    | 客户度ID                                |     |
+| topic    | 是    | 需要订阅的topic信息                         |     |
+| username | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数 |     |
+| password | 否    | 当mqtt需要进行鉴权时，需要注明username和password参数 |     |
 

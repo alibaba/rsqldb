@@ -6,9 +6,9 @@ VARCHAR UPPER(A)
 
 # 入参
 
-| 参数 | 数据类型 |
-| --- | --- |
-| A | VARCHAR |
+| 参数 | 数据类型    |
+|----|---------|
+| A  | VARCHAR |
 
 # 功能描述
 
@@ -19,9 +19,9 @@ VARCHAR UPPER(A)
 - 测试数据
 
 | var1(VARCHAR) | 
-| --- | 
-| ss | 
-| ttee |
+|---------------| 
+| ss            | 
+| ttee          |
 
 - 测试语句
 
@@ -33,7 +33,7 @@ FROM T1;
 - 测试结果
 
 | aa(VARCHAR) |
-| --- |
-| SS |
-| TTEE |
+|-------------|
+| SS          |
+| TTEE        |
 

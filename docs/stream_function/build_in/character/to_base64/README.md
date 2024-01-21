@@ -16,11 +16,11 @@ VARCHAR TO_BASE64(bin)
 
 - 测试数据
 
-| c(VARCHAR) | 
-| --- | 
+| c(VARCHAR)       | 
+|------------------| 
 | SGVsbG8gd29ybGQ= | 
-| SGk= | 
-| SGVsbG8= |
+| SGk=             | 
+| SGVsbG8=         |
 
 - 测试案例
 
@@ -31,9 +31,9 @@ FROM T1
 
 - 测试结果
 
-| var1(VARCHAR) |
-| --- |
+| var1(VARCHAR)    |
+|------------------|
 | SGVsbG8gd29ybGQ= |
-| SGk= |
-| SGVsbG8= |
+| SGk=             |
+| SGVsbG8=         |
 

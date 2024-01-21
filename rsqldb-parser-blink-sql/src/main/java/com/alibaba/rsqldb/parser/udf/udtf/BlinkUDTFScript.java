@@ -16,8 +16,10 @@
  */
 package com.alibaba.rsqldb.parser.udf.udtf;
 
-import com.alibaba.rsqldb.parser.udf.udtf.collector.BlinkCollector;
 import java.io.File;
+
+import com.alibaba.rsqldb.parser.udf.udtf.collector.BlinkCollector;
+
 import org.apache.flink.api.common.accumulators.DoubleCounter;
 import org.apache.flink.api.common.accumulators.Histogram;
 import org.apache.flink.api.common.accumulators.IntCounter;

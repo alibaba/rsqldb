@@ -5,14 +5,14 @@
 ```sql
 create table metaq_stream
 (
-    _facility varchar,
-    _hostName varchar,
+    _facility    varchar,
+    _hostName    varchar,
     _hostAddress varchar,
-    _level varchar,
-    _msg varchar,
-    _date varchar,
-    _tag varchar,
-    _pid varchar
+    _level       varchar,
+    _msg         varchar,
+    _date        varchar,
+    _tag         varchar,
+    _pid         varchar
 ) with (
       type = 'syslog',
       port = '12345',
@@ -21,18 +21,22 @@ create table metaq_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值 |
-| --- | --- | --- | --- |
-| type | 是 | 固定值，必须是syslog |
-| port | 是 | udp或tcp | udp |
-| protol | 是 | udp或tcp | udp或tcp |
-| client_ips | 是 | 消息发送源的ip或域名列表，支持ip范围-192.168.1.1-192.168.1.10，ip端-192.168.0.0/22，和正则表达式| * |
+| 参数名        | 是否必填 | 字段说明                                                                    | 默认值     |
+|------------|------|-------------------------------------------------------------------------|---------|
+| type       | 是    | 固定值，必须是syslog                                                           |
+| port       | 是    | udp或tcp                                                                 | udp     |
+| protol     | 是    | udp或tcp                                                                 | udp或tcp |
+| client_ips | 是    | 消息发送源的ip或域名列表，支持ip范围-192.168.1.1-192.168.1.10，ip端-192.168.0.0/22，和正则表达式 | *       |
 
-- 这个source会启动一个syslog的server，相同port和protol的source，无论创建多少次，一个实例也只会启动一个，不同数据源的syslog日志，可能有不同的业务逻辑，通过配置client_ips来区分不同的syslog日志
+-
+
+这个source会启动一个syslog的server，相同port和protol的source，无论创建多少次，一个实例也只会启动一个，不同数据源的syslog日志，可能有不同的业务逻辑，通过配置client_ips来区分不同的syslog日志
 
 # 输入字段
 
-- 因为syslog是标准的格式，create 字段名，也必须按例子中的字段名定义 | 属性字段 | 说明 | | --- | --- | | _facility | 优先级 | | _hostName | host name | | _hostAddress | client ip | | _level | 级别 | | _msg | syslog的消息 | | _date | 日志时间，格式2010-09-09 12:12:12 | | _tag | 标签 | | _pid | 产生日志的进程id |
+- 因为syslog是标准的格式，create 字段名，也必须按例子中的字段名定义 | 属性字段 | 说明 | | --- | --- | | _facility |
+  优先级 | | _hostName | host name | | _hostAddress | client ip | | _level | 级别 | | _msg | syslog的消息 | | _date |
+  日志时间，格式2010-09-09 12:12:12 | | _tag | 标签 | | _pid | 产生日志的进程id |
 
 # 自定义解析
 
@@ -44,14 +48,14 @@ grok MyParser  as org.apache.rocketmq.streams.script.annotation.Function;
 
 create table metaq_stream
 (
-    _facility varchar,
-    _hostName varchar,
+    _facility    varchar,
+    _hostName    varchar,
     _hostAddress varchar,
-    _level varchar,
-    _msg varchar,
-    _date varchar,
-    _tag varchar,
-    _pid varchar
+    _level       varchar,
+    _msg         varchar,
+    _date        varchar,
+    _tag         varchar,
+    _pid         varchar
 ) with (
       type = 'syslog',
       port = '12345',

@@ -16,32 +16,39 @@
  */
 package com.alibaba.rsqldb.parser.udf.udtf;
 
-import com.alibaba.rsqldb.parser.udf.EmptyRuntimeContext;
-import com.alibaba.rsqldb.parser.udf.udtf.collector.FlinkCollector;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import com.alibaba.rsqldb.parser.udf.EmptyRuntimeContext;
+import com.alibaba.rsqldb.parser.udf.udtf.collector.FlinkCollector;
+
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.functions.ConstantFunctionContext;
 import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.util.Collector;
-import org.apache.rocketmq.streams.common.component.ComponentCreator;
 import org.apache.rocketmq.streams.script.service.udf.UDTFScript;
 
 public class FlinkUDTFScript extends UDTFScript {
     protected transient FunctionContext functionContext = new FunctionContext(new EmptyRuntimeContext());
+
     public FlinkUDTFScript() {
         this.methodName = "eval";
         this.initMethodName = "open";
         this.setSetCollectorMethodName("setCollector");
 
-        Properties properties= ComponentCreator.getProperties();
-        Map<String,String> map=new HashMap<>();
-        for(Object key:properties.keySet()){
-            map.put((String)key,properties.getProperty((String)key));
+    }
+
+    @Override
+    protected boolean initConfigurable() {
+        Properties properties = getConfiguration();
+        Map<String, String> map = new HashMap<>();
+        for (Object key : properties.keySet()) {
+            map.put((String)key, properties.getProperty((String)key));
         }
         functionContext = new ConstantFunctionContext(Configuration.fromMap(map));
         initParameters = new Object[] {functionContext};
+        return super.initConfigurable();
     }
 
     @Override

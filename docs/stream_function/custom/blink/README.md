@@ -128,7 +128,8 @@ UDTF可以将一行的数据转为多行返回。
 
 ## 多列返回
 
-UDTF不仅可以做到一行转多行，也可以做到一列转多列。如果用户希望UDTF返回多列，只需要将返回值声明成Tuple或Row即可。Blink支持 Tuple1 ~ Tuple25 ，分别可以定义1个字段到25个字段。
+UDTF不仅可以做到一行转多行，也可以做到一列转多列。如果用户希望UDTF返回多列，只需要将返回值声明成Tuple或Row即可。Blink支持
+Tuple1 ~ Tuple25 ，分别可以定义1个字段到25个字段。
 
 如下示例展示了用Tuple3来返回三个字段的UDTF：
 
@@ -187,11 +188,13 @@ public class ParseUdtf extends TableFunction<Row> {
 }
 ```
 
-使用Tuple的限制是，字段值不能为null，且最多只能有25个字段。Row的字段值可以是null，但是使用Row的话，必须重载实现`getResultType`方法以告诉系统每个字段的类型。
+使用Tuple的限制是，字段值不能为null，且最多只能有25个字段。Row的字段值可以是null，但是使用Row的话，必须重载实现`getResultType`
+方法以告诉系统每个字段的类型。
 
 ## SQL 语法
 
-UDTF 支持cross join 和 left join，在使用udtf的时候需要带上 `LATERAL`和`TABLE`两个关键字，以上述的`ParseUdtf`为示例，首先注册一个function名字。
+UDTF 支持cross join 和 left join，在使用udtf的时候需要带上 `LATERAL`和`TABLE`两个关键字，以上述的`ParseUdtf`
+为示例，首先注册一个function名字。
 
 ```sql
 CREATE FUNCTION parseUdtf AS 'com.alibaba.blink.sql.udtf.ParseUdtf';
@@ -205,7 +208,8 @@ from input_stream as S,
      LATERAL TABLE(parseUdtf(content)) as T(a, b, c);
 ```
 
-LEFT JOIN: 左表的每一行数据都会关联上udtf产出的每一行数据，如果udtf不产出任何数据，那么这一行的UDTF的字段会用null值填充。注意：LEFT JOIN UDTF 必须要在后面跟上 `ON TRUE`。
+LEFT JOIN: 左表的每一行数据都会关联上udtf产出的每一行数据，如果udtf不产出任何数据，那么这一行的UDTF的字段会用null值填充。注意：LEFT
+JOIN UDTF 必须要在后面跟上 `ON TRUE`。
 
 ```sql
 select S.id, S.content, T.a, T.b, T.c

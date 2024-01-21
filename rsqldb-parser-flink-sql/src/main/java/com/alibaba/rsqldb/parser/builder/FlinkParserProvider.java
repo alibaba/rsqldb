@@ -16,29 +16,30 @@
  */
 package com.alibaba.rsqldb.parser.builder;
 
+import java.util.List;
+
 import com.alibaba.rsqldb.parser.sql.AbstractSqlParser;
 import com.alibaba.rsqldb.parser.sql.IParserProvider;
 import com.alibaba.rsqldb.parser.sql.ISqlParser;
+
 import com.google.auto.service.AutoService;
-import java.util.List;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
-
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.apache.rocketmq.streams.common.model.ServiceName;
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
 
-@AutoService(IParserProvider.class) @ServiceName("blink") public class FlinkParserProvider implements IParserProvider {
-    @Override public ISqlParser createSqlParser(String namespace, String pipelineName, String sql) {
-        return createSqlParser(namespace, pipelineName, sql, null);
-    }
+@AutoService(IParserProvider.class)
+@ServiceName("blink")
+public class FlinkParserProvider implements IParserProvider {
 
-    @Override public ISqlParser createSqlParser(String namespace, String pipelineName, String sql, ConfigurableComponent component) {
-        return new AbstractSqlParser(namespace, pipelineName, sql, component) {
-            @Override public List<SqlNode> parseSql(String sql) {
+    @Override
+    public ISqlParser createSqlParser() {
+        return new AbstractSqlParser() {
+            @Override
+            public List<SqlNode> parseSql(String sql) {
                 try {
                     SqlParser.Config parserConfig = SqlParser.config().withParserFactory(FlinkSqlParserImpl.FACTORY).withConformance(FlinkSqlConformance.DEFAULT).withLex(Lex.JAVA).withIdentifierMaxLength(256);
                     SqlParser sqlParser = SqlParser.create(sql, parserConfig);
@@ -52,7 +53,8 @@ import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
         };
     }
 
-    @Override public String getName() {
+    @Override
+    public String getName() {
         return "blink";
     }
 }

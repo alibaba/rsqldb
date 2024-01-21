@@ -18,8 +18,8 @@ str字符串是否可以转换成是其他数值，可以则返回TRUE，否则�
 - 测试数据
 
 | a(VARCHAR) | b(VARCHAR) | c(VARCHAR) | d(VARCHAR) | e(VARCHAR) | f(VARCHAR) | g(VARCHAR) |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | 123 | 2 | 11.4445 | 3 | asd | null |
+|------------|------------|------------|------------|------------|------------|------------|
+| 1          | 123        | 2          | 11.4445    | 3          | asd        | null       |
 
 - 测试案例
 
@@ -37,6 +37,6 @@ FROM T1
 - 测试结果
 
 | boo1(BOOLEAN) | boo2(BOOLEAN) | boo3(BOOLEAN) | boo4(BOOLEAN) | boo5(BOOLEAN) | boo6(BOOLEAN) | boo7(BOOLEAN) |
-| --- | --- | --- | --- | --- | --- | --- |
-| true | true | true | true | true | false | false |
+|---------------|---------------|---------------|---------------|---------------|---------------|---------------|
+| true          | true          | true          | true          | true          | false         | false         |
 

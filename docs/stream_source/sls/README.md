@@ -33,25 +33,25 @@ create table sls_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值     |
-| --- | --- | --- |---|
-| type | 是 | 固定值，必须是sls |         |
-| endPoint | 是 | 消费端点信息 |         |
-| accessId | 是 | sls读取的accessKey |         |
-| accessKey | 是 | accessKey | sls读取的密钥 |
-| project | 是 | 读取的sls项目 |         |
-| logStore | 是 | project下的具体的logStore |         |
-| consumerGroup | 是 | 消费组名 |         |
-| maxThread | 否 | 一个并发任务启动几个线程 |         |
+| 参数名           | 是否必填 | 字段说明                 | 默认值      |
+|---------------|------|----------------------|----------|
+| type          | 是    | 固定值，必须是sls           |          |
+| endPoint      | 是    | 消费端点信息               |          |
+| accessId      | 是    | sls读取的accessKey      |          |
+| accessKey     | 是    | accessKey            | sls读取的密钥 |
+| project       | 是    | 读取的sls项目             |          |
+| logStore      | 是    | project下的具体的logStore |          |
+| consumerGroup | 是    | 消费组名                 |          |
+| maxThread     | 否    | 一个并发任务启动几个线程         |          |
 
 因为sls本身是kv结构，不需要解析参数
 
 # 属性字段
 
-| 属性字段 | 说明 |
-| --- | --- |
-| `__source__` | 消息源 |
-| `__topic__` | 消息主题 |
+| 属性字段            | 说明   |
+|-----------------|------|
+| `__source__`    | 消息源  |
+| `__topic__`     | 消息主题 |
 | `__timestamp__` | 日志时间 |
 
 # 消息堆积&能力扩展

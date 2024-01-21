@@ -46,17 +46,16 @@ public class FlinkRowCollector implements Collector<Row> {
         JSONObject newMessage = new JSONObject();
         newMessage.putAll(jsonObject);
         for (int i = 0; i < size; i++) {
-            if(row.getField(i)==null){
+            if (row.getField(i) == null) {
                 continue;
             }
-            newMessage.put(FunctionType.UDTF.getName()  + i, row.getField(i));
+            newMessage.put(FunctionType.UDTF.getName() + i, row.getField(i));
         }
         Message msg = new Message(newMessage);
         msg.setHeader(message.getHeader().copy());
         context.addSplitMessages(msg);
         context.openSplitModel();
     }
-
 
     private AbstractContext loadContext() {
         ThreadContext threadContext = ThreadContext.getInstance();

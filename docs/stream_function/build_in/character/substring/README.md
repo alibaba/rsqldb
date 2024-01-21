@@ -20,8 +20,8 @@ VARCHAR SUBSTRING(VARCHAR a, INT start, INT len)
 - 测试数据
 
 | str(VARCHAR) | nullstr(VARCHAR) | 
-| --- | --- | 
-| k1=v1;k2=v2 | null |
+|--------------|------------------| 
+| k1=v1;k2=v2  | null             |
 
 - 测试案例
 
@@ -42,6 +42,6 @@ FROM T1
 - 测试结果
 
 | var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | var4(VARCHAR) | var5(VARCHAR) | var6(VARCHAR) | var7(VARCHAR) | var8(VARCHAR) | var9(VARCHAR) | var10(VARCHAR) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| "" | 1=v1;k2=v2 | v2 | v | 1 | "" | "" | k1=v1;k2=v2 | k1=v1;k2=v2 | null |
+|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|----------------|
+| ""            | 1=v1;k2=v2    | v2            | v             | 1             | ""            | ""            | k1=v1;k2=v2   | k1=v1;k2=v2   | null           |
 

@@ -18,8 +18,8 @@ str中只包含数字则返回TRUE，否则返回FALSE，返回值为BOOLEAN类�
 - 测试数据
 
 | e(VARCHAR) | f(VARCHAR) | g(VARCHAR) |
-| --- | --- | --- |
-| 3 | asd | null |
+|------------|------------|------------|
+| 3          | asd        | null       |
 
 - 测试案例
 
@@ -31,6 +31,6 @@ FROM T1
 - 测试结果
 
 | boo1(BOOLEAN) | boo2(BOOLEAN) | boo3(BOOLEAN) |
-| --- | --- | --- |
-| true | false | false |
+|---------------|---------------|---------------|
+| true          | false         | false         |
 

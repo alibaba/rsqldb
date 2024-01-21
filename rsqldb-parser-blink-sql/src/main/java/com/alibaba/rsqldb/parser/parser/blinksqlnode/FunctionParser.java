@@ -16,11 +16,14 @@
  */
 package com.alibaba.rsqldb.parser.parser.blinksqlnode;
 
-import com.alibaba.rsqldb.parser.parser.SqlNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.FunctionSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSqlNodeNodeParser;
+import java.util.Properties;
+
+import com.alibaba.rsqldb.parser.SqlNodeParserFactory;
+import com.alibaba.rsqldb.parser.builder.FunctionSqlBuilder;
+import com.alibaba.rsqldb.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractSqlNodeNodeParser;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -54,7 +57,9 @@ public class FunctionParser extends AbstractSqlNodeNodeParser<SqlCreateFunction,
     }
 
     @Override
-    public FunctionSqlBuilder create() {
-        return new FunctionSqlBuilder();
+    public FunctionSqlBuilder create(Properties configuration) {
+        FunctionSqlBuilder functionSqlBuilder = new FunctionSqlBuilder();
+        functionSqlBuilder.setConfiguration(configuration);
+        return functionSqlBuilder;
     }
 }

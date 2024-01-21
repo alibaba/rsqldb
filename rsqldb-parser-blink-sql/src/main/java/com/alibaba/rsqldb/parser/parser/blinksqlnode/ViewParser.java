@@ -16,14 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.parser.blinksqlnode;
 
-import com.alibaba.rsqldb.parser.parser.SqlNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.AbstractSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.ViewSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSqlNodeNodeParser;
+import java.util.Properties;
 import java.util.Set;
+
+import com.alibaba.rsqldb.parser.SqlNodeParserFactory;
+import com.alibaba.rsqldb.parser.builder.AbstractSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.ViewSqlBuilder;
+import com.alibaba.rsqldb.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractSqlNodeNodeParser;
+
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 
@@ -34,16 +37,17 @@ public class ViewParser extends AbstractSqlNodeNodeParser<SqlCreateView, ViewSql
         viewSQLBuilder.setTableName(sqlCreateView.getName());
         viewSQLBuilder.setSqlNode(sqlCreateView);
         SqlNode sqlNode = sqlCreateView.getQuery();
-        AbstractSqlBuilder builder = SqlNodeParserFactory.parseBuilder(sqlNode);
+        AbstractSqlBuilder builder = SqlNodeParserFactory.parseBuilder(sqlNode, viewSQLBuilder.getConfiguration());
         ////保存所有create对应的builder， 在insert或维表join时使用
         builder.setTableName2Builders(viewSQLBuilder.getTableName2Builders());
+        //        builder.setConfiguration(viewSQLBuilder.getConfiguration());
         viewSQLBuilder.setBuilder(builder);
         viewSQLBuilder.addCreatedTable(viewSQLBuilder.getTableName());
         if (builder instanceof SelectSqlBuilder) {
             /**
              * 主要是处理*的场景，把*转化成具体的字段值
              */
-            SelectSqlBuilder selectSQLBuilder = (SelectSqlBuilder) builder;
+            SelectSqlBuilder selectSQLBuilder = (SelectSqlBuilder)builder;
             Set<String> fieldNames = selectSQLBuilder.getAllFieldNames();
             viewSQLBuilder.setFieldNames(fieldNames);
         }
@@ -57,7 +61,9 @@ public class ViewParser extends AbstractSqlNodeNodeParser<SqlCreateView, ViewSql
     }
 
     @Override
-    public ViewSqlBuilder create() {
-        return new ViewSqlBuilder();
+    public ViewSqlBuilder create(Properties configuration) {
+        ViewSqlBuilder viewSqlBuilder = new ViewSqlBuilder();
+        viewSqlBuilder.setConfiguration(configuration);
+        return viewSqlBuilder;
     }
 }

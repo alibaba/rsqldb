@@ -12,7 +12,8 @@ VARCHAR PARSE_URL(VARCHAR urlStr, VARCHAR partToExtract [, VARCHAR key])
 
 # 功能描述
 
-解析url，获取partToExtract的值，如partToExtract=‘QUERY’，获取url参数key的值 partToExtract可取HOST、PATH、QUERY、REF、PROTOCOL、FILE、AUTHORITY、USERINFO。
+解析url，获取partToExtract的值，如partToExtract=‘QUERY’，获取url参数key的值
+partToExtract可取HOST、PATH、QUERY、REF、PROTOCOL、FILE、AUTHORITY、USERINFO。
 
 ## 注意：
 
@@ -22,9 +23,9 @@ VARCHAR PARSE_URL(VARCHAR urlStr, VARCHAR partToExtract [, VARCHAR key])
 
 - 测试数据
 
-| url1(VARCHAR) | nullstr(VARCHAR) | 
-| --- | --- | 
-| [http://facebook.com/path/p1.php?query=1](http://facebook.com/path/p1.php?query=1) | null |
+| url1(VARCHAR)                                                                      | nullstr(VARCHAR) | 
+|------------------------------------------------------------------------------------|------------------| 
+| [http://facebook.com/path/p1.php?query=1](http://facebook.com/path/p1.php?query=1) | null             |
 
 - 测试案例
 
@@ -45,7 +46,7 @@ FROM T1
 
 - 测试结果
 
-| var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | var4(VARCHAR) | var5(VARCHAR) | var6(VARCHAR) | var7(VARCHAR) | var8(VARCHAR) | var9(VARCHAR) | var10(VARCHAR) | var11(VARCHAR) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | query=1 | facebook.com | /path/p1.php | null | http | /path/p1.php?query=1 | facebook.com | null | null | null |
+| var1(VARCHAR) | var2(VARCHAR) | var3(VARCHAR) | var4(VARCHAR) | var5(VARCHAR) | var6(VARCHAR) | var7(VARCHAR)        | var8(VARCHAR) | var9(VARCHAR) | var10(VARCHAR) | var11(VARCHAR) |
+|---------------|---------------|---------------|---------------|---------------|---------------|----------------------|---------------|---------------|----------------|----------------|
+| 1             | query=1       | facebook.com  | /path/p1.php  | null          | http          | /path/p1.php?query=1 | facebook.com  | null          | null           | null           |
 

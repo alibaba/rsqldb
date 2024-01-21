@@ -31,6 +31,6 @@ FROM T1;
 - 测试结果
 
 | aa(VARCHAR) |
-| --- |
-| Aadvbn |
+|-------------|
+| Aadvbn      |
 

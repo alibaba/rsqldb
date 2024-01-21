@@ -1,4 +1,5 @@
-目前rocketmq streams支持单机和集群俩种部署方式，单机部署模式用来快速运行任务，集群部署模式用于大规模数据处理的生产环境； 用户可以根据自己的实际情况来快速选择； 执行部署前，需要先了解一下rocketmq streams的目录结构。
+目前rocketmq streams支持单机和集群俩种部署方式，单机部署模式用来快速运行任务，集群部署模式用于大规模数据处理的生产环境；
+用户可以根据自己的实际情况来快速选择； 执行部署前，需要先了解一下rocketmq streams的目录结构。
 
 # 下载安装包
 
@@ -28,8 +29,6 @@ tar -xvf rocketmq-streams-runner-1.0.0-SNAPSHOT-distribution.tar.gz
 - `README.md` 说明文档
 - `LICENSE` 许可证
 - `NOTICE` 声明
-
-
 
 # 参数配置
 
@@ -88,5 +87,6 @@ window.shuffle.channel.type=memory
 ```
 
 熟悉了上述的内容后， 你可以
+
 + [单机运行](standalone/README.md)
 + [集群运行](cluster/README.md)

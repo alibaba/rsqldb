@@ -18,12 +18,12 @@ VARCHAR SPLIT_INDEX(VARCHAR str, VARCHAR sep, INT index)
 
 - 测试数据
 
-| str(VARCHAR) | sep(VARCHAR) | index(INT) | 
-| --- | --- | --- | 
-| Jack,John,Mary | , | 2 | 
-| Jack,John,Mary | , | 3 | 
-| Jack,John,Mary | null | 0 | 
-| null | , | 0 |
+| str(VARCHAR)   | sep(VARCHAR) | index(INT) | 
+|----------------|--------------|------------| 
+| Jack,John,Mary | ,            | 2          | 
+| Jack,John,Mary | ,            | 3          | 
+| Jack,John,Mary | null         | 0          | 
+| null           | ,            | 0          |
 
 - 测试案例
 
@@ -35,9 +35,9 @@ FROM T1
 - 测试结果
 
 | var1(VARCHAR) |
-| --- |
-| Mary |
-| null |
-| null |
-| null |
+|---------------|
+| Mary          |
+| null          |
+| null          |
+| null          |
 

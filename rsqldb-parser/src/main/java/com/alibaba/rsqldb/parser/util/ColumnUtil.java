@@ -22,6 +22,4 @@ import org.apache.commons.logging.LogFactory;
 public class ColumnUtil {
     private static final Log LOG = LogFactory.getLog(ColumnUtil.class);
 
-
-
 }

@@ -18,11 +18,11 @@ VARCHAR REPEAT(VARCHAR str, INT n)
 - 测试数据
 
 | str(VARCHAR) | n(INT) | 
-| --- | --- | 
-| J | 9 |
-| Hello | 2 |
-| Hello | -9 | 
-| null | 9 |
+|--------------|--------| 
+| J            | 9      |
+| Hello        | 2      |
+| Hello        | -9     | 
+| null         | 9      |
 
 - 测试案例
 
@@ -34,9 +34,9 @@ FROM T1
 - 测试结果
 
 | var1(VARCHAR) |
-| --- |
-| JJJJJJJJJ |
-| HelloHello |
-| "" |
-| null |
+|---------------|
+| JJJJJJJJJ     |
+| HelloHello    |
+| ""            |
+| null          |
 

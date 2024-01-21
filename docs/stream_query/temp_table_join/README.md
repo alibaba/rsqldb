@@ -1,4 +1,6 @@
-Temporal Table是一张不断变化的表（不更新的表是变化表的一种特例）。如何查询/JOIN一张不断变化的表呢？ 如果用传统的JOIN语法来表达`JOIN temporal_table ON xxx`，会导致多次运行得到的结果不一致。所以我们在查询/JOINTemporal Table的时候，需要明确指明我们想查看的是Temporal Table的哪个时刻的快照。因此我们引入了 SQL:2011 的 Temporal Table 的语义。
+Temporal Table是一张不断变化的表（不更新的表是变化表的一种特例）。如何查询/JOIN一张不断变化的表呢？
+如果用传统的JOIN语法来表达`JOIN temporal_table ON xxx`，会导致多次运行得到的结果不一致。所以我们在查询/JOINTemporal
+Table的时候，需要明确指明我们想查看的是Temporal Table的哪个时刻的快照。因此我们引入了 SQL:2011 的 Temporal Table 的语义。
 
 # Temporal Table DDL
 

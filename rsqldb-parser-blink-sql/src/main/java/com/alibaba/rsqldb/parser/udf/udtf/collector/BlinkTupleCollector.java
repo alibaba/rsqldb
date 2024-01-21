@@ -17,6 +17,7 @@
 package com.alibaba.rsqldb.parser.udf.udtf.collector;
 
 import com.alibaba.fastjson.JSONObject;
+
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.util.Collector;
 import org.apache.rocketmq.streams.common.context.IMessage;
@@ -47,7 +48,7 @@ public class BlinkTupleCollector implements Collector<Tuple> {
 
     private FunctionContext loadContext() {
         ThreadContext threadContext = ThreadContext.getInstance();
-        return (FunctionContext) threadContext.get();
+        return (FunctionContext)threadContext.get();
     }
 
     @Override

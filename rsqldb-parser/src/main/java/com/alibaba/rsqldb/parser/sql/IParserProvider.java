@@ -16,8 +16,6 @@
  */
 package com.alibaba.rsqldb.parser.sql;
 
-import org.apache.rocketmq.streams.configurable.ConfigurableComponent;
-
 /**
  * provider sql parser
  */
@@ -26,23 +24,9 @@ public interface IParserProvider {
     /**
      * generate the sql parser
      *
-     * @param namespace    namespace
-     * @param pipelineName pipeline
-     * @param sql          sql
      * @return sql parser
      */
-    ISqlParser createSqlParser(String namespace, String pipelineName, String sql);
-
-    /**
-     * generate the sql parser
-     *
-     * @param namespace    namespace
-     * @param pipelineName pipeline
-     * @param sql          sql
-     * @param component    component
-     * @return sql parser
-     */
-    ISqlParser createSqlParser(String namespace, String pipelineName, String sql, ConfigurableComponent component);
+    ISqlParser createSqlParser();
 
     /**
      * return name

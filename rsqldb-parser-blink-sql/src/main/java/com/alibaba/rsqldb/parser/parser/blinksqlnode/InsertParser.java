@@ -16,14 +16,15 @@
  */
 package com.alibaba.rsqldb.parser.parser.blinksqlnode;
 
-import com.alibaba.rsqldb.parser.parser.builder.InsertSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractInsertParser;
+import com.alibaba.rsqldb.parser.builder.InsertSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.WindowBuilder;
+import com.alibaba.rsqldb.parser.sql.SQLParseContext;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractInsertParser;
+
 import org.apache.calcite.sql.SqlEmit;
 import org.apache.calcite.sql.SqlInsert;
-import org.apache.rocketmq.streams.common.configure.StreamsConfigure;
 
 public class InsertParser extends AbstractInsertParser {
-
 
     @Override
     protected void parseEmit(InsertSqlBuilder builder, SqlInsert insert) {
@@ -32,20 +33,26 @@ public class InsertParser extends AbstractInsertParser {
             return;
         }
         if (sqlEmit.getBeforeDelay() != null) {
-            long beforeValue = sqlEmit.getBeforeDelayValue();
-            if (beforeValue > 0) {
-                StreamsConfigure.setEmitBeforeValue(beforeValue / 1000);
+            WindowBuilder windowBuilder = (WindowBuilder)SQLParseContext.getWindowBuilder();
+            if (windowBuilder != null) {
+                long beforeValue = sqlEmit.getBeforeDelayValue();
+                if (beforeValue > 0) {
+                    windowBuilder.setEmitBefore(beforeValue / 1000);
+                }
             }
 
         }
         if (sqlEmit.getAfterDelay() != null) {
-            long afterValue = sqlEmit.getAfterDelayValue();
-            if (afterValue > 0) {
-                StreamsConfigure.setEmitAfterValue(afterValue / 1000);
+            WindowBuilder windowBuilder = (WindowBuilder)SQLParseContext.getWindowBuilder();
+            if (windowBuilder != null) {
+                long afterValue = sqlEmit.getAfterDelayValue();
+                if (afterValue > 0) {
+                    windowBuilder.setEmitAfter(afterValue / 1000);
+                }
             }
+
         }
 
     }
-
 
 }

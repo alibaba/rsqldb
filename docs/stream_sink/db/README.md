@@ -21,20 +21,21 @@ create table metaq_stream
       );
 ```
 
-| 参数名 | 是否必填 | 字段说明 | 默认值 |
-| --- | --- | --- | --- |
-| type | 是 | 固定值，可以是db,rds |
-| url | 是 | jdbc连接地址 |  |
-| tableName | 是 | 表名 |  |
-| userName | 是 | 用户名 | * |
-| password | 是 | 密码 |  |
-| batchSize | 否 | 消息缓存输出，缓存的大小 | 1000 |
-| autoFlushSize | 否 | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存 | 300 |
-| autoFlushTimeGap | 否 | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000 |
+| 参数名              | 是否必填 | 字段说明                                 | 默认值  |
+|------------------|------|--------------------------------------|------|
+| type             | 是    | 固定值，可以是db,rds                        |
+| url              | 是    | jdbc连接地址                             |      |
+| tableName        | 是    | 表名                                   |      |
+| userName         | 是    | 用户名                                  | *    |
+| password         | 是    | 密码                                   |      |
+| batchSize        | 否    | 消息缓存输出，缓存的大小                         | 1000 |
+| autoFlushSize    | 否    | 缓存启动线程异步刷新，当缓存条数>配置值时，会刷新缓存          | 300  |
+| autoFlushTimeGap | 否    | 缓存启动线程异步刷新，当上次刷新时间到现在时间间隔>配置值时，会刷新缓存 | 1000 |
 
 ### 说明
 
-- 实时计算写入Mysql数据库结果表原理：针对实时计算每行结果数据缓存，在刷新时，拼接成一行SQL语句-insert table(column1,column2,..)values(value1,value2,...),(value1,value2,...),(value1,value2,...)...，一次批量输入数据库，能最大的提高吞吐量。
+- 实时计算写入Mysql数据库结果表原理：针对实时计算每行结果数据缓存，在刷新时，拼接成一行SQL语句-insert table(
+  column1,column2,..)values(value1,value2,...),(value1,value2,...),(value1,value2,...)...，一次批量输入数据库，能最大的提高吞吐量。
 - 如果想提高实时性，可以通过设置batchSize,autoFlushSize,autoFlushTimeGap三个参数来调整。如果
 
 batchSize=1，会一条一输出，性能会大幅下降
@@ -47,7 +48,9 @@ batchSize=1，会一条一输出，性能会大幅下降
 
 - 可以在sql中，设置一个名字给参数，如password，可以设dipper.streams.db.password(这个名字随便取)
 - 在配置文件中设置dipper.streams.db.password=真实ak的值
-- 系统会自动化检查，检查逻辑：如果属性文件有dipper.streams.db.passwords，则用属性的值替换，检查环境变量是否有dipper.streams.db.password，如果有则用环境变量替换，如果没找到，则认为dipper.streams.db.password是真实值
+-
+
+系统会自动化检查，检查逻辑：如果属性文件有dipper.streams.db.passwords，则用属性的值替换，检查环境变量是否有dipper.streams.db.password，如果有则用环境变量替换，如果没找到，则认为dipper.streams.db.password是真实值
 
 ```sql
 create table metaq_stream

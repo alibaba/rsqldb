@@ -21,10 +21,10 @@ VARCHAR CONCAT_WS(VARCHAR separator, VARCHAR var1, VARCHAR var2, ...)
 - 测试数据
 
 | sep(VARCHAR) | str1(VARCHAR) | str2(VARCHAR) | str3(VARCHAR) |
-| --- |---| --- | --- | 
-|  | Jack         | Harry | John | 
-|  | Jack         | Harry | John |
-|  | Harry        | John | Jack| 
+|--------------|---------------|---------------|---------------| 
+|              | Jack          | Harry         | John          | 
+|              | Jack          | Harry         | John          |
+|              | Harry         | John          | Jack          | 
 
 - 测试案例
 
@@ -35,10 +35,10 @@ FROM T1
 
 - 测试结果
 
-| var(VARCHAR) |
-| --- |
-| Jack|Harry|John |
+| var(VARCHAR)  |
+|---------------|
+| Jack          |Harry|John |
 | JackHarryJohn |
-| Harry|John |
-| Jack |
+| Harry         |John |
+| Jack          |
 

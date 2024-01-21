@@ -17,8 +17,8 @@ INT HASH_CODE(VARCHAR str)
 - 测试数据
 
 | str1(VARCHAR) | str2(VARCHAR) | nullstr(VARCHAR) |
-| --- | --- | --- | 
-| k1=v1;k2=v2 | k1:v1,k2:v2 | null |
+|---------------|---------------|------------------| 
+| k1=v1;k2=v2   | k1:v1,k2:v2   | null             |
 
 - 测试案例
 
@@ -29,7 +29,7 @@ FROM T1
 
 - 测试结果
 
-| var1(INT) | var2(INT) | var3(INT) |
-| --- | --- | --- |
-| 1099348823 | 401392878 | null |
+| var1(INT)  | var2(INT) | var3(INT) |
+|------------|-----------|-----------|
+| 1099348823 | 401392878 | null      |
 

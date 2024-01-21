@@ -16,16 +16,17 @@
  */
 package com.alibaba.rsqldb.parser.udf.udtf.collector;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.rsqldb.parser.udf.BlinkDataType;
-import com.alibaba.rsqldb.parser.udf.udtf.BlinkUDTFScript;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.rsqldb.parser.udf.BlinkDataType;
+import com.alibaba.rsqldb.parser.udf.udtf.BlinkUDTFScript;
+
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.types.DataTypes;
 import org.apache.flink.table.types.RowType;
@@ -53,7 +54,7 @@ public class BlinkRowCollector implements Collector<Row> {
     private static final String RESULT_TYPE_METHOD_NAME = "getResultType";//获取返回类型的方法名
 
     protected transient BlinkUDTFScript target;
-//    private transient List<DataType> dataTypes;
+    //    private transient List<DataType> dataTypes;
 
     public BlinkRowCollector(BlinkUDTFScript target) {
         this.target = target;
@@ -61,11 +62,11 @@ public class BlinkRowCollector implements Collector<Row> {
 
     @Override
     public void collect(Row row) {
-        FunctionContext context = (FunctionContext) loadContext();
+        FunctionContext context = (FunctionContext)loadContext();
         int size = row.getArity();
-//        if (dataTypes == null) {
-            List<DataType> dataTypes = loadResultType(row);
-//        }
+        //        if (dataTypes == null) {
+        List<DataType> dataTypes = loadResultType(row);
+        //        }
         IMessage message = context.getMessage();
         final JSONObject jsonObject = message.getMessageBody();
         JSONObject newMessage = new JSONObject();
@@ -100,22 +101,22 @@ public class BlinkRowCollector implements Collector<Row> {
                     objects[i] = object1;
                     if (object1 != null) {
                         classes[i] = object1.getClass();
-                    }else {
+                    } else {
                         classes[i] = null;
-                        objects[i] =null;
+                        objects[i] = null;
                     }
                 }
-                dataType = (org.apache.flink.table.types.DataType) method.invoke(object, objects, classes);
+                dataType = (org.apache.flink.table.types.DataType)method.invoke(object, objects, classes);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }
             if (RowType.class.isInstance(dataType)) {
-                return convertRowType((RowType) dataType);
+                return convertRowType((RowType)dataType);
             }
 
-            TypeInfoWrappedType typeInfoWrappedType = (TypeInfoWrappedType) dataType;
+            TypeInfoWrappedType typeInfoWrappedType = (TypeInfoWrappedType)dataType;
             TypeInformation typeInformation = typeInfoWrappedType.getTypeInfo();
 
             Map<String, TypeInformation<?>> typeInformationMap = typeInformation.getGenericParameters();

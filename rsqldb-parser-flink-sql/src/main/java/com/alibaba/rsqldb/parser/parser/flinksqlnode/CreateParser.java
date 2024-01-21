@@ -16,16 +16,18 @@
  */
 package com.alibaba.rsqldb.parser.parser.flinksqlnode;
 
-import com.alibaba.rsqldb.parser.parser.SqlNodeParserFactory;
-import com.alibaba.rsqldb.parser.parser.builder.CreateSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.builder.SelectSqlBuilder;
-import com.alibaba.rsqldb.parser.parser.result.BuilderParseResult;
-import com.alibaba.rsqldb.parser.parser.result.IParseResult;
-import com.alibaba.rsqldb.parser.parser.sqlnode.AbstractSqlNodeNodeParser;
-import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import com.alibaba.rsqldb.parser.SqlNodeParserFactory;
+import com.alibaba.rsqldb.parser.builder.CreateSqlBuilder;
+import com.alibaba.rsqldb.parser.builder.SelectSqlBuilder;
+import com.alibaba.rsqldb.parser.result.BuilderParseResult;
+import com.alibaba.rsqldb.parser.result.IParseResult;
+import com.alibaba.rsqldb.parser.sqlnode.AbstractSqlNodeNodeParser;
+import com.alibaba.rsqldb.parser.util.SqlDataTypeUtil;
+
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.commons.logging.Log;
@@ -47,17 +49,64 @@ public class CreateParser extends AbstractSqlNodeNodeParser<SqlCreateTable, Crea
 
     private static final Log LOG = LogFactory.getLog(CreateParser.class);
 
+    /**
+     * 把列转换成metadata
+     *
+     * @param sqlNodes
+     * @return
+     */
+    public static MetaData createMetadata(CreateSqlBuilder builder, SqlNodeList sqlNodes, List<String> headerFieldNames) {
+        if (sqlNodes == null) {
+            return null;
+        }
+
+        MetaData metaData = new MetaData();
+        for (
+            SqlNode sqlNode : sqlNodes) {
+            if ((sqlNode instanceof SqlTableColumn.SqlMetadataColumn)) {
+                SqlTableColumn.SqlMetadataColumn sqlMetadataColumn = (SqlTableColumn.SqlMetadataColumn)sqlNode;
+                String fieldName = FunctionUtils.getConstant(sqlMetadataColumn.getName().toString());
+                MetaDataField metaDataField = new MetaDataField();
+                metaDataField.setDataType(new StringDataType());
+                metaDataField.setFieldName(fieldName);
+                metaData.getMetaDataFields().add(metaDataField);
+                SelectSqlBuilder sqlBuilder = new SelectSqlBuilder();
+                sqlBuilder.setCloseFieldCheck(true);
+                sqlBuilder.setTableName(builder.getTableName());
+                sqlBuilder.setConfiguration(builder.getConfiguration());
+                SqlNodeParserFactory.getParse(sqlNode).parse(sqlBuilder, sqlNode);
+                builder.getScripts().addAll(sqlBuilder.getScripts());
+                continue;
+            }
+            SqlTableColumn.SqlRegularColumn sqlTableColumn = (SqlTableColumn.SqlRegularColumn)sqlNode;
+            String fieldName = sqlTableColumn.getName().toString();
+            String type = FunctionUtils.getConstant(sqlTableColumn.getType().toString());
+            DataType dataType = SqlDataTypeUtil.covert(type);
+            if (dataType == null) {
+                LOG.warn("expect datatype, but convert fail.the sqlnode type is " + type);
+            }
+            //            if(sqlTableColumn.isHeader()){
+            //                headerFildNames.add(fieldName);
+            //            }
+            MetaDataField metaDataField = new MetaDataField();
+            metaDataField.setDataType(dataType);
+            metaDataField.setFieldName(fieldName);
+            metaData.getMetaDataFields().add(metaDataField);
+        }
+        return metaData;
+    }
+
     @Override
     public IParseResult parse(CreateSqlBuilder createSQLBuilder, SqlCreateTable sqlCreateTable) {
         createSQLBuilder.setSqlNode(sqlCreateTable);
         createSQLBuilder.setSqlType("SOURCE");
         createSQLBuilder.setTableName(sqlCreateTable.getTableName().toString());
         createSQLBuilder.addCreatedTable(createSQLBuilder.getTableName());
-        List<String> headerFieldNames=new ArrayList<>();
-        MetaData metaData=createMetadata(createSQLBuilder,sqlCreateTable.getColumnList(),headerFieldNames);
+        List<String> headerFieldNames = new ArrayList<>();
+        MetaData metaData = createMetadata(createSQLBuilder, sqlCreateTable.getColumnList(), headerFieldNames);
         createSQLBuilder.setMetaData(metaData);
         createSQLBuilder.setHeaderFieldNames(headerFieldNames);
-        createSQLBuilder.setProperties(createProperty(createSQLBuilder,sqlCreateTable));
+        createSQLBuilder.setProperties(createProperty(createSQLBuilder, sqlCreateTable));
         return new BuilderParseResult(createSQLBuilder);
     }
 
@@ -70,69 +119,24 @@ public class CreateParser extends AbstractSqlNodeNodeParser<SqlCreateTable, Crea
     }
 
     @Override
-    public CreateSqlBuilder create() {
-        return new CreateSqlBuilder();
+    public CreateSqlBuilder create(Properties configuration) {
+        CreateSqlBuilder createSqlBuilder = new CreateSqlBuilder();
+        createSqlBuilder.setConfiguration(configuration);
+        return createSqlBuilder;
     }
 
-
-    /**
-     * 把列转换成metadata
-     *
-     * @param sqlNodes
-     * @return
-     */
-    public static MetaData createMetadata(CreateSqlBuilder builder,SqlNodeList sqlNodes, List<String> headerFildNames) {
-        if (sqlNodes == null) {
-            return null;
-        }
-
-        MetaData metaData = new MetaData();
-        for (
-            SqlNode sqlNode : sqlNodes) {
-            if ((sqlNode instanceof SqlTableColumn.SqlMetadataColumn)) {
-                SqlTableColumn.SqlMetadataColumn sqlMetadataColumn=(SqlTableColumn.SqlMetadataColumn)sqlNode;
-                String fieldName = FunctionUtils.getConstant(sqlMetadataColumn.getName().toString());
-                MetaDataField metaDataField = new MetaDataField();
-                metaDataField.setDataType(new StringDataType());
-                metaDataField.setFieldName(fieldName);
-                metaData.getMetaDataFields().add(metaDataField);
-                SelectSqlBuilder sqlBuilder=new SelectSqlBuilder();
-                sqlBuilder.setCloseFieldCheck(true);
-                sqlBuilder.setTableName(builder.getTableName());
-                SqlNodeParserFactory.getParse(sqlNode).parse(sqlBuilder,sqlNode);
-                builder.getScripts().addAll(sqlBuilder.getScripts());
-                continue;
-            }
-            SqlTableColumn.SqlRegularColumn sqlTableColumn = ( SqlTableColumn.SqlRegularColumn)sqlNode;
-            String fieldName = sqlTableColumn.getName().toString();
-            String type = FunctionUtils.getConstant(sqlTableColumn.getType().toString());
-            DataType dataType = SqlDataTypeUtil.covert(type);
-            if (dataType == null) {
-                LOG.warn("expect datatype, but convert fail.the sqlnode type is " + type);
-            }
-//            if(sqlTableColumn.isHeader()){
-//                headerFildNames.add(fieldName);
-//            }
-            MetaDataField metaDataField = new MetaDataField();
-            metaDataField.setDataType(dataType);
-            metaDataField.setFieldName(fieldName);
-            metaData.getMetaDataFields().add(metaDataField);
-        }
-        return metaData;
-    }
-
-    public Properties createProperty(CreateSqlBuilder createSQLBuilder,SqlCreateTable sqlCreateTable) {
+    public Properties createProperty(CreateSqlBuilder createSQLBuilder, SqlCreateTable sqlCreateTable) {
         SqlNodeList sqlNodeList = sqlCreateTable.getPropertyList();
         List<SqlNode> propertys = sqlNodeList.getList();
         /**
          * 把property的值，生成key：value。和key：propertysql的值
          */
         Properties properties = new Properties();
-        List<SqlNode> sqlNodes=sqlNodeList.getList();
+        List<SqlNode> sqlNodes = sqlNodeList.getList();
         String type = "sls";
         int i = 0;
         for (SqlNode sqlNode : propertys) {
-            if (!SqlTableOption.class.isInstance(sqlNode)) {
+            if (!(sqlNode instanceof SqlTableOption)) {
                 i++;
                 continue;
             }
@@ -141,7 +145,7 @@ public class CreateParser extends AbstractSqlNodeNodeParser<SqlCreateTable, Crea
             if (ContantsUtil.isContant(value)) {
                 value = value.substring(1, value.length() - 1);
             }
-            String key=property.getKeyString().toLowerCase();
+            String key = property.getKeyString().toLowerCase();
             if (ContantsUtil.isContant(key)) {
                 key = key.substring(1, key.length() - 1);
             }
